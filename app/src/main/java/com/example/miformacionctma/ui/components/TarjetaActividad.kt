@@ -23,21 +23,26 @@ import com.example.miformacionctma.ui.theme.MiFormacionCTMATheme
 @Composable
 fun TarjetaActividad(
     actividad: ActividadFormativa,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
     val progresoSeguro = actividad.progreso.coerceIn(0, 100)
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+    // Determinar el texto del estado para pasarle a EstadoActividad
+    val textoEstado = when {
+        progresoSeguro >= 100 -> "Completada"
+        progresoSeguro > 0 -> "En proceso"
+        else -> "Pendiente"
+    }
 
+    Card(
+        onClick = { onClick() },
+        modifier = modifier.fillMaxWidth()
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-
             Text(
                 text = actividad.titulo,
                 style = MaterialTheme.typography.titleMedium
@@ -50,8 +55,7 @@ fun TarjetaActividad(
                 )
             }
 
-            // Estado de la actividad
-            EstadoActividad(progresoSeguro)
+            EstadoActividad(texto = textoEstado)
 
             Text(
                 text = "Progreso: $progresoSeguro%",
@@ -59,11 +63,11 @@ fun TarjetaActividad(
             )
 
             LinearProgressIndicator(
-            progress = { progresoSeguro / 100f },
-            modifier = Modifier.fillMaxWidth(),
-            color = ProgressIndicatorDefaults.linearColor,
-            trackColor = ProgressIndicatorDefaults.linearTrackColor,
-            strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                progress = { progresoSeguro / 100f },
+                modifier = Modifier.fillMaxWidth(),
+                color = ProgressIndicatorDefaults.linearColor,
+                trackColor = ProgressIndicatorDefaults.linearTrackColor,
+                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
             )
 
             Row(
@@ -97,7 +101,7 @@ private fun textoPrioridad(prioridad: Prioridad): String {
 private fun TarjetaActividadPreviewNormal() {
     MiFormacionCTMATheme {
         TarjetaActividad(
-            ActividadFormativa(
+            actividad = ActividadFormativa(
                 id = 1L,
                 titulo = "Kotlin básico",
                 descripcion = "Repasar funciones y clases",
@@ -114,7 +118,7 @@ private fun TarjetaActividadPreviewNormal() {
 private fun TarjetaActividadPreviewTituloLargo() {
     MiFormacionCTMATheme {
         TarjetaActividad(
-            ActividadFormativa(
+            actividad = ActividadFormativa(
                 id = 2L,
                 titulo = "Validar títulos extremadamente largos dentro de una tarjeta reutilizable de actividades para Compose",
                 descripcion = "Comprobar que el diseño no se rompa con textos extensos",
@@ -131,7 +135,7 @@ private fun TarjetaActividadPreviewTituloLargo() {
 private fun TarjetaActividadPreviewCompletada() {
     MiFormacionCTMATheme {
         TarjetaActividad(
-            ActividadFormativa(
+            actividad = ActividadFormativa(
                 id = 3L,
                 titulo = "Actividad completada",
                 descripcion = "Debe mostrar el estado Completada",
@@ -148,7 +152,7 @@ private fun TarjetaActividadPreviewCompletada() {
 private fun TarjetaActividadPreviewSinIniciar() {
     MiFormacionCTMATheme {
         TarjetaActividad(
-            ActividadFormativa(
+            actividad = ActividadFormativa(
                 id = 4L,
                 titulo = "Actividad pendiente",
                 descripcion = "Debe mostrar el estado Pendiente",

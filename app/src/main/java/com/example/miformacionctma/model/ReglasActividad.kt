@@ -17,10 +17,10 @@ object ReglasActividad {
 
     fun estadoActividad(actividad: ActividadFormativa): String {
         return when {
-            actividad.progreso >= 100 -> "COMPLETADA"
-            actividad.diasRestantes < 0 -> "VENCIDA"
-            actividad.progreso > 0 -> "EN_PROCESO"
-            else -> "PENDIENTE"
+            actividad.progreso >= 100 -> "Completada"
+            actividad.diasRestantes < 0 -> "Vencida"
+            actividad.progreso > 0 -> "En proceso"
+            else -> "Pendiente"
         }
     }
 
@@ -52,11 +52,12 @@ object ReglasActividad {
         return actividades.sortedWith(
             compareBy<ActividadFormativa>(
                 // Vencidas primero
-                { estadoActividad(it) != "VENCIDA" },
+                { estadoActividad(it) != "Vencida" },
                 // Prioridad alta primero
                 { -it.prioridad.ordinal },
                 // Menos días primero
-                { it.diasRestantes })
+                { it.diasRestantes }
+            )
         )
     }
 }
