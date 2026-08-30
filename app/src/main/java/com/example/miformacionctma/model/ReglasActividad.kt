@@ -1,17 +1,45 @@
 package com.example.miformacionctma.model
 
 object ReglasActividad {
+    // - Validaciones de campos para el formulario de la semana 4) -
+
+    // Título obligatorio: 3 a 80 caracteres
+    fun validarTitulo(valor: String, mostrarVacio: Boolean = true): String? {
+        val limpio = valor.trim()
+        return when {
+            limpio.isEmpty() && mostrarVacio -> "El título es obligatorio"
+            limpio.isNotEmpty() && limpio.length < 3 -> "Usa al menos 3 caracteres"
+            limpio.length > 80 -> "Usa máximo 80 caracteres"
+            else -> null
+        }
+    }
+
+    // Descripción opcional: máximo 240 caracteres
+    fun validarDescripcion(valor: String): String? {
+        return if (valor.trim().length > 240) "Máximo 240 caracteres" else null
+    }
+
+    // Fecha obligatoria con formato YYYY-MM-DD
+    fun validarFecha(valor: String): String? {
+        val limpio = valor.trim()
+        if (limpio.isEmpty()) return "La fecha es obligatoria"
+        val regexFecha = Regex("""^\d{4}-\d{2}-\d{2}$""")
+        return if (!limpio.matches(regexFecha)) "Formato inválido (AAAA-MM-DD)" else null
+    }
+
+    // Progreso: entre 0 y 100
+    fun validarProgreso(valor: Int): String? {
+        return if (valor !in 0..100) "El progreso debe estar entre 0 y 100" else null
+    }
+
+    // - Validaciones de semanas anteriores -
+
     fun validarActividad(actividad: ActividadFormativa): List<String> {
         val errores = mutableListOf<String>()
-
-        if (actividad.titulo.isBlank()) {
-            errores.add("El título es obligatorio")
-        }
-
-        if (actividad.progreso !in 0..100) {
-            errores.add("El progreso debe estar entre 0 y 100")
-        }
-
+        validarTitulo(actividad.titulo)?.let { errores.add(it) }
+        validarDescripcion(actividad.descripcion)?.let { errores.add(it) }
+        validarFecha(actividad.fecha)?.let { errores.add(it) }
+        validarProgreso(actividad.progreso)?.let { errores.add(it) }
         return errores
     }
 
@@ -41,13 +69,9 @@ object ReglasActividad {
         texto: String
     ): List<ActividadFormativa> {
         val termino = texto.trim().lowercase()
-
-        return actividades.filter {
-            it.titulo.trim().lowercase().contains(termino)
-        }
+        return actividades.filter { it.titulo.trim().lowercase().contains(termino) }
     }
 
-    // Reto adicional
     fun ordenarActividades(actividades: List<ActividadFormativa>): List<ActividadFormativa> {
         return actividades.sortedWith(
             compareBy(
@@ -59,15 +83,5 @@ object ReglasActividad {
                 { it.diasRestantes }
             )
         )
-    }
-
-    fun validarTitulo(valor: String, mostrarVacio: Boolean = true): String? {
-        val limpio = valor.trim()
-        return when {
-            limpio.isEmpty() && mostrarVacio -> "Escribe un título"
-            limpio.isNotEmpty() && limpio.length < 3 -> "Usa al menos 3 caracteres"
-            limpio.length > 80 -> "Usa máximo 80 caracteres"
-            else -> null
-        }
     }
 }

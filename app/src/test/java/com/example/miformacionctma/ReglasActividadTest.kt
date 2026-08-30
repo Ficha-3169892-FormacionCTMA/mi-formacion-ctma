@@ -3,21 +3,17 @@ package com.example.miformacionctma
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.model.ReglasActividad
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
-/**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
-
 class ReglasActividadTest {
+
     @Test
     fun promedioProgreso_calculaCorrectamente() {
         val actividades = listOf(
-            ActividadFormativa(1, "A", null, 100, 0, Prioridad.ALTA),
-            ActividadFormativa(2, "B", null, 50, 0, Prioridad.MEDIA)
+            ActividadFormativa(1, "A", "Sin descripción", "2026-09-01", 100, 0, Prioridad.ALTA),
+            ActividadFormativa(2, "B", "Sin descripción", "2026-09-02", 50, 0, Prioridad.MEDIA)
         )
 
         val promedio = ReglasActividad.promedioProgreso(actividades)
@@ -28,9 +24,9 @@ class ReglasActividadTest {
     @Test
     fun actividadesUrgentes_filtraCorrectamente() {
         val actividades = listOf(
-            ActividadFormativa(1, "Urgente", null, 20, 1, Prioridad.ALTA),
-            ActividadFormativa(2, "Normal", null, 20, 5, Prioridad.MEDIA),
-            ActividadFormativa(3, "Completada", null, 100, 1, Prioridad.BAJA)
+            ActividadFormativa(1, "Urgente", "Sin descripción", "2026-09-01", 20, 1, Prioridad.ALTA),
+            ActividadFormativa(2, "Normal", "Sin descripción", "2026-09-05", 20, 5, Prioridad.MEDIA),
+            ActividadFormativa(3, "Completada", "Sin descripción", "2026-09-01", 100, 1, Prioridad.BAJA)
         )
 
         val urgentes = ReglasActividad.actividadesUrgentes(actividades)
@@ -42,39 +38,24 @@ class ReglasActividadTest {
     @Test
     fun estadoActividad_devuelvePendiente() {
         val actividad = ActividadFormativa(
-            1,
-            "Pendiente",
-            null,
-            0,
-            3,
-            Prioridad.BAJA
+            id = 1,
+            titulo = "Pendiente",
+            descripcion = "Sin descripción",
+            fecha = "2026-09-01",
+            progreso = 0,
+            diasRestantes = 3,
+            prioridad = Prioridad.BAJA
         )
 
         val estado = ReglasActividad.estadoActividad(actividad)
 
-        assertEquals("PENDIENTE", estado)
-    }
-
-    @Test
-    fun validarTitulo_devuelve() {
-        val actividad = ActividadFormativa(
-            1,
-            "Pendiente",
-            null,
-            0,
-            3,
-            Prioridad.BAJA
-        )
-
-        val estado = ReglasActividad.estadoActividad(actividad)
-
-        assertEquals("PENDIENTE", estado)
+        assertEquals("Pendiente", estado)
     }
 
     @Test
     fun validarTitulo_evaluaLimitesCorrectamente() {
         val errorVacio = ReglasActividad.validarTitulo("", mostrarVacio = true)
-        assertEquals("Escribe un título", errorVacio)
+        assertEquals("El título es obligatorio", errorVacio)
 
         val errorCorto = ReglasActividad.validarTitulo("AB")
         assertEquals("Usa al menos 3 caracteres", errorCorto)
@@ -87,6 +68,6 @@ class ReglasActividadTest {
         assertEquals("Usa máximo 80 caracteres", errorLargo)
 
         val errorEspacios = ReglasActividad.validarTitulo("   ", mostrarVacio = true)
-        assertEquals("Escribe un título", errorEspacios)
+        assertEquals("El título es obligatorio", errorEspacios)
     }
 }

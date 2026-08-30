@@ -45,9 +45,9 @@ fun TarjetaActividad(
                 style = MaterialTheme.typography.titleMedium
             )
 
-            actividad.descripcion?.let { descripcion ->
+            if (actividad.descripcion.isNotBlank()) {
                 Text(
-                    text = descripcion,
+                    text = actividad.descripcion,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -77,7 +77,7 @@ fun TarjetaActividad(
                 )
 
                 Text(
-                    text = "${actividad.diasRestantes} días restantes",
+                    text = "Fecha: ${actividad.fecha}",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -102,6 +102,7 @@ private fun TarjetaActividadPreviewNormal() {
                 id = 1L,
                 titulo = "Kotlin básico",
                 descripcion = "Repasar funciones y clases",
+                fecha = "2026-09-02",
                 progreso = 65,
                 diasRestantes = 3,
                 prioridad = Prioridad.ALTA
@@ -119,6 +120,7 @@ private fun TarjetaActividadPreviewTituloLargo() {
                 id = 2L,
                 titulo = "Validar títulos extremadamente largos dentro de una tarjeta reutilizable de actividades para Compose",
                 descripcion = "Comprobar que el diseño no se rompa con textos extensos",
+                fecha = "2026-09-06",
                 progreso = 20,
                 diasRestantes = 7,
                 prioridad = Prioridad.MEDIA
@@ -136,6 +138,7 @@ private fun TarjetaActividadPreviewCompletada() {
                 id = 3L,
                 titulo = "Actividad completada",
                 descripcion = "Debe mostrar el estado Completada",
+                fecha = "2026-08-29",
                 progreso = 100,
                 diasRestantes = 0,
                 prioridad = Prioridad.MEDIA
@@ -153,6 +156,7 @@ private fun TarjetaActividadPreviewSinIniciar() {
                 id = 4L,
                 titulo = "Actividad pendiente",
                 descripcion = "Debe mostrar el estado Pendiente",
+                fecha = "2026-09-09",
                 progreso = 0,
                 diasRestantes = 10,
                 prioridad = Prioridad.BAJA
