@@ -49,5 +49,16 @@ object PruebasSemana2 {
 
         println("Escenario 6:")
         println(ReglasActividad.buscarPorTitulo(lista, "  kotlin "))
+
+        // Escenario 7: ordenamiento de actividades
+        val listaParaOrdenar = listOf(
+            ActividadFormativa(6, "Normal Baja", null, 0, 5, Prioridad.BAJA),
+            ActividadFormativa(7, "Actividad Vencida", null, 20, -1, Prioridad.MEDIA),
+            ActividadFormativa(8, "Normal Alta", null, 10, 2, Prioridad.ALTA)
+        )
+
+        println("Escenario 7 (Ordenadas):")
+        val ordenadas = ReglasActividad.ordenarActividades(listaParaOrdenar)
+        ordenadas.forEach { println("- ${it.titulo} (${ReglasActividad.estadoActividad(it)}, Prioridad: ${it.prioridad})") }
     }
 }

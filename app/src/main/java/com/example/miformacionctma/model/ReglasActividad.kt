@@ -50,7 +50,7 @@ object ReglasActividad {
     // Reto adicional
     fun ordenarActividades(actividades: List<ActividadFormativa>): List<ActividadFormativa> {
         return actividades.sortedWith(
-            compareBy<ActividadFormativa>(
+            compareBy(
                 // Vencidas primero
                 { estadoActividad(it) != "Vencida" },
                 // Prioridad alta primero
@@ -59,5 +59,15 @@ object ReglasActividad {
                 { it.diasRestantes }
             )
         )
+    }
+
+    fun validarTitulo(valor: String, mostrarVacio: Boolean = true): String? {
+        val limpio = valor.trim()
+        return when {
+            limpio.isEmpty() && mostrarVacio -> "Escribe un título"
+            limpio.isNotEmpty() && limpio.length < 3 -> "Usa al menos 3 caracteres"
+            limpio.length > 80 -> "Usa máximo 80 caracteres"
+            else -> null
+        }
     }
 }
