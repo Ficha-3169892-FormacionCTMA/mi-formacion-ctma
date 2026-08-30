@@ -54,4 +54,39 @@ class ReglasActividadTest {
 
         assertEquals("PENDIENTE", estado)
     }
+
+    @Test
+    fun validarTitulo_devuelve() {
+        val actividad = ActividadFormativa(
+            1,
+            "Pendiente",
+            null,
+            0,
+            3,
+            Prioridad.BAJA
+        )
+
+        val estado = ReglasActividad.estadoActividad(actividad)
+
+        assertEquals("PENDIENTE", estado)
+    }
+
+    @Test
+    fun validarTitulo_evaluaLimitesCorrectamente() {
+        val errorVacio = ReglasActividad.validarTitulo("", mostrarVacio = true)
+        assertEquals("Escribe un título", errorVacio)
+
+        val errorCorto = ReglasActividad.validarTitulo("AB")
+        assertEquals("Usa al menos 3 caracteres", errorCorto)
+
+        val valido = ReglasActividad.validarTitulo("ABC")
+        assertNull(valido)
+
+        val textoLargo = "A".repeat(81)
+        val errorLargo = ReglasActividad.validarTitulo(textoLargo)
+        assertEquals("Usa máximo 80 caracteres", errorLargo)
+
+        val errorEspacios = ReglasActividad.validarTitulo("   ", mostrarVacio = true)
+        assertEquals("Escribe un título", errorEspacios)
+    }
 }

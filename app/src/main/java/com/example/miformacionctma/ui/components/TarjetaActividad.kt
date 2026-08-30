@@ -1,7 +1,5 @@
 package com.example.miformacionctma.ui.components
 
-
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,7 +26,6 @@ fun TarjetaActividad(
 ) {
     val progresoSeguro = actividad.progreso.coerceIn(0, 100)
 
-    // Determinar el texto del estado para pasarle a EstadoActividad
     val textoEstado = when {
         progresoSeguro >= 100 -> "Completada"
         progresoSeguro > 0 -> "En proceso"
@@ -36,7 +33,7 @@ fun TarjetaActividad(
     }
 
     Card(
-        onClick = { onClick() },
+        onClick = onClick,
         modifier = modifier.fillMaxWidth()
     ) {
         Column(

@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -39,7 +40,9 @@ import com.example.miformacionctma.ui.theme.MiFormacionCTMATheme
 @Composable
 fun ContenidoAdaptable(
     actividades: List<ActividadFormativa>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onActividadClick: (Long) -> Unit = {},
+    onCrearClick: () -> Unit = {}
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -47,7 +50,11 @@ fun ContenidoAdaptable(
     ) {
         BoxWithConstraints {
             if (maxWidth < 600.dp) {
-                PantallaActividades(actividades = actividades)
+                PantallaActividades(
+                    actividades = actividades,
+                    onActividadClick = onActividadClick,
+                    onCrearClick = onCrearClick
+                )
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
@@ -56,7 +63,10 @@ fun ContenidoAdaptable(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(actividades, key = { it.id }) { actividad ->
-                        TarjetaActividad(actividad = actividad)
+                        TarjetaActividad(
+                            actividad = actividad,
+                            onClick = { onActividadClick(actividad.id) }
+                        )
                     }
                 }
             }
@@ -66,7 +76,9 @@ fun ContenidoAdaptable(
 
 @Composable
 fun PantallaActividades(
-    actividades: List<ActividadFormativa>
+    actividades: List<ActividadFormativa>,
+    onActividadClick: (Long) -> Unit = {},
+    onCrearClick: () -> Unit = {}
 ) {
     // Estado para rastrear el texto de búsqueda
     var textoBusqueda by remember { mutableStateOf("") }
@@ -93,7 +105,16 @@ fun PantallaActividades(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Scaffold { paddingValues ->
+        Scaffold(
+            floatingActionButton = {
+                FloatingActionButton(onClick = onCrearClick) {
+                    Text(
+                        text = "+",
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                }
+            }
+        ) { paddingValues ->
             if (actividades.isEmpty()) {
                 EstadoVacio(modifier = Modifier.padding(paddingValues))
             } else {
@@ -130,7 +151,7 @@ fun PantallaActividades(
                         }
                     } else {
                         items(actividadesFiltradas, key = { it.id }) { actividad ->
-                            TarjetaActividad(actividad = actividad)
+                            TarjetaActividad(actividad = actividad, onClick = { onActividadClick(actividad.id) })
                         }
                     }
 
