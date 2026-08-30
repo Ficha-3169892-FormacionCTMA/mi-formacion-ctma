@@ -1,64 +1,94 @@
 package com.example.miformacionctma.model
 
 object PruebasSemana2 {
-
     fun ejecutar() {
-
-        // Escenario 1: título vacío
+        // Escenario 1: título vacío (Inválido)
         val tituloVacio = ActividadFormativa(
-            1, "   ", null, 50, 3, Prioridad.MEDIA
+            id = 1L,
+            titulo = "   ",
+            descripcion = "Intento de registro sin título",
+            fecha = "2026-09-15",
+            progreso = 50,
+            diasRestantes = 3,
+            prioridad = Prioridad.MEDIA
         )
 
-        println("Escenario 1:")
+        println("Escenario 1 (Título Vacío):")
         println(ReglasActividad.validarActividad(tituloVacio))
 
-        // Escenario 2: progreso inválido
+        // Escenario 2: progreso inválido (> 100)
         val progresoInvalido = ActividadFormativa(
-            2, "Kotlin", null, 120, 3, Prioridad.MEDIA
+            id = 2L,
+            titulo = "Aprender Kotlin",
+            descripcion = "Progreso fuera de rango",
+            fecha = "2026-09-10",
+            progreso = 120,
+            diasRestantes = 3,
+            prioridad = Prioridad.MEDIA
         )
 
-        println("Escenario 2:")
+        println("\nEscenario 2 (Progreso Inválido):")
         println(ReglasActividad.validarActividad(progresoInvalido))
 
-        // Escenario 3: vencida
+        // Escenario 3: vencida (días restantes negativos / fecha pasada)
         val vencida = ActividadFormativa(
-            3, "Entrega", null, 80, -1, Prioridad.ALTA
+            id = 3L,
+            titulo = "Entrega de Guía",
+            descripcion = "Actividad con plazo expirado",
+            fecha = "2026-08-01",
+            progreso = 80,
+            diasRestantes = -1,
+            prioridad = Prioridad.ALTA
         )
 
-        println("Escenario 3:")
+        println("\nEscenario 3 (Vencida):")
         println(ReglasActividad.estadoActividad(vencida))
 
-        // Escenario 4: completada
+        // Escenario 4: completada (progreso 100%)
         val completa = ActividadFormativa(
-            4, "Final", null, 100, -2, Prioridad.MEDIA
+            id = 4L,
+            titulo = "Taller Final",
+            descripcion = "Actividad entregada al 100%",
+            fecha = "2026-08-20",
+            progreso = 100,
+            diasRestantes = -2,
+            prioridad = Prioridad.MEDIA
         )
 
-        println("Escenario 4:")
+        println("\nEscenario 4 (Completada):")
         println(ReglasActividad.estadoActividad(completa))
 
         // Escenario 5: lista vacía
-        println("Escenario 5:")
+        println("\nEscenario 5 (Promedio de Lista Vacía):")
         println(ReglasActividad.promedioProgreso(emptyList()))
 
-        // Escenario 6: búsqueda flexible
+        // Escenario 6: búsqueda flexible por título
         val lista = listOf(
             ActividadFormativa(
-                5, "Kotlin básico", null, 10, 5, Prioridad.BAJA
+                id = 5L,
+                titulo = "Kotlin básico",
+                descripcion = "Introducción al lenguaje",
+                fecha = "2026-09-05",
+                progreso = 10,
+                diasRestantes = 5,
+                prioridad = Prioridad.BAJA
             )
         )
 
-        println("Escenario 6:")
+        println("\nEscenario 6 (Búsqueda '  kotlin '):")
         println(ReglasActividad.buscarPorTitulo(lista, "  kotlin "))
 
         // Escenario 7: ordenamiento de actividades
         val listaParaOrdenar = listOf(
-            ActividadFormativa(6, "Normal Baja", null, 0, 5, Prioridad.BAJA),
-            ActividadFormativa(7, "Actividad Vencida", null, 20, -1, Prioridad.MEDIA),
-            ActividadFormativa(8, "Normal Alta", null, 10, 2, Prioridad.ALTA)
+            ActividadFormativa(6L, "Normal Baja", "Prioridad baja", "2026-09-12", 0, 5, Prioridad.BAJA),
+            ActividadFormativa(7L, "Actividad Vencida", "Vencida", "2026-08-10", 20, -1, Prioridad.MEDIA),
+            ActividadFormativa(8L, "Normal Alta", "Prioridad alta", "2026-09-02", 10, 2, Prioridad.ALTA)
         )
 
-        println("Escenario 7 (Ordenadas):")
+        println("\nEscenario 7 (Ordenadas):")
         val ordenadas = ReglasActividad.ordenarActividades(listaParaOrdenar)
-        ordenadas.forEach { println("- ${it.titulo} (${ReglasActividad.estadoActividad(it)}, Prioridad: ${it.prioridad})") }
+        ordenadas.forEach {
+            println("- ${it.titulo} (Estado: ${ReglasActividad.estadoActividad(it)}, Prioridad: ${it.prioridad})")
+        }
     }
 }

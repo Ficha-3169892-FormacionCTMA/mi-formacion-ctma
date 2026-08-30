@@ -24,14 +24,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.miformacionctma.domain.actividadesDemo
+import com.example.miformacionctma.domain.ActividadesDemo
 import com.example.miformacionctma.model.ActividadFormativa
+import com.example.miformacionctma.model.ReglasActividad
 import com.example.miformacionctma.ui.components.SeccionAgile
 import com.example.miformacionctma.ui.components.SeccionPresentacion
 import com.example.miformacionctma.ui.components.TarjetaActividad
@@ -81,17 +82,17 @@ fun PantallaActividades(
     onCrearClick: () -> Unit = {}
 ) {
     // Estado para rastrear el texto de búsqueda
-    var textoBusqueda by remember { mutableStateOf("") }
+    var textoBusqueda by rememberSaveable { mutableStateOf("") }
 
     // Filtrado dinámico por título o descripción
     val actividadesFiltradas = actividades.filter { actividad ->
         val coincideTitulo = actividad.titulo.contains(textoBusqueda, ignoreCase = true)
-        val coincideDescripcion = actividad.descripcion?.contains(textoBusqueda, ignoreCase = true) ?: false
+        val coincideDescripcion = actividad.descripcion.contains(textoBusqueda, ignoreCase = true)
         coincideTitulo || coincideDescripcion
     }
 
-    val urgentes = actividades.count { it.progreso < 100 && it.diasRestantes <= 2 }
-    val promedio = if (actividades.isNotEmpty()) actividades.map { it.progreso }.average().toInt() else 0
+    val urgentes = ReglasActividad.actividadesUrgentes(actividades).size
+    val promedio = ReglasActividad.promedioProgreso(actividades).toInt()
     val completadas = actividades.count { it.progreso >= 100 }
 
     val resumen = buildString {
@@ -205,7 +206,7 @@ private fun EstadoVacio(modifier: Modifier = Modifier) {
 @Composable
 private fun PantallaActividadesPreview() {
     MiFormacionCTMATheme {
-        PantallaActividades(actividades = actividadesDemo)
+        PantallaActividades(actividades = ActividadesDemo.listaInicial)
     }
 }
 
@@ -213,7 +214,7 @@ private fun PantallaActividadesPreview() {
 @Composable
 private fun PantallaActividadesPreviewAncha() {
     MiFormacionCTMATheme {
-        ContenidoAdaptable(actividades = actividadesDemo)
+        ContenidoAdaptable(actividades = ActividadesDemo.listaInicial)
     }
 }
 

@@ -16,8 +16,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.miformacionctma.ui.theme.MiFormacionCTMATheme
 import com.example.miformacionctma.R
+import com.example.miformacionctma.domain.ActividadesDemo
+import com.example.miformacionctma.model.ActividadFormativa
+import com.example.miformacionctma.model.ReglasActividad
+import com.example.miformacionctma.ui.theme.MiFormacionCTMATheme
 
 @Composable
 fun SeccionPresentacion(
@@ -98,10 +101,10 @@ fun SeccionAgile(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text("Valores Ágiles", style = MaterialTheme.typography.titleMedium)
-                Text("• Individuos e interacciones")
-                Text("• Software funcionando")
-                Text("• Colaboración con el cliente")
-                Text("• Respuesta al cambio")
+                Text("• Individuos e interacciones", style = MaterialTheme.typography.bodyMedium)
+                Text("• Software funcionando", style = MaterialTheme.typography.bodyMedium)
+                Text("• Colaboración con el cliente", style = MaterialTheme.typography.bodyMedium)
+                Text("• Respuesta al cambio", style = MaterialTheme.typography.bodyMedium)
             }
         }
 
@@ -140,17 +143,26 @@ private fun PrincipioItem(titulo: String, descripcion: String) {
     }
 }
 
+fun construirTextoResumen(actividades: List<ActividadFormativa>): String {
+    val urgentes = ReglasActividad.actividadesUrgentes(actividades).size
+    val promedio = ReglasActividad.promedioProgreso(actividades)
+    val completadas = actividades.count { it.progreso >= 100 }
+    val total = actividades.size
+
+    return """
+        Urgentes: $urgentes
+        Promedio: ${"%.1f".format(promedio)}%
+        Completadas: $completadas
+        Total actividades: $total
+    """.trimIndent()
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun SeccionPresentacionPreview() {
     MiFormacionCTMATheme {
         SeccionPresentacion(
-            resumen = """
-                Urgentes: 2
-                Promedio: 76.7%
-                Completadas: 1
-                Total actividades: 3
-            """.trimIndent()
+            resumen = construirTextoResumen(ActividadesDemo.listaInicial)
         )
     }
 }
