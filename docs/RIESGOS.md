@@ -12,25 +12,25 @@ Para cada riesgo se establece su probabilidad, impacto, nivel de riesgo, estrate
 
 La probabilidad representa qué tan posible es que ocurra el riesgo durante el desarrollo o utilización de la aplicación.
 
-| Valor | Nivel | Descripción |
-|---|---|---|
-| 1 | Muy baja | Es poco probable que ocurra. |
-| 2 | Baja | Puede ocurrir ocasionalmente. |
-| 3 | Media | Existe una posibilidad moderada de que ocurra. |
-| 4 | Alta | Es probable que ocurra. |
-| 5 | Muy alta | Es muy probable que ocurra. |
+| Valor | Nivel    | Descripción                                    |
+|-------|----------|------------------------------------------------|
+| 1     | Muy baja | Es poco probable que ocurra.                   |
+| 2     | Baja     | Puede ocurrir ocasionalmente.                  |
+| 3     | Media    | Existe una posibilidad moderada de que ocurra. |
+| 4     | Alta     | Es probable que ocurra.                        |
+| 5     | Muy alta | Es muy probable que ocurra.                    |
 
 ### 2.2 Impacto
 
 El impacto representa el efecto que tendría el riesgo sobre la aplicación o sobre el cumplimiento de las historias de usuario.
 
-| Valor | Nivel | Descripción |
-|---|---|---|
-| 1 | Muy bajo | La afectación sobre el proyecto sería mínima. |
-| 2 | Bajo | La afectación sería limitada y fácilmente corregible. |
-| 3 | Medio | Puede afectar parcialmente una funcionalidad. |
-| 4 | Alto | Puede afectar significativamente una funcionalidad o al usuario. |
-| 5 | Muy alto | Puede impedir el cumplimiento de una funcionalidad importante. |
+| Valor | Nivel    | Descripción                                                      |
+|-------|----------|------------------------------------------------------------------|
+| 1     | Muy bajo | La afectación sobre el proyecto sería mínima.                    |
+| 2     | Bajo     | La afectación sería limitada y fácilmente corregible.            |
+| 3     | Medio    | Puede afectar parcialmente una funcionalidad.                    |
+| 4     | Alto     | Puede afectar significativamente una funcionalidad o al usuario. |
+| 5     | Muy alto | Puede impedir el cumplimiento de una funcionalidad importante.   |
 
 ### 2.3 Nivel de riesgo
 
@@ -38,27 +38,27 @@ El nivel de riesgo se obtiene mediante la siguiente fórmula:
 
 > **Nivel de riesgo = Probabilidad × Impacto**
 
-| Resultado | Nivel |
-|---|---|
-| 1–4 | Bajo |
-| 5–9 | Medio |
-| 10–14 | Alto |
-| 15–25 | Crítico |
+| Resultado | Nivel   |
+|-----------|---------|
+| 1–4       | Bajo    |
+| 5–9       | Medio   |
+| 10–14     | Alto    |
+| 15–25     | Crítico |
 
 ---
 
 ## 3. Registro de riesgos
 
-| ID | Riesgo | Historias relacionadas | Probabilidad | Impacto | Nivel |
-|---|---|---|---:|---:|---|
-| R01 | Las actividades pendientes no se muestran correctamente al abrir la aplicación. | HU-01 | 2 | 4 | 8 — Medio |
-| R02 | Una actividad puede clasificarse incorrectamente y no aparecer como pendiente. | HU-01 | 3 | 4 | 12 — Alto |
-| R03 | Una actividad próxima a vencer puede no ser identificada como urgente. | HU-02 | 3 | 4 | 12 — Alto |
-| R04 | El cálculo de los días restantes puede presentar errores debido al manejo de fechas. | HU-02 | 3 | 4 | 12 — Alto |
-| R05 | El porcentaje de progreso mostrado puede no corresponder con el avance de la actividad. | HU-03 | 2 | 4 | 8 — Medio |
-| R06 | La información de las actividades y su progreso puede perderse al cerrar o reiniciar la aplicación. | HU-01, HU-03 | 4 | 4 | 16 — Crítico |
-| R07 | Los cambios realizados durante el desarrollo pueden introducir errores en funcionalidades existentes. | HU-01, HU-02, HU-03 | 3 | 4 | 12 — Alto |
-| R08 | Un identificador de actividad inexistente puede provocar un fallo durante la navegación al detalle. | HU-03 | 2 | 5 | 10 — Alto |
+| ID  | Riesgo                                                                                                | Historias relacionadas | Probabilidad | Impacto | Nivel        |
+|-----|-------------------------------------------------------------------------------------------------------|------------------------|-------------:|--------:|--------------|
+| R01 | Las actividades pendientes no se muestran correctamente al abrir la aplicación.                       | HU-01                  |            2 |       4 | 8 — Medio    |
+| R02 | Una actividad puede clasificarse incorrectamente y no aparecer como pendiente.                        | HU-01                  |            3 |       4 | 12 — Alto    |
+| R03 | Una actividad próxima a vencer puede no ser identificada como urgente.                                | HU-02                  |            3 |       4 | 12 — Alto    |
+| R04 | El cálculo de los días restantes puede presentar errores debido al manejo de fechas.                  | HU-02                  |            3 |       4 | 12 — Alto    |
+| R05 | El porcentaje de progreso mostrado puede no corresponder con el avance de la actividad.               | HU-03                  |            2 |       4 | 8 — Medio    |
+| R06 | La información de las actividades y su progreso puede perderse al cerrar o reiniciar la aplicación.   | HU-01, HU-03           |            4 |       4 | 16 — Crítico |
+| R07 | Los cambios realizados durante el desarrollo pueden introducir errores en funcionalidades existentes. | HU-01, HU-02, HU-03    |            3 |       4 | 12 — Alto    |
+| R08 | Un identificador de actividad inexistente puede provocar un fallo durante la navegación al detalle.   | HU-03                  |            2 |       5 | 10 — Alto    |
 
 ---
 
