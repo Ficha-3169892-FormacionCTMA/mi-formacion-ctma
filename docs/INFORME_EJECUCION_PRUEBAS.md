@@ -1,16 +1,16 @@
-# Informe de Pruebas de Software y Plan de Validación: Proyecto Mi Formación CTMA
+# Informe de Pruebas de Software y Plan de Validación: Proyecto MiFormaciónCTMA
 
 **Autor:** Andrés Felipe Vargas Metrio  
 **Institución:** Servicio Nacional de Aprendizaje (SENA) - CTMA  
 **Programa:** Análisis y Desarrollo de Software (ADSO)  
 **Fecha:** 4 de septiembre de 2026  
-**Proyecto:** Mi Formación CTMA
+**Proyecto:** MiFormación CTMA
 
 ---
 
 ## 1. Introducción
 
-El presente documento constituye el informe de pruebas de software y plan de validación para la aplicación móvil **Mi Formación CTMA**, desarrollada en el marco del programa de formación Análisis y Desarrollo de Software (ADSO) del SENA CTMA.
+El presente documento constituye el informe de pruebas de software y plan de validación para la aplicación móvil **Mi ormaciónCTMA**, desarrollada en el marco del programa de formación Análisis y Desarrollo de Software (ADSO) del SENA CTMA.
 
 El objetivo fundamental de esta fase es verificar y validar la calidad técnica del software mediante la ejecución automatizada de pruebas unitarias y la verificación manual en dispositivos móviles reales (Android). A través de esta batería de pruebas se garantiza el cumplimiento estricto de las reglas de negocio, la robustez en el manejo de excepciones y la estabilidad de la interfaz de usuario ante eventos del ciclo de vida (como la rotación de pantalla y la gestión de la pila de navegación).
 
@@ -18,7 +18,7 @@ El objetivo fundamental de esta fase es verificar y validar la calidad técnica 
 
 ## 2. Contexto y Arquitectura del Sistema
 
-La aplicación **Mi Formación CTMA** está estructurada bajo los principios de la arquitectura recomendada para Android (Clean Architecture / MVVM simplificado), dividiendo las responsabilidades en capas claras:
+La aplicación **MiFormaciónCTMA** está estructurada bajo los principios de la arquitectura recomendada para Android (Clean Architecture / MVVM simplificado), dividiendo las responsabilidades en capas claras:
 
 1. **Capa de Modelo (`model`):**
    - `ActividadFormativa.kt`: Data class que define los atributos fundamentales de las actividades académicas (ID, título, descripción, fecha, porcentaje de progreso, días restantes y prioridad).
@@ -136,7 +136,7 @@ Para la sustentación presencial o virtual del proyecto, se establece el procedi
 
 1. La implementación de las pruebas automatizadas mediante JUnit demostró una cobertura completa de las reglas de negocio declaradas en `ReglasActividad.kt`, asegurando un comportamiento determinista de la aplicación ante datos válidos e inválidos.
 2. La arquitectura adoptada facilitó la independencia entre la lógica de dominio y los componentes visuales, lo que permitió simular y validar estados de interfaz sin incurrir en ejecuciones lentas de emuladores.
-3. El proyecto **Mi Formación CTMA** cumple satisfactoriamente con la totalidad de criterios de aceptación exigidos en el Plan de Pruebas, garantizando estabilidad para su presentación funcional.
+3. El proyecto **MiFormaciónCTMA** cumple satisfactoriamente con la totalidad de criterios de aceptación exigidos en el Plan de Pruebas, garantizando estabilidad para su presentación funcional.
 
 ---
 
