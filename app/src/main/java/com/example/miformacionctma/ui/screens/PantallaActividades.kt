@@ -30,18 +30,65 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.miformacionctma.domain.ActividadesDemo
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.ReglasActividad
 import com.example.miformacionctma.ui.components.SeccionAgile
 import com.example.miformacionctma.ui.components.SeccionPresentacion
 import com.example.miformacionctma.ui.components.TarjetaActividad
+import com.example.miformacionctma.ui.state.ListadoUiState
 import com.example.miformacionctma.ui.theme.MiFormacionCTMATheme
+import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
+
+@Composable
+fun ActividadesRoute(
+    viewModel: ActividadesViewModel,
+    onActividadClick: (Long) -> Unit = {},
+    onCrearClick: () -> Unit = {}
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val busqueda by viewModel.busqueda.collectAsStateWithLifecycle()
+
+    when (val state = uiState) {
+        ListadoUiState.Cargando -> {
+            EstadoCargando()
+        }
+
+        ListadoUiState.Vacio -> {
+            PantallaActividades(
+                actividades = emptyList(),
+                busqueda = busqueda,
+                onBuscar = viewModel::cambiarBusqueda,
+                onActividadClick = onActividadClick,
+                onCrearClick = onCrearClick
+            )
+        }
+
+        is ListadoUiState.Contenido -> {
+            ContenidoAdaptable(
+                actividades = state.actividades,
+                busqueda = busqueda,
+                onBuscar = viewModel::cambiarBusqueda,
+                onActividadClick = onActividadClick,
+                onCrearClick = onCrearClick
+            )
+        }
+
+        is ListadoUiState.Error -> {
+            EstadoError(state.mensaje)
+        }
+    }
+
+
+}
 
 @Composable
 fun ContenidoAdaptable(
     actividades: List<ActividadFormativa>,
     modifier: Modifier = Modifier,
+    busqueda: String = "",
+    onBuscar: (String) -> Unit = {},
     onActividadClick: (Long) -> Unit = {},
     onCrearClick: () -> Unit = {}
 ) {
@@ -53,6 +100,8 @@ fun ContenidoAdaptable(
             if (maxWidth < 600.dp) {
                 PantallaActividades(
                     actividades = actividades,
+                    busqueda = busqueda,
+                    onBuscar = onBuscar,
                     onActividadClick = onActividadClick,
                     onCrearClick = onCrearClick
                 )
@@ -63,10 +112,15 @@ fun ContenidoAdaptable(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(actividades, key = { it.id }) { actividad ->
+                    items(
+                        actividades,
+                        key = { it.id }
+                    ) { actividad ->
                         TarjetaActividad(
                             actividad = actividad,
-                            onClick = { onActividadClick(actividad.id) }
+                            onClick = {
+                                onActividadClick(actividad.id)
+                            }
                         )
                     }
                 }
@@ -78,22 +132,22 @@ fun ContenidoAdaptable(
 @Composable
 fun PantallaActividades(
     actividades: List<ActividadFormativa>,
+    busqueda: String = "",
+    onBuscar: (String) -> Unit = {},
     onActividadClick: (Long) -> Unit = {},
     onCrearClick: () -> Unit = {}
 ) {
-    // Estado para rastrear el texto de búsqueda
-    var textoBusqueda by rememberSaveable { mutableStateOf("") }
+    val urgentes = ReglasActividad
+        .actividadesUrgentes(actividades)
+        .size
 
-    // Filtrado dinámico por título o descripción
-    val actividadesFiltradas = actividades.filter { actividad ->
-        val coincideTitulo = actividad.titulo.contains(textoBusqueda, ignoreCase = true)
-        val coincideDescripcion = actividad.descripcion.contains(textoBusqueda, ignoreCase = true)
-        coincideTitulo || coincideDescripcion
+    val promedio = ReglasActividad
+        .promedioProgreso(actividades)
+        .toInt()
+
+    val completadas = actividades.count {
+        it.progreso >= 100
     }
-
-    val urgentes = ReglasActividad.actividadesUrgentes(actividades).size
-    val promedio = ReglasActividad.promedioProgreso(actividades).toInt()
-    val completadas = actividades.count { it.progreso >= 100 }
 
     val resumen = buildString {
         appendLine("Urgentes: $urgentes")
@@ -108,7 +162,9 @@ fun PantallaActividades(
     ) {
         Scaffold(
             floatingActionButton = {
-                FloatingActionButton(onClick = onCrearClick) {
+                FloatingActionButton(
+                    onClick = onCrearClick
+                ) {
                     Text(
                         text = "+",
                         style = MaterialTheme.typography.headlineMedium
@@ -116,70 +172,140 @@ fun PantallaActividades(
                 }
             }
         ) { paddingValues ->
-            if (actividades.isEmpty()) {
-                EstadoVacio(modifier = Modifier.padding(paddingValues))
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    item { SeccionPresentacion(resumen = resumen) }
-                    item { Spacer(modifier = Modifier.height(12.dp)) }
-                    item { EncabezadoActividades() }
 
-                    // Componente de la Barra de Búsqueda
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                item {
+                    SeccionPresentacion(
+                        resumen = resumen
+                    )
+                }
+
+                item {
+                    Spacer(
+                        modifier = Modifier.height(12.dp)
+                    )
+                }
+
+                item {
+                    EncabezadoActividades()
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = busqueda,
+                        onValueChange = onBuscar,
+                        label = {
+                            Text("Buscar actividad...")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                }
+
+                if (actividades.isEmpty()) {
                     item {
-                        OutlinedTextField(
-                            value = textoBusqueda,
-                            onValueChange = { textoBusqueda = it },
-                            label = { Text("Buscar actividad...") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
+                        Text(
+                            text = if (busqueda.isBlank()) {
+                                "No hay actividades registradas."
+                            } else {
+                                "No se encontraron coincidencias para \"$busqueda\""
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(
+                                vertical = 16.dp
+                            )
                         )
                     }
-
-                    // Evaluación de la lista filtrada
-                    if (actividadesFiltradas.isEmpty()) {
-                        item {
-                            Text(
-                                text = "No se encontraron coincidencias para \"$textoBusqueda\"",
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(vertical = 16.dp)
-                            )
-                        }
-                    } else {
-                        items(actividadesFiltradas, key = { it.id }) { actividad ->
-                            TarjetaActividad(actividad = actividad, onClick = { onActividadClick(actividad.id) })
-                        }
+                } else {
+                    items(
+                        actividades,
+                        key = { it.id }
+                    ) { actividad ->
+                        TarjetaActividad(
+                            actividad = actividad,
+                            onClick = {
+                                onActividadClick(actividad.id)
+                            }
+                        )
                     }
+                }
 
-                    item { Spacer(modifier = Modifier.height(20.dp)) }
-                    item { SeccionAgile() }
+                item {
+                    Spacer(
+                        modifier = Modifier.height(20.dp)
+                    )
+                }
+
+                item {
+                    SeccionAgile()
                 }
             }
         }
     }
+
+
 }
 
 @Composable
 private fun EncabezadoActividades() {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         Text(
             text = "Actividades Formativas",
             style = MaterialTheme.typography.headlineSmall
         )
+
         Text(
             text = "Consulta tus actividades y revisa su progreso actual.",
             style = MaterialTheme.typography.bodyMedium
         )
     }
+
+
 }
 
 @Composable
-private fun EstadoVacio(modifier: Modifier = Modifier) {
+private fun EstadoCargando() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Consultando actividades...",
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
+}
+
+@Composable
+private fun EstadoError(
+    mensaje: String
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = mensaje,
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
+}
+
+@Composable
+private fun EstadoVacio(
+    modifier: Modifier = Modifier
+) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -194,31 +320,58 @@ private fun EstadoVacio(modifier: Modifier = Modifier) {
                 text = "No hay actividades registradas",
                 style = MaterialTheme.typography.titleMedium
             )
+
             Text(
                 text = "Agrega una actividad para comenzar a organizar tu formación.",
                 style = MaterialTheme.typography.bodyMedium
             )
         }
     }
+
+
 }
 
-@Preview(name = "Actividades normales", showBackground = true)
+@Preview(
+    name = "Actividades normales",
+    showBackground = true
+)
 @Composable
 private fun PantallaActividadesPreview() {
     MiFormacionCTMATheme {
-        PantallaActividades(actividades = ActividadesDemo.listaInicial)
+        var busqueda by rememberSaveable {
+            mutableStateOf("")
+        }
+
+        PantallaActividades(
+            actividades = ActividadesDemo.listaInicial,
+            busqueda = busqueda,
+            onBuscar = {
+                busqueda = it
+            }
+        )
     }
+
+
 }
 
-@Preview(name = "Actividades anchas", showBackground = true, widthDp = 700)
+@Preview(
+    name = "Actividades anchas",
+    showBackground = true,
+    widthDp = 700
+)
 @Composable
 private fun PantallaActividadesPreviewAncha() {
     MiFormacionCTMATheme {
-        ContenidoAdaptable(actividades = ActividadesDemo.listaInicial)
+        ContenidoAdaptable(
+            actividades = ActividadesDemo.listaInicial
+        )
     }
 }
 
-@Preview(name = "Estado vacío", showBackground = true)
+@Preview(
+    name = "Estado vacío",
+    showBackground = true
+)
 @Composable
 private fun EstadoVacioPreview() {
     MiFormacionCTMATheme {

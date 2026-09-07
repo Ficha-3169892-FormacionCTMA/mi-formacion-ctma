@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -25,20 +26,18 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.ui.state.FormularioActividadUiState
+import com.example.miformacionctma.ui.state.OperacionUiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaCrearActividad(
     uiState: FormularioActividadUiState,
+    operacionUiState: OperacionUiState = OperacionUiState.Inactiva,
     onTituloChange: (String) -> Unit,
     onDescripcionChange: (String) -> Unit,
     onFechaChange: (String) -> Unit,
@@ -47,14 +46,19 @@ fun PantallaCrearActividad(
     onGuardarClick: () -> Unit,
     onVolver: () -> Unit
 ) {
-    var enProcesoGuardado by remember { mutableStateOf(false) }
+    val guardando = operacionUiState is OperacionUiState.EnCurso
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Detalle de Actividad") },
+                title = {
+                    Text("Crear Actividad")
+                },
                 navigationIcon = {
-                    IconButton(onClick = onVolver) {
+                    IconButton(
+                        onClick = onVolver,
+                        enabled = !guardando
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver"
@@ -64,6 +68,7 @@ fun PantallaCrearActividad(
             )
         }
     ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -72,76 +77,114 @@ fun PantallaCrearActividad(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // CAMPO: TÍTULO
-            val mostrarErrorTitulo = uiState.tituloTocado && uiState.tituloError != null
+
+            // TÍTULO
+            val mostrarErrorTitulo =
+                uiState.tituloTocado && uiState.tituloError != null
+
             OutlinedTextField(
                 value = uiState.titulo,
                 onValueChange = onTituloChange,
-                label = { Text("Título de la actividad *") },
-                placeholder = { Text("Ej: Taller de Kotlin") },
+                label = {
+                    Text("Título de la actividad *")
+                },
+                placeholder = {
+                    Text("Ej: Taller de Kotlin")
+                },
                 isError = mostrarErrorTitulo,
                 supportingText = {
                     if (mostrarErrorTitulo) {
-                        Text(text = uiState.tituloError, color = MaterialTheme.colorScheme.error)
+                        Text(
+                            text = uiState.tituloError,
+                            color = MaterialTheme.colorScheme.error
+                        )
                     } else {
                         Text("${uiState.titulo.length}/80 caracteres")
                     }
                 },
                 singleLine = true,
+                enabled = !guardando,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // CAMPO: DESCRIPCIÓN
-            val mostrarErrorDescripcion = uiState.descripcionTocado && uiState.descripcionError != null
+            // DESCRIPCIÓN
+            val mostrarErrorDescripcion =
+                uiState.descripcionTocado &&
+                        uiState.descripcionError != null
+
             OutlinedTextField(
                 value = uiState.descripcion,
                 onValueChange = onDescripcionChange,
-                label = { Text("Descripción (opcional)") },
-                placeholder = { Text("Agrega detalles sobre la actividad") },
+                label = {
+                    Text("Descripción (opcional)")
+                },
+                placeholder = {
+                    Text("Agrega detalles sobre la actividad")
+                },
                 isError = mostrarErrorDescripcion,
                 supportingText = {
                     if (mostrarErrorDescripcion) {
-                        Text(text = uiState.descripcionError, color = MaterialTheme.colorScheme.error)
+                        Text(
+                            text = uiState.descripcionError,
+                            color = MaterialTheme.colorScheme.error
+                        )
                     } else {
                         Text("${uiState.descripcion.length}/240 caracteres")
                     }
                 },
                 minLines = 3,
                 maxLines = 5,
+                enabled = !guardando,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // CAMPO: FECHA
-            val mostrarErrorFecha = uiState.fechaTocado && uiState.fechaError != null
+            // FECHA
+            val mostrarErrorFecha =
+                uiState.fechaTocado && uiState.fechaError != null
+
             OutlinedTextField(
                 value = uiState.fecha,
                 onValueChange = onFechaChange,
-                label = { Text("Fecha límite *") },
-                placeholder = { Text("Año-Mes-Día (Ej: 2026-09-15)") },
+                label = {
+                    Text("Fecha límite *")
+                },
+                placeholder = {
+                    Text("Año-Mes-Día (Ej: 2026-09-15)")
+                },
                 isError = mostrarErrorFecha,
                 supportingText = {
                     if (mostrarErrorFecha) {
-                        Text(text = uiState.fechaError, color = MaterialTheme.colorScheme.error)
+                        Text(
+                            text = uiState.fechaError,
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                 },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                ),
+                enabled = !guardando,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // CAMPO: PRIORIDAD
+            // PRIORIDAD
             Text(
                 text = "Prioridad",
                 style = MaterialTheme.typography.titleMedium
             )
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Prioridad.entries.forEach { prioridadEnum ->
                     FilterChip(
-                        selected = (uiState.prioridad == prioridadEnum),
-                        onClick = { onPrioridadChange(prioridadEnum) },
+                        selected = uiState.prioridad == prioridadEnum,
+                        onClick = {
+                            onPrioridadChange(prioridadEnum)
+                        },
+                        enabled = !guardando,
                         label = {
                             Text(
                                 when (prioridadEnum) {
@@ -155,36 +198,83 @@ fun PantallaCrearActividad(
                 }
             }
 
-            // CAMPO: PROGRESO
+            // PROGRESO
             Column {
                 Text(
                     text = "Progreso inicial: ${uiState.progreso}%",
                     style = MaterialTheme.typography.titleMedium
                 )
+
                 Slider(
                     value = uiState.progreso.toFloat(),
-                    onValueChange = { onProgresoChange(it.toInt()) },
-                    valueRange = 0f..100f
+                    onValueChange = {
+                        onProgresoChange(it.toInt())
+                    },
+                    valueRange = 0f..100f,
+                    enabled = !guardando
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
 
-            // BOTÓN GUARDAR
-            Button(
-                onClick = {
-                    if (!enProcesoGuardado && uiState.puedeGuardar) {
-                        enProcesoGuardado = true
-                        onGuardarClick()
+            // ESTADO DE LA OPERACIÓN
+            when (val estado = operacionUiState) {
+
+                OperacionUiState.Inactiva -> {
+                    // Sin mensaje.
+                }
+
+                OperacionUiState.EnCurso -> {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        CircularProgressIndicator()
+
+                        Text(
+                            text = "Guardando actividad...",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
-                },
-                enabled = uiState.puedeGuardar && !enProcesoGuardado,
+                }
+
+                OperacionUiState.Exitosa -> {
+                    Text(
+                        text = "Actividad guardada correctamente.",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+                is OperacionUiState.Fallida -> {
+                    Text(
+                        text = estado.mensaje,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+
+            // GUARDAR
+            Button(
+                onClick = onGuardarClick,
+                enabled = uiState.puedeGuardar && !guardando,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Text(if (enProcesoGuardado) "Guardando..." else "Guardar Actividad")
+                Text(
+                    text = if (guardando) {
+                        "Guardando..."
+                    } else {
+                        "Guardar Actividad"
+                    }
+                )
             }
         }
     }
+
+
 }
