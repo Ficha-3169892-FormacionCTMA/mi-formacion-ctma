@@ -1,4 +1,4 @@
-# Historias de Usuario — MiFormacióoCTMA
+# Historias de Usuario — MiFormaciónCTMA
 
 ### HU-01 - Consultar listado de actividades pendientes
 
