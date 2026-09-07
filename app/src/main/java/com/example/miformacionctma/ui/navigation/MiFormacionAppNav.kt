@@ -1,13 +1,13 @@
 package com.example.miformacionctma.ui.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -15,7 +15,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.miformacionctma.data.local.AppDatabase
 import com.example.miformacionctma.data.repository.ActividadRepositoryImpl
+import com.example.miformacionctma.data.repository.PreferenciasRepository
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.model.ReglasActividad
@@ -24,27 +26,34 @@ import com.example.miformacionctma.ui.screens.PantallaCrearActividad
 import com.example.miformacionctma.ui.screens.PantallaDetalleActividad
 import com.example.miformacionctma.ui.state.FormularioActividadUiState
 import com.example.miformacionctma.ui.state.ListadoUiState
-import com.example.miformacionctma.ui.state.OperacionUiState
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModelFactory
 
 @Composable
 fun MiFormacionAppNav() {
+    val navController = rememberNavController()
+    val context = LocalContext.current
 
-    val navController =
-        rememberNavController()
+    val database = remember(context) {
+        AppDatabase.getInstance(context)
+    }
 
-    val repository =
-        remember {
-            ActividadRepositoryImpl()
-        }
-
-    val actividadesViewModel: ActividadesViewModel =
-        viewModel(
-            factory = ActividadesViewModelFactory(
-                repository
-            )
+    val repository = remember(database) {
+        ActividadRepositoryImpl(
+            database.actividadDao()
         )
+    }
+
+    val preferenciasRepository = remember(context) {
+        PreferenciasRepository(context)
+    }
+
+    val actividadesViewModel: ActividadesViewModel = viewModel(
+        factory = ActividadesViewModelFactory(
+            repository = repository,
+            preferenciasRepository = preferenciasRepository
+        )
+    )
 
     val actividadesState by actividadesViewModel.uiState
         .collectAsStateWithLifecycle()
@@ -52,15 +61,10 @@ fun MiFormacionAppNav() {
     val operacionState by actividadesViewModel.operacion
         .collectAsStateWithLifecycle()
 
-    val actividades =
-        when (val state = actividadesState) {
-
-            is ListadoUiState.Contenido ->
-                state.actividades
-
-            else ->
-                emptyList()
-        }
+    val actividades = when (val state = actividadesState) {
+        is ListadoUiState.Contenido -> state.actividades
+        else -> emptyList()
+    }
 
     var formTitulo by rememberSaveable {
         mutableStateOf("")
@@ -95,19 +99,13 @@ fun MiFormacionAppNav() {
     }
 
     val tituloError =
-        ReglasActividad.validarTitulo(
-            formTitulo
-        )
+        ReglasActividad.validarTitulo(formTitulo)
 
     val descripcionError =
-        ReglasActividad.validarDescripcion(
-            formDescripcion
-        )
+        ReglasActividad.validarDescripcion(formDescripcion)
 
     val fechaError =
-        ReglasActividad.validarFecha(
-            formFecha
-        )
+        ReglasActividad.validarFecha(formFecha)
 
     val uiStateFormulario =
         FormularioActividadUiState(
@@ -124,49 +122,22 @@ fun MiFormacionAppNav() {
             progreso = formProgreso
         )
 
-    LaunchedEffect(operacionState) {
-
-        if (operacionState is OperacionUiState.Exitosa) {
-
-            formTitulo = ""
-            formDescripcion = ""
-            formFecha = ""
-            formPrioridad = Prioridad.MEDIA
-            formProgreso = 0
-
-            formTituloTocado = false
-            formDescripcionTocado = false
-            formFechaTocado = false
-
-            actividadesViewModel.limpiarOperacion()
-
-            navController.popBackStack()
-        }
-    }
-
     NavHost(
         navController = navController,
         startDestination = Destino.Lista.ruta
     ) {
 
-        composable(
-            Destino.Lista.ruta
-        ) {
-
+        composable(Destino.Lista.ruta) {
             ActividadesRoute(
                 viewModel = actividadesViewModel,
-
                 onActividadClick = { id ->
-
                     navController.navigate(
                         Destino.Detalle.crearRuta(id)
                     ) {
                         launchSingleTop = true
                     }
                 },
-
                 onCrearClick = {
-
                     navController.navigate(
                         Destino.Crear.ruta
                     ) {
@@ -176,14 +147,9 @@ fun MiFormacionAppNav() {
             )
         }
 
-        composable(
-            Destino.Crear.ruta
-        ) {
-
+        composable(Destino.Crear.ruta) {
             PantallaCrearActividad(
-
                 uiState = uiStateFormulario,
-
                 operacionUiState = operacionState,
 
                 onTituloChange = {
@@ -210,11 +176,7 @@ fun MiFormacionAppNav() {
                 },
 
                 onGuardarClick = {
-
-                    if (
-                        uiStateFormulario.puedeGuardar &&
-                        operacionState !is OperacionUiState.EnCurso
-                    ) {
+                    if (uiStateFormulario.puedeGuardar) {
 
                         val nuevaActividad =
                             ActividadFormativa(
@@ -223,23 +185,12 @@ fun MiFormacionAppNav() {
                                             it.id
                                         } ?: 0L
                                         ) + 1L,
-
-                                titulo =
-                                    formTitulo.trim(),
-
-                                descripcion =
-                                    formDescripcion.trim(),
-
-                                fecha =
-                                    formFecha.trim(),
-
-                                progreso =
-                                    formProgreso,
-
+                                titulo = formTitulo.trim(),
+                                descripcion = formDescripcion.trim(),
+                                fecha = formFecha.trim(),
+                                progreso = formProgreso,
                                 diasRestantes = 7,
-
-                                prioridad =
-                                    formPrioridad
+                                prioridad = formPrioridad
                             )
 
                         actividadesViewModel.guardar(
@@ -249,12 +200,7 @@ fun MiFormacionAppNav() {
                 },
 
                 onVolver = {
-
-                    if (
-                        operacionState !is OperacionUiState.EnCurso
-                    ) {
-                        navController.popBackStack()
-                    }
+                    navController.popBackStack()
                 }
             )
         }

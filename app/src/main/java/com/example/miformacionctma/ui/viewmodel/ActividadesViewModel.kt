@@ -3,11 +3,11 @@ package com.example.miformacionctma.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.miformacionctma.data.repository.ActividadRepository
+import com.example.miformacionctma.data.repository.PreferenciasRepository
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.ui.state.ListadoUiState
 import com.example.miformacionctma.ui.state.OperacionUiState
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,39 +21,45 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ActividadesViewModel(
-    private val repository: ActividadRepository
+    private val repository: ActividadRepository,
+    private val preferenciasRepository: PreferenciasRepository
 ) : ViewModel() {
 
-    private val textoBusqueda =
-        MutableStateFlow("")
-
-    private val reintento =
-        MutableStateFlow(0)
+    private val textoBusqueda = MutableStateFlow("")
 
     val busqueda: StateFlow<String> =
         textoBusqueda.asStateFlow()
 
-    private val actividadesBuscadas: Flow<List<ActividadFormativa>> =
+    private val orden =
+        preferenciasRepository.orden
+            .distinctUntilChanged()
+
+    private val actividades =
+        textoBusqueda
+            .map { it.trim() }
+            .distinctUntilChanged()
+            .flatMapLatest { texto ->
+                repository.buscar(texto)
+            }
+
+    private val resultado =
         combine(
-            textoBusqueda
-                .map(String::trim)
-                .distinctUntilChanged(),
-            reintento
-        ) { texto, _ ->
-            texto
-        }.flatMapLatest { texto ->
-            repository.buscar(texto)
+            actividades,
+            orden
+        ) { lista, ordenActual ->
+            ordenarActividades(
+                lista = lista,
+                orden = ordenActual
+            )
         }
 
     val uiState: StateFlow<ListadoUiState> =
-        actividadesBuscadas
+        resultado
             .map { actividades ->
                 if (actividades.isEmpty()) {
                     ListadoUiState.Vacio
                 } else {
-                    ListadoUiState.Contenido(
-                        actividades
-                    )
+                    ListadoUiState.Contenido(actividades)
                 }
             }
             .catch { error ->
@@ -69,9 +75,7 @@ class ActividadesViewModel(
             }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(
-                    5_000
-                ),
+                started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = ListadoUiState.Cargando
             )
 
@@ -83,71 +87,85 @@ class ActividadesViewModel(
     val operacion: StateFlow<OperacionUiState> =
         _operacion.asStateFlow()
 
-    fun cambiarBusqueda(
-        texto: String
-    ) {
+    fun cambiarBusqueda(texto: String) {
         textoBusqueda.value = texto
     }
 
-    fun reintentar() {
-        reintento.value++
+    fun cambiarOrden(orden: String) {
+        viewModelScope.launch {
+            try {
+                preferenciasRepository.guardarOrden(orden)
+            } catch (cancelada: CancellationException) {
+                throw cancelada
+            }
+        }
+    }
+
+    fun guardar(actividad: ActividadFormativa) {
+        ejecutarOperacion(
+            mensajeError = "No se pudo guardar la actividad."
+        ) {
+            repository.guardar(actividad)
+        }
+    }
+
+    fun eliminar(id: Long) {
+        ejecutarOperacion(
+            mensajeError = "No se pudo eliminar la actividad."
+        ) {
+            repository.eliminar(id)
+        }
     }
 
     fun limpiarOperacion() {
-        _operacion.value =
-            OperacionUiState.Inactiva
+        _operacion.value = OperacionUiState.Inactiva
     }
 
-    fun guardar(
-        actividad: ActividadFormativa
+    fun reintentar() {
+        textoBusqueda.value = textoBusqueda.value
+    }
+
+    private fun ejecutarOperacion(
+        mensajeError: String,
+        operacion: suspend () -> Unit
     ) {
         viewModelScope.launch {
-            _operacion.value =
-                OperacionUiState.EnCurso
+            _operacion.value = OperacionUiState.EnCurso
 
             try {
-                repository.guardar(
-                    actividad
-                )
+                operacion()
 
-                _operacion.value =
-                    OperacionUiState.Exitosa
-
+                _operacion.value = OperacionUiState.Exitosa
             } catch (cancelada: CancellationException) {
                 throw cancelada
-
             } catch (error: Exception) {
                 _operacion.value =
                     OperacionUiState.Fallida(
-                        "No se pudo guardar la actividad."
+                        mensajeError
                     )
             }
         }
     }
 
-    fun eliminar(
-        id: Long
-    ) {
-        viewModelScope.launch {
-            _operacion.value =
-                OperacionUiState.EnCurso
+    private fun ordenarActividades(
+        lista: List<ActividadFormativa>,
+        orden: String
+    ): List<ActividadFormativa> {
+        return when (orden) {
+            "titulo" -> lista.sortedBy {
+                it.titulo.lowercase()
+            }
 
-            try {
-                repository.eliminar(
-                    id
-                )
+            "progreso" -> lista.sortedByDescending {
+                it.progreso
+            }
 
-                _operacion.value =
-                    OperacionUiState.Exitosa
+            "fecha" -> lista.sortedBy {
+                it.fecha
+            }
 
-            } catch (cancelada: CancellationException) {
-                throw cancelada
-
-            } catch (error: Exception) {
-                _operacion.value =
-                    OperacionUiState.Fallida(
-                        "No se pudo eliminar la actividad."
-                    )
+            else -> lista.sortedBy {
+                it.id
             }
         }
     }
