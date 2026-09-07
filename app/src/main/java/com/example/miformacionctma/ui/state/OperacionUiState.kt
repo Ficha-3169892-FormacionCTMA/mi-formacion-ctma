@@ -11,6 +11,4 @@ sealed interface OperacionUiState {
     data class Fallida(
         val mensaje: String
     ) : OperacionUiState
-
-
 }

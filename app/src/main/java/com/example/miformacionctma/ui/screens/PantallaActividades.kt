@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -51,16 +52,13 @@ fun ActividadesRoute(
     val busqueda by viewModel.busqueda.collectAsStateWithLifecycle()
 
     when (val state = uiState) {
+
         ListadoUiState.Cargando -> {
             EstadoCargando()
         }
 
         ListadoUiState.Vacio -> {
-            PantallaActividades(
-                actividades = emptyList(),
-                busqueda = busqueda,
-                onBuscar = viewModel::cambiarBusqueda,
-                onActividadClick = onActividadClick,
+            EstadoVacio(
                 onCrearClick = onCrearClick
             )
         }
@@ -76,11 +74,12 @@ fun ActividadesRoute(
         }
 
         is ListadoUiState.Error -> {
-            EstadoError(state.mensaje)
+            EstadoError(
+                mensaje = state.mensaje,
+                onReintentar = viewModel::reintentar
+            )
         }
     }
-
-
 }
 
 @Composable
@@ -97,7 +96,9 @@ fun ContenidoAdaptable(
         color = MaterialTheme.colorScheme.background
     ) {
         BoxWithConstraints {
+
             if (maxWidth < 600.dp) {
+
                 PantallaActividades(
                     actividades = actividades,
                     busqueda = busqueda,
@@ -105,7 +106,9 @@ fun ContenidoAdaptable(
                     onActividadClick = onActividadClick,
                     onCrearClick = onCrearClick
                 )
+
             } else {
+
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     contentPadding = PaddingValues(16.dp),
@@ -116,10 +119,13 @@ fun ContenidoAdaptable(
                         actividades,
                         key = { it.id }
                     ) { actividad ->
+
                         TarjetaActividad(
                             actividad = actividad,
                             onClick = {
-                                onActividadClick(actividad.id)
+                                onActividadClick(
+                                    actividad.id
+                                )
                             }
                         )
                     }
@@ -137,23 +143,28 @@ fun PantallaActividades(
     onActividadClick: (Long) -> Unit = {},
     onCrearClick: () -> Unit = {}
 ) {
-    val urgentes = ReglasActividad
-        .actividadesUrgentes(actividades)
-        .size
+    val urgentes =
+        ReglasActividad
+            .actividadesUrgentes(actividades)
+            .size
 
-    val promedio = ReglasActividad
-        .promedioProgreso(actividades)
-        .toInt()
+    val promedio =
+        ReglasActividad
+            .promedioProgreso(actividades)
+            .toInt()
 
-    val completadas = actividades.count {
-        it.progreso >= 100
-    }
+    val completadas =
+        actividades.count {
+            it.progreso >= 100
+        }
 
     val resumen = buildString {
         appendLine("Urgentes: $urgentes")
         appendLine("Promedio: $promedio%")
         appendLine("Completadas: $completadas")
-        appendLine("Total actividades: ${actividades.size}")
+        appendLine(
+            "Total actividades: ${actividades.size}"
+        )
     }
 
     Surface(
@@ -202,7 +213,9 @@ fun PantallaActividades(
                         value = busqueda,
                         onValueChange = onBuscar,
                         label = {
-                            Text("Buscar actividad...")
+                            Text(
+                                "Buscar actividad..."
+                            )
                         },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
@@ -210,6 +223,7 @@ fun PantallaActividades(
                 }
 
                 if (actividades.isEmpty()) {
+
                     item {
                         Text(
                             text = if (busqueda.isBlank()) {
@@ -223,15 +237,20 @@ fun PantallaActividades(
                             )
                         )
                     }
+
                 } else {
+
                     items(
                         actividades,
                         key = { it.id }
                     ) { actividad ->
+
                         TarjetaActividad(
                             actividad = actividad,
                             onClick = {
-                                onActividadClick(actividad.id)
+                                onActividadClick(
+                                    actividad.id
+                                )
                             }
                         )
                     }
@@ -249,8 +268,6 @@ fun PantallaActividades(
             }
         }
     }
-
-
 }
 
 @Composable
@@ -268,8 +285,6 @@ private fun EncabezadoActividades() {
             style = MaterialTheme.typography.bodyMedium
         )
     }
-
-
 }
 
 @Composable
@@ -278,16 +293,22 @@ private fun EstadoCargando() {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "Consultando actividades...",
-            style = MaterialTheme.typography.bodyLarge
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Cargando actividades...",
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
     }
 }
 
 @Composable
 private fun EstadoError(
-    mensaje: String
+    mensaje: String,
+    onReintentar: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -295,26 +316,43 @@ private fun EstadoError(
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = mensaje,
-            style = MaterialTheme.typography.bodyLarge
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Ocurrió un error",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Text(
+                text = mensaje,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.error
+            )
+
+            Button(
+                onClick = onReintentar
+            ) {
+                Text("Reintentar")
+            }
+        }
     }
 }
 
 @Composable
 private fun EstadoVacio(
-    modifier: Modifier = Modifier
+    onCrearClick: () -> Unit
 ) {
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = "No hay actividades registradas",
@@ -322,13 +360,17 @@ private fun EstadoVacio(
             )
 
             Text(
-                text = "Agrega una actividad para comenzar a organizar tu formación.",
+                text = "Agrega una actividad para comenzar.",
                 style = MaterialTheme.typography.bodyMedium
             )
+
+            Button(
+                onClick = onCrearClick
+            ) {
+                Text("Crear actividad")
+            }
         }
     }
-
-
 }
 
 @Preview(
@@ -338,6 +380,7 @@ private fun EstadoVacio(
 @Composable
 private fun PantallaActividadesPreview() {
     MiFormacionCTMATheme {
+
         var busqueda by rememberSaveable {
             mutableStateOf("")
         }
@@ -350,8 +393,6 @@ private fun PantallaActividadesPreview() {
             }
         )
     }
-
-
 }
 
 @Preview(
@@ -375,6 +416,8 @@ private fun PantallaActividadesPreviewAncha() {
 @Composable
 private fun EstadoVacioPreview() {
     MiFormacionCTMATheme {
-        EstadoVacio()
+        EstadoVacio(
+            onCrearClick = {}
+        )
     }
 }

@@ -15,8 +15,11 @@ class ActividadRepositoryImpl : ActividadRepository {
     override fun observarActividades(): Flow<List<ActividadFormativa>> =
         actividades
 
-    override fun buscar(texto: String): Flow<List<ActividadFormativa>> =
+    override fun buscar(
+        texto: String
+    ): Flow<List<ActividadFormativa>> =
         actividades.map { lista ->
+
             val textoNormalizado = texto.trim()
 
             if (textoNormalizado.isEmpty()) {
@@ -35,9 +38,17 @@ class ActividadRepositoryImpl : ActividadRepository {
             }
         }
 
-    override suspend fun guardar(actividad: ActividadFormativa) {
+    override suspend fun guardar(
+        actividad: ActividadFormativa
+    ) {
         actividades.update { lista ->
             lista + actividad
+        }
+    }
+
+    override suspend fun eliminar(id: Long) {
+        actividades.update { lista ->
+            lista.filterNot { it.id == id }
         }
     }
 }

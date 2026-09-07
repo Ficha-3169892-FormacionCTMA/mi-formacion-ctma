@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -23,18 +24,26 @@ class ActividadesViewModel(
     private val repository: ActividadRepository
 ) : ViewModel() {
 
-    private val textoBusqueda = MutableStateFlow("")
+    private val textoBusqueda =
+        MutableStateFlow("")
+
+    private val reintento =
+        MutableStateFlow(0)
 
     val busqueda: StateFlow<String> =
         textoBusqueda.asStateFlow()
 
-    private val actividadesBuscadas:
-            kotlinx.coroutines.flow.Flow<List<ActividadFormativa>> =
-        textoBusqueda
-            .map(String::trim)
-            .distinctUntilChanged()
-            .flatMapLatest(repository::buscar)
-
+    private val actividadesBuscadas: Flow<List<ActividadFormativa>> =
+        combine(
+            textoBusqueda
+                .map(String::trim)
+                .distinctUntilChanged(),
+            reintento
+        ) { texto, _ ->
+            texto
+        }.flatMapLatest { texto ->
+            repository.buscar(texto)
+        }
 
     val uiState: StateFlow<ListadoUiState> =
         actividadesBuscadas
@@ -42,7 +51,9 @@ class ActividadesViewModel(
                 if (actividades.isEmpty()) {
                     ListadoUiState.Vacio
                 } else {
-                    ListadoUiState.Contenido(actividades)
+                    ListadoUiState.Contenido(
+                        actividades
+                    )
                 }
             }
             .catch { error ->
@@ -58,7 +69,9 @@ class ActividadesViewModel(
             }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.WhileSubscribed(
+                    5_000
+                ),
                 initialValue = ListadoUiState.Cargando
             )
 
@@ -70,20 +83,39 @@ class ActividadesViewModel(
     val operacion: StateFlow<OperacionUiState> =
         _operacion.asStateFlow()
 
-    fun cambiarBusqueda(texto: String) {
+    fun cambiarBusqueda(
+        texto: String
+    ) {
         textoBusqueda.value = texto
     }
 
-    fun guardar(actividad: ActividadFormativa) {
+    fun reintentar() {
+        reintento.value++
+    }
+
+    fun limpiarOperacion() {
+        _operacion.value =
+            OperacionUiState.Inactiva
+    }
+
+    fun guardar(
+        actividad: ActividadFormativa
+    ) {
         viewModelScope.launch {
-            _operacion.value = OperacionUiState.EnCurso
+            _operacion.value =
+                OperacionUiState.EnCurso
 
             try {
-                repository.guardar(actividad)
+                repository.guardar(
+                    actividad
+                )
 
-                _operacion.value = OperacionUiState.Exitosa
+                _operacion.value =
+                    OperacionUiState.Exitosa
+
             } catch (cancelada: CancellationException) {
                 throw cancelada
+
             } catch (error: Exception) {
                 _operacion.value =
                     OperacionUiState.Fallida(
@@ -93,5 +125,30 @@ class ActividadesViewModel(
         }
     }
 
+    fun eliminar(
+        id: Long
+    ) {
+        viewModelScope.launch {
+            _operacion.value =
+                OperacionUiState.EnCurso
 
+            try {
+                repository.eliminar(
+                    id
+                )
+
+                _operacion.value =
+                    OperacionUiState.Exitosa
+
+            } catch (cancelada: CancellationException) {
+                throw cancelada
+
+            } catch (error: Exception) {
+                _operacion.value =
+                    OperacionUiState.Fallida(
+                        "No se pudo eliminar la actividad."
+                    )
+            }
+        }
+    }
 }

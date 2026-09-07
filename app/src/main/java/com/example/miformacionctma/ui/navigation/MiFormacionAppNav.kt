@@ -1,6 +1,7 @@
 package com.example.miformacionctma.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -23,28 +24,43 @@ import com.example.miformacionctma.ui.screens.PantallaCrearActividad
 import com.example.miformacionctma.ui.screens.PantallaDetalleActividad
 import com.example.miformacionctma.ui.state.FormularioActividadUiState
 import com.example.miformacionctma.ui.state.ListadoUiState
+import com.example.miformacionctma.ui.state.OperacionUiState
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModelFactory
 
 @Composable
 fun MiFormacionAppNav() {
-    val navController = rememberNavController()
 
-    val repository = remember {
-        ActividadRepositoryImpl()
-    }
+    val navController =
+        rememberNavController()
 
-    val actividadesViewModel: ActividadesViewModel = viewModel(
-        factory = ActividadesViewModelFactory(repository)
-    )
+    val repository =
+        remember {
+            ActividadRepositoryImpl()
+        }
+
+    val actividadesViewModel: ActividadesViewModel =
+        viewModel(
+            factory = ActividadesViewModelFactory(
+                repository
+            )
+        )
 
     val actividadesState by actividadesViewModel.uiState
         .collectAsStateWithLifecycle()
 
-    val actividades = when (val state = actividadesState) {
-        is ListadoUiState.Contenido -> state.actividades
-        else -> emptyList()
-    }
+    val operacionState by actividadesViewModel.operacion
+        .collectAsStateWithLifecycle()
+
+    val actividades =
+        when (val state = actividadesState) {
+
+            is ListadoUiState.Contenido ->
+                state.actividades
+
+            else ->
+                emptyList()
+        }
 
     var formTitulo by rememberSaveable {
         mutableStateOf("")
@@ -78,50 +94,97 @@ fun MiFormacionAppNav() {
         mutableStateOf(false)
     }
 
-    val tituloError = ReglasActividad.validarTitulo(formTitulo)
-    val descripcionError = ReglasActividad.validarDescripcion(formDescripcion)
-    val fechaError = ReglasActividad.validarFecha(formFecha)
+    val tituloError =
+        ReglasActividad.validarTitulo(
+            formTitulo
+        )
 
-    val uiStateFormulario = FormularioActividadUiState(
-        titulo = formTitulo,
-        tituloError = tituloError,
-        tituloTocado = formTituloTocado,
-        descripcion = formDescripcion,
-        descripcionError = descripcionError,
-        descripcionTocado = formDescripcionTocado,
-        fecha = formFecha,
-        fechaError = fechaError,
-        fechaTocado = formFechaTocado,
-        prioridad = formPrioridad,
-        progreso = formProgreso
-    )
+    val descripcionError =
+        ReglasActividad.validarDescripcion(
+            formDescripcion
+        )
+
+    val fechaError =
+        ReglasActividad.validarFecha(
+            formFecha
+        )
+
+    val uiStateFormulario =
+        FormularioActividadUiState(
+            titulo = formTitulo,
+            tituloError = tituloError,
+            tituloTocado = formTituloTocado,
+            descripcion = formDescripcion,
+            descripcionError = descripcionError,
+            descripcionTocado = formDescripcionTocado,
+            fecha = formFecha,
+            fechaError = fechaError,
+            fechaTocado = formFechaTocado,
+            prioridad = formPrioridad,
+            progreso = formProgreso
+        )
+
+    LaunchedEffect(operacionState) {
+
+        if (operacionState is OperacionUiState.Exitosa) {
+
+            formTitulo = ""
+            formDescripcion = ""
+            formFecha = ""
+            formPrioridad = Prioridad.MEDIA
+            formProgreso = 0
+
+            formTituloTocado = false
+            formDescripcionTocado = false
+            formFechaTocado = false
+
+            actividadesViewModel.limpiarOperacion()
+
+            navController.popBackStack()
+        }
+    }
 
     NavHost(
         navController = navController,
         startDestination = Destino.Lista.ruta
     ) {
 
-        composable(Destino.Lista.ruta) {
+        composable(
+            Destino.Lista.ruta
+        ) {
+
             ActividadesRoute(
                 viewModel = actividadesViewModel,
+
                 onActividadClick = { id ->
+
                     navController.navigate(
                         Destino.Detalle.crearRuta(id)
                     ) {
                         launchSingleTop = true
                     }
                 },
+
                 onCrearClick = {
-                    navController.navigate(Destino.Crear.ruta) {
+
+                    navController.navigate(
+                        Destino.Crear.ruta
+                    ) {
                         launchSingleTop = true
                     }
                 }
             )
         }
 
-        composable(Destino.Crear.ruta) {
+        composable(
+            Destino.Crear.ruta
+        ) {
+
             PantallaCrearActividad(
+
                 uiState = uiStateFormulario,
+
+                operacionUiState = operacionState,
 
                 onTituloChange = {
                     formTitulo = it
@@ -147,36 +210,51 @@ fun MiFormacionAppNav() {
                 },
 
                 onGuardarClick = {
-                    if (uiStateFormulario.puedeGuardar) {
 
-                        val nuevaActividad = ActividadFormativa(
-                            id = (actividades.maxOfOrNull { it.id } ?: 0L) + 1L,
-                            titulo = formTitulo.trim(),
-                            descripcion = formDescripcion.trim(),
-                            fecha = formFecha.trim(),
-                            progreso = formProgreso,
-                            diasRestantes = 7,
-                            prioridad = formPrioridad
+                    if (
+                        uiStateFormulario.puedeGuardar &&
+                        operacionState !is OperacionUiState.EnCurso
+                    ) {
+
+                        val nuevaActividad =
+                            ActividadFormativa(
+                                id = (
+                                        actividades.maxOfOrNull {
+                                            it.id
+                                        } ?: 0L
+                                        ) + 1L,
+
+                                titulo =
+                                    formTitulo.trim(),
+
+                                descripcion =
+                                    formDescripcion.trim(),
+
+                                fecha =
+                                    formFecha.trim(),
+
+                                progreso =
+                                    formProgreso,
+
+                                diasRestantes = 7,
+
+                                prioridad =
+                                    formPrioridad
+                            )
+
+                        actividadesViewModel.guardar(
+                            nuevaActividad
                         )
-
-                        actividadesViewModel.guardar(nuevaActividad)
-
-                        formTitulo = ""
-                        formDescripcion = ""
-                        formFecha = ""
-                        formPrioridad = Prioridad.MEDIA
-                        formProgreso = 0
-
-                        formTituloTocado = false
-                        formDescripcionTocado = false
-                        formFechaTocado = false
-
-                        navController.popBackStack()
                     }
                 },
 
                 onVolver = {
-                    navController.popBackStack()
+
+                    if (
+                        operacionState !is OperacionUiState.EnCurso
+                    ) {
+                        navController.popBackStack()
+                    }
                 }
             )
         }
@@ -191,7 +269,9 @@ fun MiFormacionAppNav() {
         ) { backStackEntry ->
 
             val id =
-                backStackEntry.arguments?.getLong("actividadId") ?: -1L
+                backStackEntry.arguments
+                    ?.getLong("actividadId")
+                    ?: -1L
 
             PantallaDetalleActividad(
                 actividadId = id,
@@ -202,6 +282,4 @@ fun MiFormacionAppNav() {
             )
         }
     }
-
-
 }
