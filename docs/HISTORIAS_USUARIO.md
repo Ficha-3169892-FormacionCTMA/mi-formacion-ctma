@@ -1,4 +1,4 @@
-# Historias de Usuario — MiFormaciónCTMA
+# Historias de Usuario — Mi Formación CTMA
 
 ### HU-01 - Consultar listado de actividades pendientes
 
@@ -8,10 +8,8 @@
 
 #### Criterios de Aceptación
 
-* **CA-01.1:** Al abrir la aplicación se muestra un listado con las actividades registradas.
-* **CA-01.2:** Cada elemento del listado presenta título, fecha límite, estado de prioridad y
-  porcentaje de progreso.
-* **CA-01.3:** Si no hay actividades registradas, se muestra una interfaz limpia con estado vacío.
+* **CA-01.1:** Al seleccionar una tarjeta de la lista se transfiere su ID para navegar al detalle.
+* **CA-01.2:** Al accionar el botón Volver desde la lista se limpia el historial de navegación.
 
 #### Riesgos Relacionados
 
@@ -33,10 +31,9 @@
 
 #### Criterios de Aceptación
 
-* **CA-02.1:** Una actividad con pocos días restantes (1 a 3 días) se categoriza automáticamente
+* **CA-02.1:** El sistema exige que las fechas ingresadas cumplan el formato estricto (AAAA-MM-DD).
+* **CA-02.2:** Una actividad con 2 días o menos restantes y no completada se marca automáticamente
   como urgente.
-* **CA-02.2:** La interfaz resalta visualmente la urgencia de la actividad en la tarjeta
-  correspondiente.
 
 #### Riesgos Relacionados
 
@@ -58,9 +55,10 @@
 
 #### Criterios de Aceptación
 
-* **CA-03.1:** El sistema muestra el porcentaje de progreso asociado a la actividad (0% a 100%).
-* **CA-03.2:** Es posible abrir una vista detallada para inspeccionar la descripción completa de la
-  evidencia.
+* **CA-03.1:** La pantalla de detalle visualiza de forma precisa el porcentaje numérico de progreso
+  registrado.
+* **CA-03.2:** Si se intenta consultar un ID inexistente (-1), la app maneja la ausencia de datos
+  sin cerrarse.
 
 #### Riesgos Relacionados
 
@@ -82,11 +80,14 @@
 
 #### Criterios de Aceptación
 
-* **CA-04.1:** El título es obligatorio y debe contener entre 3 y 80 caracteres.
-* **CA-04.2:** La fecha límite debe validar el formato correcto (AAAA-MM-DD).
-* **CA-04.3:** Los mensajes de error no aparecen de entrada hasta que el usuario interactúa con los
-  campos.
-* **CA-04.4:** Una doble pulsación rápida en Guardar no genera registros duplicados.
+* **CA-04.1:** Al abrir por primera vez la pantalla de creación con campos vacíos no se muestran
+  mensajes de error inmediatos.
+* **CA-04.2:** El título requiere un mínimo de 3 caracteres, mostrando un mensaje descriptivo si no
+  lo cumple.
+* **CA-04.3:** Pulsaciones simultáneas o rápidas en Guardar procesan la acción una única vez para
+  evitar duplicados.
+* **CA-04.4:** Si el título contiene únicamente espacios en blanco, la aplicación deshabilita la
+  opción de guardar.
 
 #### Riesgos Relacionados
 
@@ -98,7 +99,6 @@
 
 * CP-01
 * CP-02
-* CP-03
 * CP-05
 * CP-10
 
@@ -113,10 +113,10 @@ dispositivo,
 
 #### Criterios de Aceptación
 
-* **CA-05.1:** Los datos parciales en los campos de texto se conservan al recrear la pantalla por
-  rotación.
-* **CA-05.2:** La selección de prioridad y progreso inicial se mantienen intactas tras el cambio de
-  pantalla.
+* **CA-05.1:** El texto ingresado en los campos del formulario se conserva ante la recreación de la
+  pantalla por rotación.
+* **CA-05.2:** El porcentaje seleccionado en el control de progreso se mantiene intacto tras rotar
+  el dispositivo.
 
 #### Riesgos Relacionados
 
@@ -137,11 +137,10 @@ dispositivo,
 
 #### Criterios de Aceptación
 
-* **CA-06.1:** Al ingresar caracteres en la barra de búsqueda, la lista filtra coincidencias en
-  tiempo real.
-* **CA-06.2:** El texto ingresado en la búsqueda persiste ante giros o rotaciones de pantalla.
-* **CA-06.3:** Si no hay coincidencias, se despliega una vista controlada de resultado no
-  encontrado.
+* **CA-06.1:** Al ingresar un texto de búsqueda (ej. "Kotlin"), la lista filtra las coincidencias
+  ignorando mayúsculas/minúsculas.
+* **CA-06.2:** Si la búsqueda no genera coincidencias, se despliega una vista visual de estado
+  vacío.
 
 #### Riesgos Relacionados
 
@@ -158,15 +157,13 @@ dispositivo,
 ### HU-07 - Navegación segura entre pantallas y manejo de ID
 
 **Como** aprendiz,  
-**quiero** navegar entre la lista, la creación y el detalle sin errores de aplicación,  
+**quiero** navegar entre la lista y el detalle sin errores,  
 **para** recorrer la aplicación de forma fluida.
 
 #### Criterios de Aceptación
 
-* **CA-07.1:** La navegación al detalle transfiere únicamente el identificador primitivo ID.
-* **CA-07.2:** Si se solicita un ID que no existe, la app muestra un estado de error controlado sin
-  cerrarse abruptamente (crash).
-* **CA-07.3:** El botón de regreso elimina la pantalla actual del back stack sin duplicar rutas.
+* **CA-07.1:** El retorno desde la vista de detalle desapila correctamente la pantalla devolviendo
+  el control al listado.
 
 #### Riesgos Relacionados
 
@@ -175,9 +172,6 @@ dispositivo,
 
 #### Casos de Prueba Relacionados
 
-* CP-06
-* CP-07
-* CP-08
 * CP-13
 
 ---
@@ -190,9 +184,8 @@ dispositivo,
 
 #### Criterios de Aceptación
 
-* **CA-08.1:** El selector de progreso permite elegir valores continuos de 0 a 100.
-* **CA-08.2:** El estado reflejado en el detalle se actualiza en coherencia con la entrada del
-  usuario.
+* **CA-08.1:** El control de progreso acepta valores límite (0% y 100%) como entradas válidas y
+  rechaza valores fuera de rango.
 
 #### Riesgos Relacionados
 
@@ -202,4 +195,3 @@ dispositivo,
 #### Casos de Prueba Relacionados
 
 * CP-14
-* CP-15
