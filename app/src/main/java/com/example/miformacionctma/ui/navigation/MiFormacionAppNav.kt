@@ -16,6 +16,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.miformacionctma.data.local.AppDatabase
+import com.example.miformacionctma.data.remote.ActividadApiService
+import com.example.miformacionctma.data.remote.AuthInterceptor
+import com.example.miformacionctma.data.remote.RemoteActividadDataSource
+import com.example.miformacionctma.data.remote.StaticTokenProvider
 import com.example.miformacionctma.data.repository.ActividadRepositoryImpl
 import com.example.miformacionctma.data.repository.PreferenciasRepository
 import com.example.miformacionctma.model.ActividadFormativa
@@ -28,19 +32,68 @@ import com.example.miformacionctma.ui.state.FormularioActividadUiState
 import com.example.miformacionctma.ui.state.ListadoUiState
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModelFactory
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.util.concurrent.TimeUnit
 
 @Composable
 fun MiFormacionAppNav() {
     val navController = rememberNavController()
     val context = LocalContext.current
 
+    val json = remember {
+        Json {
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+        }
+    }
+
+    val tokenProvider = remember {
+        StaticTokenProvider()
+    }
+
+    val okHttpClient = remember(tokenProvider) {
+        val logging = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.HEADERS
+            // Nota: En producción ocultaríamos el Authorization header en los logs
+            redactHeader("Authorization")
+        }
+
+        OkHttpClient.Builder()
+            .addInterceptor(AuthInterceptor(tokenProvider))
+            .addInterceptor(logging)
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .build()
+    }
+
+    val apiService = remember(okHttpClient, json) {
+        Retrofit.Builder()
+            .baseUrl("https://ejemplo.com/api/")
+            .client(okHttpClient)
+            .addConverterFactory(
+                json.asConverterFactory("application/json".toMediaType())
+            )
+            .build()
+            .create(ActividadApiService::class.java)
+    }
+
+    val remoteDataSource = remember(apiService) {
+        RemoteActividadDataSource(apiService)
+    }
+
     val database = remember(context) {
         AppDatabase.getInstance(context)
     }
 
-    val repository = remember(database) {
+    val repository = remember(database, remoteDataSource) {
         ActividadRepositoryImpl(
-            database.actividadDao()
+            dao = database.actividadDao(),
+            remoteDataSource = remoteDataSource
         )
     }
 

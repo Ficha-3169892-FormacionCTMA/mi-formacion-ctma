@@ -18,6 +18,25 @@ También puede ejecutarse mediante un **AVD Android** compatible.
 
 ---
 
+## Semana 8: Servicios Web, Caché y Resiliencia
+
+Se ha implementado una arquitectura **offline-first** que integra servicios remotos y persistencia local.
+
+### Arquitectura de Datos
+- **Retrofit + OkHttp**: Consumo de API REST con timeouts configurados y logs securizados.
+- **Room**: Fuente única de verdad (SSOT) que observa la UI mediante `Flow`.
+- **Offline-First**: Las respuestas del servidor se persisten en Room de forma atómica.
+- **Resiliencia**: Clasificación de errores (401, 404, 5xx, Sin Red, Timeout) y manejo seguro de `CancellationException`.
+
+### Autenticación
+- **TokenProvider**: Abstracción para el manejo de credenciales.
+- **AuthInterceptor**: Inyección automática del token `Bearer` en las cabeceras de red.
+
+### Pruebas de Integración
+- **MockWebServer**: Simulación de diversos escenarios de red (éxito, errores HTTP, JSON inválido) para garantizar la robustez del repositorio.
+
+---
+
 ## Ejecución
 
 ### Opción recomendada: dispositivo físico (inalámbrico)
@@ -40,11 +59,17 @@ También puede ejecutarse mediante un **AVD Android** compatible.
 
 ## Pruebas realizadas
 
-Se implementaron **pruebas unitarias con JUnit** para verificar:
+Se han implementado pruebas automáticas en varios niveles:
 
-- `promedioProgreso()`
-- `actividadesUrgentes()`
-- `estadoActividad()`
+1. **Pruebas Unitarias (JUnit 4)**:
+    - Lógica de negocio: `promedioProgreso()`, `actividadesUrgentes()`, etc.
+    - Mapeo de datos: Transformación correcta entre DTOs y Entidades.
+
+2. **Pruebas de Integración (MockWebServer + Mockito)**:
+    - Escenarios de éxito (200 OK) con actualización de caché.
+    - Manejo de errores 401 (No autorizado) y 500 (Error servidor).
+    - Resiliencia ante JSON malformado.
+    - Verificación de la atomicidad de las transacciones en Room durante el refresh.
 
 Todas las pruebas finalizan correctamente.
 

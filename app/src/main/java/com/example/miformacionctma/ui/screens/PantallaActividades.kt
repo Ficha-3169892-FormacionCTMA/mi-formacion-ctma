@@ -50,6 +50,8 @@ fun ActividadesRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val busqueda by viewModel.busqueda.collectAsStateWithLifecycle()
+    val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
+    val ultimaActualizacion by viewModel.ultimaActualizacion.collectAsStateWithLifecycle()
 
     when (val state = uiState) {
 
@@ -59,7 +61,10 @@ fun ActividadesRoute(
 
         ListadoUiState.Vacio -> {
             EstadoVacio(
-                onCrearClick = onCrearClick
+                onCrearClick = onCrearClick,
+                onRefresh = viewModel::refresh,
+                refreshing = refreshing,
+                ultimaActualizacion = ultimaActualizacion
             )
         }
 
@@ -69,14 +74,20 @@ fun ActividadesRoute(
                 busqueda = busqueda,
                 onBuscar = viewModel::cambiarBusqueda,
                 onActividadClick = onActividadClick,
-                onCrearClick = onCrearClick
+                onCrearClick = onCrearClick,
+                onRefresh = viewModel::refresh,
+                refreshing = refreshing,
+                ultimaActualizacion = ultimaActualizacion
             )
         }
 
         is ListadoUiState.Error -> {
             EstadoError(
                 mensaje = state.mensaje,
-                onReintentar = viewModel::reintentar
+                onReintentar = {
+                    viewModel.refresh()
+                    viewModel.reintentar()
+                }
             )
         }
     }
@@ -89,7 +100,10 @@ fun ContenidoAdaptable(
     busqueda: String = "",
     onBuscar: (String) -> Unit = {},
     onActividadClick: (Long) -> Unit = {},
-    onCrearClick: () -> Unit = {}
+    onCrearClick: () -> Unit = {},
+    onRefresh: () -> Unit = {},
+    refreshing: Boolean = false,
+    ultimaActualizacion: String? = null
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -104,7 +118,10 @@ fun ContenidoAdaptable(
                     busqueda = busqueda,
                     onBuscar = onBuscar,
                     onActividadClick = onActividadClick,
-                    onCrearClick = onCrearClick
+                    onCrearClick = onCrearClick,
+                    onRefresh = onRefresh,
+                    refreshing = refreshing,
+                    ultimaActualizacion = ultimaActualizacion
                 )
 
             } else {
@@ -141,7 +158,10 @@ fun PantallaActividades(
     busqueda: String = "",
     onBuscar: (String) -> Unit = {},
     onActividadClick: (Long) -> Unit = {},
-    onCrearClick: () -> Unit = {}
+    onCrearClick: () -> Unit = {},
+    onRefresh: () -> Unit = {},
+    refreshing: Boolean = false,
+    ultimaActualizacion: String? = null
 ) {
     val urgentes =
         ReglasActividad
@@ -205,7 +225,11 @@ fun PantallaActividades(
                 }
 
                 item {
-                    EncabezadoActividades()
+                    EncabezadoActividades(
+                        onRefresh = onRefresh,
+                        refreshing = refreshing,
+                        ultimaActualizacion = ultimaActualizacion
+                    )
                 }
 
                 item {
@@ -271,19 +295,42 @@ fun PantallaActividades(
 }
 
 @Composable
-private fun EncabezadoActividades() {
+private fun EncabezadoActividades(
+    onRefresh: () -> Unit = {},
+    refreshing: Boolean = false,
+    ultimaActualizacion: String? = null
+) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = "Actividades Formativas",
-            style = MaterialTheme.typography.headlineSmall
-        )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "Actividades Formativas",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.align(Alignment.CenterStart)
+            )
+
+            Button(
+                onClick = onRefresh,
+                enabled = !refreshing,
+                modifier = Modifier.align(Alignment.CenterEnd)
+            ) {
+                Text(if (refreshing) "Actualizando..." else "Actualizar")
+            }
+        }
 
         Text(
             text = "Consulta tus actividades y revisa su progreso actual.",
             style = MaterialTheme.typography.bodyMedium
         )
+
+        if (ultimaActualizacion != null) {
+            Text(
+                text = "Última actualización: $ultimaActualizacion",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
     }
 }
 
@@ -342,7 +389,10 @@ private fun EstadoError(
 
 @Composable
 private fun EstadoVacio(
-    onCrearClick: () -> Unit
+    onCrearClick: () -> Unit,
+    onRefresh: () -> Unit = {},
+    refreshing: Boolean = false,
+    ultimaActualizacion: String? = null
 ) {
     Box(
         modifier = Modifier
@@ -360,9 +410,23 @@ private fun EstadoVacio(
             )
 
             Text(
-                text = "Agrega una actividad para comenzar.",
+                text = "Agrega una actividad o intenta actualizar.",
                 style = MaterialTheme.typography.bodyMedium
             )
+
+            if (ultimaActualizacion != null) {
+                Text(
+                    text = "Última actualización: $ultimaActualizacion",
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+
+            Button(
+                onClick = onRefresh,
+                enabled = !refreshing
+            ) {
+                Text(if (refreshing) "Actualizando..." else "Actualizar ahora")
+            }
 
             Button(
                 onClick = onCrearClick
@@ -390,7 +454,8 @@ private fun PantallaActividadesPreview() {
             busqueda = busqueda,
             onBuscar = {
                 busqueda = it
-            }
+            },
+            ultimaActualizacion = "09:45:00"
         )
     }
 }
@@ -417,7 +482,8 @@ private fun PantallaActividadesPreviewAncha() {
 private fun EstadoVacioPreview() {
     MiFormacionCTMATheme {
         EstadoVacio(
-            onCrearClick = {}
+            onCrearClick = {},
+            ultimaActualizacion = "10:30:00"
         )
     }
 }

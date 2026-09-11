@@ -12,4 +12,6 @@ interface ActividadRepository {
     suspend fun guardar(actividad: ActividadFormativa)
 
     suspend fun eliminar(id: Long)
+
+    suspend fun refresh()
 }

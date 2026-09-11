@@ -30,6 +30,12 @@ class ActividadesViewModel(
     val busqueda: StateFlow<String> =
         textoBusqueda.asStateFlow()
 
+    private val _refreshing = MutableStateFlow(false)
+    val refreshing: StateFlow<Boolean> = _refreshing.asStateFlow()
+
+    private val _ultimaActualizacion = MutableStateFlow<String?>(null)
+    val ultimaActualizacion: StateFlow<String?> = _ultimaActualizacion.asStateFlow()
+
     private val orden =
         preferenciasRepository.orden
             .distinctUntilChanged()
@@ -86,6 +92,30 @@ class ActividadesViewModel(
 
     val operacion: StateFlow<OperacionUiState> =
         _operacion.asStateFlow()
+
+    init {
+        refresh()
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _refreshing.value = true
+            try {
+                repository.refresh()
+                _ultimaActualizacion.value = java.text.SimpleDateFormat(
+                    "HH:mm:ss", java.util.Locale.getDefault()
+                ).format(java.util.Date())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _operacion.value = OperacionUiState.Fallida(
+                    e.message ?: "Fallo al actualizar datos remotos"
+                )
+            } finally {
+                _refreshing.value = false
+            }
+        }
+    }
 
     fun cambiarBusqueda(texto: String) {
         textoBusqueda.value = texto
