@@ -9,10 +9,19 @@ import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.util.concurrent.TimeUnit
 import okhttp3.logging.HttpLoggingInterceptor
+interface SessionTokenProvider {
+    fun obtenerToken(): String
+}
+
 object RetrofitInstance {
 
     private const val BASE_URL = BuildConfig.SUPABASE_URL
-    private const val SUPABASE_KEY = BuildConfig.SUPABASE_KEY
+
+    var tokenProvider: SessionTokenProvider = object : SessionTokenProvider {
+        override fun obtenerToken(): String {
+            return BuildConfig.SUPABASE_KEY
+        }
+    }
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -21,6 +30,8 @@ object RetrofitInstance {
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
+        redactHeader("apikey")
+        redactHeader("Authorization")
     }
 
     private val client = OkHttpClient.Builder()
@@ -31,7 +42,7 @@ object RetrofitInstance {
         .addInterceptor { chain ->
             val request: Request = chain.request()
                 .newBuilder()
-                .addHeader("apikey", SUPABASE_KEY)
+                .addHeader("apikey", tokenProvider.obtenerToken())
                 .build()
 
             chain.proceed(request)

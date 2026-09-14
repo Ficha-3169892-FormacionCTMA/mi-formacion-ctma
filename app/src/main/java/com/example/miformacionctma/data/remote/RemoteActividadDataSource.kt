@@ -3,6 +3,7 @@ package com.example.miformacionctma.data.remote
 import java.io.IOException
 import java.net.SocketTimeoutException
 import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.SerializationException
 import retrofit2.HttpException
 import retrofit2.Response
 
@@ -42,26 +43,15 @@ class RemoteActividadDataSource(
         id: Long,
         actividad: CrearActividadDto
     ): ActividadDto {
-
-        val response = api.actualizarActividad(
-            id = "eq.$id",
-            actividad = actividad
-        )
-
-        if (!response.isSuccessful) {
-            throw Exception(
-                "PUT falló: HTTP ${response.code()} - ${response.message()}"
+        val lista = ejecutarPeticion {
+            api.actualizarActividad(
+                id = "eq.$id",
+                actividad = actividad
             )
         }
-
-        val lista = response.body()
-
-        if (lista.isNullOrEmpty()) {
-            throw Exception(
-                "PUT respondió correctamente, pero no encontró el registro."
-            )
+        if (lista.isEmpty()) {
+            throw Exception("El servidor no encontró el registro para actualizar.")
         }
-
         return lista.first()
     }
 
@@ -77,6 +67,12 @@ class RemoteActividadDataSource(
 
         } catch (error: CancellationException) {
             throw error
+
+        } catch (error: SerializationException) {
+            throw Exception(
+                "Error de serialización en la respuesta del servidor.",
+                error
+            )
 
         } catch (error: SocketTimeoutException) {
             throw Exception(
@@ -116,6 +112,12 @@ class RemoteActividadDataSource(
 
         } catch (error: CancellationException) {
             throw error
+
+        } catch (error: SerializationException) {
+            throw Exception(
+                "Error de serialización en la respuesta del servidor.",
+                error
+            )
 
         } catch (error: SocketTimeoutException) {
             throw Exception(

@@ -72,4 +72,56 @@ El proyecto fue desarrollado utilizando un **repositorio compartido en GitHub** 
 
 ## Estado actual
 
-El proyecto cuenta con una **interfaz funcional, adaptable y accesible**, lista para continuar con futuras iteraciones relacionadas con **persistencia de datos, navegación y arquitectura avanzada en Compose**.
+El proyecto cuenta con una **interfaz funcional, adaptable y accesible**, persistencia de datos offline-first y sincronización en la nube con Supabase.
+
+---
+
+## Arquitectura de Sincronización, Red y Caché Local
+
+### 1. Contrato de la API (Supabase / PostgREST)
+Las operaciones de red consumen la API de Supabase en base a los siguientes endpoints y parámetros:
+- `GET /actividades`: Obtiene el listado completo de actividades.
+- `GET /actividades?id=eq.{id}`: Obtiene el detalle de una actividad en particular usando filtros de igualdad de PostgREST.
+- `POST /actividades`: Crea una actividad. Incluye la cabecera `Prefer: return=representation` para forzar al servidor a devolver el JSON del objeto creado.
+- `PATCH /actividades?id=eq.{id}`: Actualiza parcialmente una actividad. Incluye la cabecera `Prefer: return=representation`.
+- `DELETE /actividades?id=eq.{id}`: Elimina un registro de forma permanente.
+
+### 2. Decisiones de Caché (Estrategia Offline-First)
+- **Persistencia Atómica:** La sincronización desde el servidor se realiza usando una operación `@Transaction` en Room (`refrescarTodo`). Esto garantiza que la base de datos local limpie los datos antiguos e inserte los nuevos registros en un único bloque atómico. Si la operación de red o guardado falla, la base de datos no queda en un estado corrupto o inconsistente.
+- **Flujo de Datos (SSOT):** La interfaz de usuario nunca muestra los datos directamente desde la red; en su lugar, se suscribe a un `Flow` continuo proveniente de Room. De esta forma, cualquier actualización o refresco en segundo plano impacta automáticamente la UI sin recargar pantallas.
+
+### 3. Clasificación y Manejo de Errores
+El componente `RemoteActividadDataSource` clasifica exhaustivamente las fallas para entregar retroalimentación clara a la UI:
+- **Sin conexión o Fallos de Red (`IOException`):** Transforma la excepción en un mensaje descriptivo indicando falta de conexión con el servidor.
+- **Tiempos de espera agotados (`SocketTimeoutException`):** Captura retardos excesivos e informa al usuario.
+- **Errores de Autenticación (HTTP 401):** Detecta credenciales incorrectas o expiradas.
+- **Recursos no encontrados (HTTP 404):** Identifica cuando un recurso solicitado ya no existe.
+- **Errores del Servidor (HTTP 5xx):** Informa indisponibilidad temporal del backend.
+- **Errores de Serialización (`SerializationException`):** Maneja respuestas malformadas o inesperadas de la API protegiendo la estabilidad del aplicativo.
+- **Excepciones de Cancelación (`CancellationException`):** Se relanzan explícitamente para mantener intacto el ciclo de vida de los Coroutine Scopes de Kotlin.
+
+### 4. Seguridad e Inyección de Tokens (Sesión Segura)
+- Se abstiene de emplear literales fijos o quemados en código.
+- Los tokens son inyectados dinámicamente mediante una abstracción `SessionTokenProvider`.
+- Se configuró la política de logs en `HttpLoggingInterceptor` aplicando `redactHeader("apikey")` y `redactHeader("Authorization")` para prohibir la exposición de claves y secretos en la consola (Logcat).
+
+### 5. Limitaciones del Sistema
+- La sincronización actual realiza un reemplazo masivo (`Clear and Insert`) en la tabla durante el refresh. En bases de datos muy masivas, se recomienda evolucionar a un esquema de sincronización diferencial basado en marcas de tiempo (`updated_at`).
+- La edición asume que el dispositivo cuenta con red en el momento del envío; no se encolan mutaciones offline complejas con políticas de reintento persistentes.
+
+### 6. Pruebas de Servidor Simulado
+Se diseñó e implementó la suite completa `RemoteActividadDataSourceTest` que valida la robustez del datasource simulando los 7 escenarios requeridos:
+- **Respuesta 200 con éxito:** Retorno y mapeo correcto.
+- **Respuesta Vacía:** Comportamiento seguro ante colecciones nulas o sin elementos.
+- **Error 401:** Lógica de No Autorizado.
+- **Error 500:** Respuesta controlada ante caídas de servidor.
+- **JSON Inválido:** Captura idónea de fallos de parseo/serialización.
+- **Timeout:** Validación del comportamiento por SocketTimeout.
+- **Caché Previo:** Verificación conceptual de resiliencia local.
+
+### 7. Uso de IA Validado
+El uso del asistente de Inteligencia Artificial para esta iteración ha sido estrictamente validado y supervisado por el equipo de desarrollo para garantizar código limpio y apego a las buenas prácticas arquitectónicas:
+- Diagnóstico preciso del error de parseo `EOF` mediante el entendimiento de las cabeceras `Prefer` de PostgREST.
+- Refactorización de Retrofit con parámetros nombrados y tipados robustos.
+- Corrección quirúrgica del flujo MVI/MVVM asegurando la reactividad continua de la UI.
+

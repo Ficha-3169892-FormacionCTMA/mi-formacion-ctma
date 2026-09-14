@@ -104,51 +104,18 @@ fun ContenidoAdaptable(
     actualizando: Boolean = false,
     operacion: OperacionUiState = OperacionUiState.Inactiva
 ) {
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        BoxWithConstraints {
-
-            if (maxWidth < 600.dp) {
-
-                PantallaActividades(
-                    actividades = actividades,
-                    busqueda = busqueda,
-                    onBuscar = onBuscar,
-                    onActividadClick = onActividadClick,
-                    onCrearClick = onCrearClick,
-                    onActualizar = onActualizar,
-                    actualizando = actualizando,
-                    operacion = operacion
-                )
-
-            } else {
-
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(
-                        actividades,
-                        key = { it.id }
-                    ) { actividad ->
-
-                        TarjetaActividad(
-                            actividad = actividad,
-                            onClick = {
-                                onActividadClick(
-                                    actividad.id
-                                )
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
+    // Siempre usamos PantallaActividades para unificar la barra de herramientas, botón de actualizar,
+    // estados de operación separado (fecha y reintentar) y datos cacheados.
+    PantallaActividades(
+        actividades = actividades,
+        busqueda = busqueda,
+        onBuscar = onBuscar,
+        onActividadClick = onActividadClick,
+        onCrearClick = onCrearClick,
+        onActualizar = onActualizar,
+        actualizando = actualizando,
+        operacion = operacion
+    )
 }
 
 @Composable
@@ -264,11 +231,23 @@ fun PantallaActividades(
 
                     is OperacionUiState.Fallida -> {
                         item {
-                            Text(
-                                text = operacion.mensaje,
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    text = operacion.mensaje,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Button(
+                                    onClick = onActualizar,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                ) {
+                                    Text("Reintentar")
+                                }
+                            }
                         }
                     }
 

@@ -23,6 +23,18 @@ interface ActividadDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun guardar(actividad: ActividadEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun guardarTodas(actividades: List<ActividadEntity>)
+
+    @Query("DELETE FROM actividades")
+    suspend fun borrarTodas()
+
+    @androidx.room.Transaction
+    suspend fun refrescarTodo(actividades: List<ActividadEntity>) {
+        borrarTodas()
+        guardarTodas(actividades)
+    }
+
     @Query("DELETE FROM actividades WHERE id = :id")
     suspend fun eliminar(id: Long)
 }

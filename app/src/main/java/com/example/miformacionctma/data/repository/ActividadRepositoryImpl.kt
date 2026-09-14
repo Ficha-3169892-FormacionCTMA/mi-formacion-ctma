@@ -48,19 +48,9 @@ class ActividadRepositoryImpl(
     }
 
     override suspend fun refrescarDesdeServidor() {
-
-        val actividadesRemotas =
-            remote.obtenerActividades()
-
-        actividadesRemotas.forEach { dto ->
-
-            val actividad =
-                dto.toDomain()
-
-            dao.guardar(
-                actividad.toEntity()
-            )
-        }
+        val actividadesRemotas = remote.obtenerActividades()
+        val entities = actividadesRemotas.map { it.toDomain().toEntity() }
+        dao.refrescarTodo(entities)
     }
 
     override suspend fun obtenerDesdeServidor(
