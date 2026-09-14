@@ -70,4 +70,22 @@ class ReglasActividadTest {
         val errorEspacios = ReglasActividad.validarTitulo("   ", mostrarVacio = true)
         assertEquals("El título es obligatorio", errorEspacios)
     }
+
+    @Test
+    fun validarDescripcion_validaLongitudMaxima() {
+        val descripcionLarga = "a".repeat(241)
+        val error = ReglasActividad.validarDescripcion(descripcionLarga)
+        assertEquals("Máximo 240 caracteres", error)
+
+        val valida = ReglasActividad.validarDescripcion("Descripción normal")
+        assertNull(valida)
+    }
+
+    @Test
+    fun validarFecha_validaFormatoEstricto() {
+        // HU-02 / CA-02.1
+        assertEquals("Formato inválido (AAAA-MM-DD)", ReglasActividad.validarFecha("15-09-2026"))
+        assertEquals("Formato inválido (AAAA-MM-DD)", ReglasActividad.validarFecha("2026/09/15"))
+        assertNull(ReglasActividad.validarFecha("2026-09-15"))
+    }
 }

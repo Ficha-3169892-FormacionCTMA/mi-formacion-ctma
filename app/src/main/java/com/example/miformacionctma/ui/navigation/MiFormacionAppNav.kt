@@ -18,6 +18,8 @@ import androidx.navigation.navArgument
 import com.example.miformacionctma.data.local.AppDatabase
 import com.example.miformacionctma.data.repository.ActividadRepositoryImpl
 import com.example.miformacionctma.data.repository.PreferenciasRepository
+import com.example.miformacionctma.data.repository.PreferenciasRepositoryImpl
+import com.example.miformacionctma.data.repository.dataStore
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.model.ReglasActividad
@@ -52,8 +54,8 @@ fun MiFormacionAppNav() {
         )
     }
 
-    val preferenciasRepository = remember(context) {
-        PreferenciasRepository(context)
+    val preferenciasRepository: PreferenciasRepository = remember(context) {
+        PreferenciasRepositoryImpl(context.dataStore)
     }
 
     val actividadesViewModel: ActividadesViewModel = viewModel(
