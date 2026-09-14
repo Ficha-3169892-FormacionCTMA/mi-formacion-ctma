@@ -38,6 +38,7 @@ import com.example.miformacionctma.ui.state.OperacionUiState
 fun PantallaCrearActividad(
     uiState: FormularioActividadUiState,
     operacionUiState: OperacionUiState = OperacionUiState.Inactiva,
+    esEdicion: Boolean = false,
     onTituloChange: (String) -> Unit,
     onDescripcionChange: (String) -> Unit,
     onFechaChange: (String) -> Unit,
@@ -48,11 +49,17 @@ fun PantallaCrearActividad(
 ) {
     val guardando = operacionUiState is OperacionUiState.EnCurso
 
+    androidx.compose.runtime.LaunchedEffect(operacionUiState) {
+        if (operacionUiState is OperacionUiState.Exitosa) {
+            onVolver()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Text("Crear Actividad")
+                    Text(if (esEdicion) "Editar Actividad" else "Crear Actividad")
                 },
                 navigationIcon = {
                     IconButton(
@@ -240,7 +247,7 @@ fun PantallaCrearActividad(
                     }
                 }
 
-                OperacionUiState.Exitosa -> {
+                is OperacionUiState.Exitosa -> {
                     Text(
                         text = "Actividad guardada correctamente.",
                         color = MaterialTheme.colorScheme.primary,

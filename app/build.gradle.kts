@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -37,11 +38,29 @@ android {
     buildFeatures {
         compose = true
     }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    defaultConfig {
+
+        buildConfigField(
+            "String",
+            "SUPABASE_URL",
+            "\"${project.findProperty("SUPABASE_URL") ?: ""}\""
+        )
+
+        buildConfigField(
+            "String",
+            "SUPABASE_KEY",
+            "\"${project.findProperty("SUPABASE_KEY") ?: ""}\""
+        )
+    }
 }
 
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
-
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.foundation.layout)
@@ -53,8 +72,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
 
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.foundation)
-    implementation(libs.androidx.material3)
 
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
@@ -75,4 +92,12 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.kotlinx.serialization)
+    implementation(libs.kotlinx.serialization.json)
+
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging.interceptor)
+    implementation("com.squareup.okhttp3:logging-interceptor:5.2.1")
 }

@@ -8,6 +8,7 @@ import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.ui.state.ListadoUiState
 import com.example.miformacionctma.ui.state.OperacionUiState
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +20,11 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import com.example.miformacionctma.model.Prioridad
+import kotlinx.coroutines.delay
 
 class ActividadesViewModel(
     private val repository: ActividadRepository,
@@ -87,6 +93,8 @@ class ActividadesViewModel(
     val operacion: StateFlow<OperacionUiState> =
         _operacion.asStateFlow()
 
+    private var actualizacionJob: Job? = null
+
     fun cambiarBusqueda(texto: String) {
         textoBusqueda.value = texto
     }
@@ -102,18 +110,77 @@ class ActividadesViewModel(
     }
 
     fun guardar(actividad: ActividadFormativa) {
-        ejecutarOperacion(
-            mensajeError = "No se pudo guardar la actividad."
-        ) {
-            repository.guardar(actividad)
+        viewModelScope.launch {
+            _operacion.value = OperacionUiState.EnCurso
+
+            try {
+                if (actividad.id == 0L) {
+                    repository.crearEnServidor(actividad)
+                } else {
+                    repository.actualizarEnServidor(actividad)
+                }
+
+                _operacion.value = OperacionUiState.Exitosa(
+                    fechaActualizacion = obtenerFechaActual()
+                )
+
+            } catch (cancelada: CancellationException) {
+                throw cancelada
+
+            } catch (error: Exception) {
+                _operacion.value =
+                    OperacionUiState.Fallida(
+                        error.message
+                            ?: "No se pudo guardar la actividad."
+                    )
+            }
         }
     }
 
     fun eliminar(id: Long) {
-        ejecutarOperacion(
-            mensajeError = "No se pudo eliminar la actividad."
-        ) {
-            repository.eliminar(id)
+        viewModelScope.launch {
+            _operacion.value = OperacionUiState.EnCurso
+            try {
+                repository.eliminarDelServidor(id)
+                _operacion.value = OperacionUiState.Exitosa(
+                    fechaActualizacion = obtenerFechaActual()
+                )
+            } catch (cancelada: CancellationException) {
+                throw cancelada
+            } catch (error: Exception) {
+                _operacion.value = OperacionUiState.Fallida(
+                    error.message ?: "No se pudo eliminar la actividad."
+                )
+            }
+        }
+    }
+
+    fun refrescarDesdeServidor() {
+
+        if (actualizacionJob?.isActive == true) {
+            return
+        }
+
+        actualizacionJob = viewModelScope.launch {
+            _operacion.value = OperacionUiState.EnCurso
+
+            try {
+                repository.refrescarDesdeServidor()
+
+                _operacion.value = OperacionUiState.Exitosa(
+                    fechaActualizacion = obtenerFechaActual()
+                )
+
+            } catch (cancelada: CancellationException) {
+                throw cancelada
+
+            } catch (error: Exception) {
+                _operacion.value =
+                    OperacionUiState.Fallida(
+                        error.message
+                            ?: "No se pudieron actualizar las actividades."
+                    )
+            }
         }
     }
 
@@ -122,7 +189,7 @@ class ActividadesViewModel(
     }
 
     fun reintentar() {
-        textoBusqueda.value = textoBusqueda.value
+        refrescarDesdeServidor()
     }
 
     private fun ejecutarOperacion(
@@ -135,9 +202,13 @@ class ActividadesViewModel(
             try {
                 operacion()
 
-                _operacion.value = OperacionUiState.Exitosa
+                _operacion.value = OperacionUiState.Exitosa(
+                    fechaActualizacion = obtenerFechaActual()
+                )
+
             } catch (cancelada: CancellationException) {
                 throw cancelada
+
             } catch (error: Exception) {
                 _operacion.value =
                     OperacionUiState.Fallida(
@@ -145,6 +216,17 @@ class ActividadesViewModel(
                     )
             }
         }
+    }
+
+    private fun obtenerFechaActual(): String {
+        val formato = SimpleDateFormat(
+            "dd/MM/yyyy HH:mm",
+            Locale.getDefault()
+        )
+
+        formato.timeZone = java.util.TimeZone.getTimeZone("America/Bogota")
+
+        return formato.format(Date())
     }
 
     private fun ordenarActividades(

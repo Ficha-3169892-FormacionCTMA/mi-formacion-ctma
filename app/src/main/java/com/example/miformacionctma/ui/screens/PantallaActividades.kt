@@ -23,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -39,6 +40,7 @@ import com.example.miformacionctma.ui.components.SeccionAgile
 import com.example.miformacionctma.ui.components.SeccionPresentacion
 import com.example.miformacionctma.ui.components.TarjetaActividad
 import com.example.miformacionctma.ui.state.ListadoUiState
+import com.example.miformacionctma.ui.state.OperacionUiState
 import com.example.miformacionctma.ui.theme.MiFormacionCTMATheme
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
 
@@ -50,6 +52,11 @@ fun ActividadesRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val busqueda by viewModel.busqueda.collectAsStateWithLifecycle()
+    val operacion by viewModel.operacion.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.refrescarDesdeServidor()
+    }
 
     when (val state = uiState) {
 
@@ -69,7 +76,10 @@ fun ActividadesRoute(
                 busqueda = busqueda,
                 onBuscar = viewModel::cambiarBusqueda,
                 onActividadClick = onActividadClick,
-                onCrearClick = onCrearClick
+                onCrearClick = onCrearClick,
+                onActualizar = viewModel::refrescarDesdeServidor,
+                actualizando = operacion is OperacionUiState.EnCurso,
+                operacion = operacion
             )
         }
 
@@ -89,7 +99,10 @@ fun ContenidoAdaptable(
     busqueda: String = "",
     onBuscar: (String) -> Unit = {},
     onActividadClick: (Long) -> Unit = {},
-    onCrearClick: () -> Unit = {}
+    onCrearClick: () -> Unit = {},
+    onActualizar: () -> Unit = {},
+    actualizando: Boolean = false,
+    operacion: OperacionUiState = OperacionUiState.Inactiva
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -104,7 +117,10 @@ fun ContenidoAdaptable(
                     busqueda = busqueda,
                     onBuscar = onBuscar,
                     onActividadClick = onActividadClick,
-                    onCrearClick = onCrearClick
+                    onCrearClick = onCrearClick,
+                    onActualizar = onActualizar,
+                    actualizando = actualizando,
+                    operacion = operacion
                 )
 
             } else {
@@ -141,7 +157,10 @@ fun PantallaActividades(
     busqueda: String = "",
     onBuscar: (String) -> Unit = {},
     onActividadClick: (Long) -> Unit = {},
-    onCrearClick: () -> Unit = {}
+    onCrearClick: () -> Unit = {},
+    onActualizar: () -> Unit = {},
+    actualizando: Boolean = false,
+    operacion: OperacionUiState = OperacionUiState.Inactiva
 ) {
     val urgentes =
         ReglasActividad
@@ -206,6 +225,54 @@ fun PantallaActividades(
 
                 item {
                     EncabezadoActividades()
+                }
+
+                item {
+                    Button(
+                        onClick = onActualizar,
+                        enabled = !actualizando,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            if (actualizando) {
+                                "Actualizando..."
+                            } else {
+                                "Actualizar desde servidor"
+                            }
+                        )
+                    }
+                }
+
+                when (operacion) {
+
+                    is OperacionUiState.Exitosa -> {
+                        item {
+                            Text(
+                                text = "Actividades actualizadas correctamente.",
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
+                        item {
+                            Text(
+                                text = "Última actualización: ${operacion.fechaActualizacion}",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+
+                    is OperacionUiState.Fallida -> {
+                        item {
+                            Text(
+                                text = operacion.mensaje,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+
+                    else -> Unit
                 }
 
                 item {

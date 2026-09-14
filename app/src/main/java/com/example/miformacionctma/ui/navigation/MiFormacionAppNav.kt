@@ -28,7 +28,8 @@ import com.example.miformacionctma.ui.state.FormularioActividadUiState
 import com.example.miformacionctma.ui.state.ListadoUiState
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModelFactory
-
+import com.example.miformacionctma.data.remote.RemoteActividadDataSource
+import com.example.miformacionctma.data.remote.RetrofitInstance
 @Composable
 fun MiFormacionAppNav() {
     val navController = rememberNavController()
@@ -38,9 +39,16 @@ fun MiFormacionAppNav() {
         AppDatabase.getInstance(context)
     }
 
+    val remote = remember {
+        RemoteActividadDataSource(
+            RetrofitInstance.api
+        )
+    }
+
     val repository = remember(database) {
         ActividadRepositoryImpl(
-            database.actividadDao()
+            database.actividadDao(),
+            remote
         )
     }
 
@@ -138,6 +146,15 @@ fun MiFormacionAppNav() {
                     }
                 },
                 onCrearClick = {
+                    actividadesViewModel.limpiarOperacion()
+                    formTitulo = ""
+                    formDescripcion = ""
+                    formFecha = ""
+                    formPrioridad = Prioridad.MEDIA
+                    formProgreso = 0
+                    formTituloTocado = false
+                    formDescripcionTocado = false
+                    formFechaTocado = false
                     navController.navigate(
                         Destino.Crear.ruta
                     ) {
@@ -180,11 +197,7 @@ fun MiFormacionAppNav() {
 
                         val nuevaActividad =
                             ActividadFormativa(
-                                id = (
-                                        actividades.maxOfOrNull {
-                                            it.id
-                                        } ?: 0L
-                                        ) + 1L,
+                                id = 0L,
                                 titulo = formTitulo.trim(),
                                 descripcion = formDescripcion.trim(),
                                 fecha = formFecha.trim(),
@@ -222,6 +235,86 @@ fun MiFormacionAppNav() {
             PantallaDetalleActividad(
                 actividadId = id,
                 actividades = actividades,
+                onVolver = {
+                    navController.popBackStack()
+                },
+                onEditarClick = { editarId ->
+                    actividadesViewModel.limpiarOperacion()
+                    val act = actividades.find { it.id == editarId }
+                    if (act != null) {
+                        formTitulo = act.titulo
+                        formDescripcion = act.descripcion
+                        formFecha = act.fecha
+                        formPrioridad = act.prioridad
+                        formProgreso = act.progreso
+                        formTituloTocado = false
+                        formDescripcionTocado = false
+                        formFechaTocado = false
+                    }
+                    navController.navigate(Destino.Editar.crearRuta(editarId)) {
+                        launchSingleTop = true
+                    }
+                },
+                onEliminarClick = { eliminarId ->
+                    actividadesViewModel.eliminar(eliminarId)
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = Destino.Editar.ruta,
+            arguments = listOf(
+                navArgument("actividadId") {
+                    type = NavType.LongType
+                }
+            )
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getLong("actividadId") ?: -1L
+
+            PantallaCrearActividad(
+                uiState = uiStateFormulario,
+                operacionUiState = operacionState,
+                esEdicion = true,
+
+                onTituloChange = {
+                    formTitulo = it
+                    formTituloTocado = true
+                },
+
+                onDescripcionChange = {
+                    formDescripcion = it
+                    formDescripcionTocado = true
+                },
+
+                onFechaChange = {
+                    formFecha = it
+                    formFechaTocado = true
+                },
+
+                onPrioridadChange = {
+                    formPrioridad = it
+                },
+
+                onProgresoChange = {
+                    formProgreso = it
+                },
+
+                onGuardarClick = {
+                    if (uiStateFormulario.puedeGuardar) {
+                        val actividadEditada = ActividadFormativa(
+                            id = id,
+                            titulo = formTitulo.trim(),
+                            descripcion = formDescripcion.trim(),
+                            fecha = formFecha.trim(),
+                            progreso = formProgreso,
+                            diasRestantes = 7,
+                            prioridad = formPrioridad
+                        )
+                        actividadesViewModel.guardar(actividadEditada)
+                    }
+                },
+
                 onVolver = {
                     navController.popBackStack()
                 }

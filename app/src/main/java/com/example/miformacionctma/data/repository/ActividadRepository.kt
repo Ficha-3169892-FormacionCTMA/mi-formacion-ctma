@@ -12,4 +12,18 @@ interface ActividadRepository {
     suspend fun guardar(actividad: ActividadFormativa)
 
     suspend fun eliminar(id: Long)
+
+    suspend fun refrescarDesdeServidor()
+
+    suspend fun obtenerDesdeServidor(id: Long): ActividadFormativa
+
+    suspend fun crearEnServidor(
+        actividad: ActividadFormativa
+    ): ActividadFormativa
+
+    suspend fun actualizarEnServidor(
+        actividad: ActividadFormativa
+    ): ActividadFormativa
+
+    suspend fun eliminarDelServidor(id: Long)
 }

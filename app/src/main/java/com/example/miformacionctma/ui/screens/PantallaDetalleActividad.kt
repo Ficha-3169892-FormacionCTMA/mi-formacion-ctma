@@ -24,15 +24,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaDetalleActividad(
     actividadId: Long,
     actividades: List<ActividadFormativa>,
-    onVolver: () -> Unit
+    onVolver: () -> Unit,
+    onEditarClick: (Long) -> Unit = {},
+    onEliminarClick: (Long) -> Unit = {}
 ) {
     val actividad = actividades.find { it.id == actividadId }
+    var mostrarConfirmarEliminar by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -44,6 +55,22 @@ fun PantallaDetalleActividad(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver"
                         )
+                    }
+                },
+                actions = {
+                    if (actividad != null) {
+                        IconButton(onClick = { onEditarClick(actividad.id) }) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Editar Actividad"
+                            )
+                        }
+                        IconButton(onClick = { mostrarConfirmarEliminar = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Eliminar Actividad"
+                            )
+                        }
                     }
                 }
             )
@@ -98,6 +125,29 @@ fun PantallaDetalleActividad(
                     LinearProgressIndicator(
                         progress = { actividad.progreso / 100f },
                         modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                if (mostrarConfirmarEliminar) {
+                    AlertDialog(
+                        onDismissRequest = { mostrarConfirmarEliminar = false },
+                        title = { Text("Eliminar Actividad") },
+                        text = { Text("¿Estás seguro de que deseas eliminar esta actividad? Esta acción no se puede deshacer.") },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    mostrarConfirmarEliminar = false
+                                    onEliminarClick(actividad.id)
+                                }
+                            ) {
+                                Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { mostrarConfirmarEliminar = false }) {
+                                Text("Cancelar")
+                            }
+                        }
                     )
                 }
             } else {
