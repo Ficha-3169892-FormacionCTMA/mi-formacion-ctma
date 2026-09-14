@@ -1,20 +1,31 @@
-# Android Studio Default
+# Gradle
+.gradle/
+build/
+
+# IntelliJ / Android Studio
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
+*.iws
+*.ipr
+out/
 
 # Android Studio local device state
 /.idea/deploymentTargetSelector.xml
 /.idea/deviceManager.xml
+
+# Local configuration
+local.properties
+.DS_Store
+
+# Captures and logs
+/captures/
+*.log
+
+# Keystore / Secrets
+*.jks
+*.keystore
+*.p12
+google-services.json
+
+# NOTE: app/schemas/ is NOT ignored here.
+# As per Room 3 guidelines, schemas must be versioned for migration testing.

@@ -28,7 +28,7 @@ import com.example.miformacionctma.model.Prioridad
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaDetalleActividad(
-    actividadId: Long,
+    actividadId: String,
     actividades: List<ActividadFormativa>,
     onVolver: () -> Unit
 ) {
