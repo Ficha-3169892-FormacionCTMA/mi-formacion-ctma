@@ -12,8 +12,8 @@ class ReglasActividadTest {
     @Test
     fun promedioProgreso_calculaCorrectamente() {
         val actividades = listOf(
-            ActividadFormativa(1, "A", "Sin descripción", "2026-09-01", 100, 0, Prioridad.ALTA),
-            ActividadFormativa(2, "B", "Sin descripción", "2026-09-02", 50, 0, Prioridad.MEDIA)
+            ActividadFormativa("1", "A", "Sin descripción", "2026-09-01", 100, 0, Prioridad.ALTA),
+            ActividadFormativa("2", "B", "Sin descripción", "2026-09-02", 50, 0, Prioridad.MEDIA)
         )
 
         val promedio = ReglasActividad.promedioProgreso(actividades)
@@ -24,9 +24,9 @@ class ReglasActividadTest {
     @Test
     fun actividadesUrgentes_filtraCorrectamente() {
         val actividades = listOf(
-            ActividadFormativa(1, "Urgente", "Sin descripción", "2026-09-01", 20, 1, Prioridad.ALTA),
-            ActividadFormativa(2, "Normal", "Sin descripción", "2026-09-05", 20, 5, Prioridad.MEDIA),
-            ActividadFormativa(3, "Completada", "Sin descripción", "2026-09-01", 100, 1, Prioridad.BAJA)
+            ActividadFormativa("1", "Urgente", "Sin descripción", "2026-09-01", 20, 1, Prioridad.ALTA),
+            ActividadFormativa("2", "Normal", "Sin descripción", "2026-09-05", 20, 5, Prioridad.MEDIA),
+            ActividadFormativa("3", "Completada", "Sin descripción", "2026-09-01", 100, 1, Prioridad.BAJA)
         )
 
         val urgentes = ReglasActividad.actividadesUrgentes(actividades)
@@ -38,7 +38,7 @@ class ReglasActividadTest {
     @Test
     fun estadoActividad_devuelvePendiente() {
         val actividad = ActividadFormativa(
-            id = 1,
+            id = "1",
             titulo = "Pendiente",
             descripcion = "Sin descripción",
             fecha = "2026-09-01",
