@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "ec1947ac733b1b2a8a60a084de6786c6",
+    "identityHash": "74a6b1a14473dc6cae05cd27500dad7d",
     "entities": [
       {
         "tableName": "actividades",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `titulo` TEXT NOT NULL, `descripcion` TEXT NOT NULL, `fecha` TEXT NOT NULL, `progreso` INTEGER NOT NULL, `diasRestantes` INTEGER NOT NULL, `prioridad` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `titulo` TEXT NOT NULL, `descripcion` TEXT NOT NULL, `fecha` TEXT NOT NULL, `progreso` INTEGER NOT NULL, `prioridad` TEXT NOT NULL, `competenciaId` INTEGER, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -39,20 +39,54 @@
             "notNull": true
           },
           {
-            "fieldPath": "diasRestantes",
-            "columnName": "diasRestantes",
+            "fieldPath": "prioridad",
+            "columnName": "prioridad",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "competenciaId",
+            "columnName": "competenciaId",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_actividades_competenciaId",
+            "unique": false,
+            "columnNames": [
+              "competenciaId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_actividades_competenciaId` ON `${TABLE_NAME}` (`competenciaId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "competencias",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "prioridad",
-            "columnName": "prioridad",
+            "fieldPath": "nombre",
+            "columnName": "nombre",
             "affinity": "TEXT",
             "notNull": true
           }
         ],
         "primaryKey": {
-          "autoGenerate": false,
+          "autoGenerate": true,
           "columnNames": [
             "id"
           ]
@@ -61,7 +95,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ec1947ac733b1b2a8a60a084de6786c6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '74a6b1a14473dc6cae05cd27500dad7d')"
     ]
   }
 }

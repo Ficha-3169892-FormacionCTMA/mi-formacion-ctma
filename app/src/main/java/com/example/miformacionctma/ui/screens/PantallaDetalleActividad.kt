@@ -30,6 +30,7 @@ import com.example.miformacionctma.model.Prioridad
 fun PantallaDetalleActividad(
     actividadId: Long,
     actividades: List<ActividadFormativa>,
+    competenciaNombre: String?,
     onVolver: () -> Unit
 ) {
     val actividad = actividades.find { it.id == actividadId }
@@ -83,11 +84,11 @@ fun PantallaDetalleActividad(
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
-                        text = "Días restantes: ${actividad.diasRestantes}",
+                        text = "Prioridad: $textoPrioridad",
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
-                        text = "Prioridad: $textoPrioridad",
+                        text = "Competencia: ${competenciaNombre ?: "Sin competencia"}",
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(

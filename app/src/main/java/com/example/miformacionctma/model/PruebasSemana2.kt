@@ -9,7 +9,6 @@ object PruebasSemana2 {
             descripcion = "Intento de registro sin título",
             fecha = "2026-09-15",
             progreso = 50,
-            diasRestantes = 3,
             prioridad = Prioridad.MEDIA
         )
 
@@ -23,7 +22,6 @@ object PruebasSemana2 {
             descripcion = "Progreso fuera de rango",
             fecha = "2026-09-10",
             progreso = 120,
-            diasRestantes = 3,
             prioridad = Prioridad.MEDIA
         )
 
@@ -37,7 +35,6 @@ object PruebasSemana2 {
             descripcion = "Actividad con plazo expirado",
             fecha = "2026-08-01",
             progreso = 80,
-            diasRestantes = -1,
             prioridad = Prioridad.ALTA
         )
 
@@ -51,7 +48,6 @@ object PruebasSemana2 {
             descripcion = "Actividad entregada al 100%",
             fecha = "2026-08-20",
             progreso = 100,
-            diasRestantes = -2,
             prioridad = Prioridad.MEDIA
         )
 
@@ -70,7 +66,6 @@ object PruebasSemana2 {
                 descripcion = "Introducción al lenguaje",
                 fecha = "2026-09-05",
                 progreso = 10,
-                diasRestantes = 5,
                 prioridad = Prioridad.BAJA
             )
         )
@@ -80,9 +75,9 @@ object PruebasSemana2 {
 
         // Escenario 7: ordenamiento de actividades
         val listaParaOrdenar = listOf(
-            ActividadFormativa(6L, "Normal Baja", "Prioridad baja", "2026-09-12", 0, 5, Prioridad.BAJA),
-            ActividadFormativa(7L, "Actividad Vencida", "Vencida", "2026-08-10", 20, -1, Prioridad.MEDIA),
-            ActividadFormativa(8L, "Normal Alta", "Prioridad alta", "2026-09-02", 10, 2, Prioridad.ALTA)
+            ActividadFormativa(6L, "Normal Baja", "Prioridad baja", "2026-09-12", 0, Prioridad.BAJA),
+            ActividadFormativa(7L, "Actividad Vencida", "Vencida", "2026-08-10", 20, Prioridad.MEDIA),
+            ActividadFormativa(8L, "Normal Alta", "Prioridad alta", "2026-09-02", 10, Prioridad.ALTA)
         )
 
         println("\nEscenario 7 (Ordenadas):")

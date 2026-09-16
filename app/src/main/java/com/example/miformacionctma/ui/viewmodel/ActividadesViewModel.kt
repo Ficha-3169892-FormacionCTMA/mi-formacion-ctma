@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.miformacionctma.data.repository.ActividadRepository
 import com.example.miformacionctma.data.repository.PreferenciasRepository
 import com.example.miformacionctma.model.ActividadFormativa
+import com.example.miformacionctma.model.Competencia
 import com.example.miformacionctma.model.ReglasActividad
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +21,14 @@ class ActividadesViewModel(
 
     val actividades: StateFlow<List<ActividadFormativa>> =
         repository.observarActividades()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = emptyList()
+            )
+
+    val competencias: StateFlow<List<Competencia>> =
+        repository.observarCompetencias()
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -76,6 +85,12 @@ class ActividadesViewModel(
         viewModelScope.launch {
             preferenciasRepository.guardarOrdenPorPrioridad(valor)
         }
+    }
+
+    suspend fun obtenerConCompetencia(
+        id: Long
+    ): Pair<ActividadFormativa, String?>? {
+        return repository.obtenerConCompetencia(id)
     }
 
     init {

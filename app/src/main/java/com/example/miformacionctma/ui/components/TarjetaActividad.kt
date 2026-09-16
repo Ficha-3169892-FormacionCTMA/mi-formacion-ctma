@@ -104,7 +104,6 @@ private fun TarjetaActividadPreviewNormal() {
                 descripcion = "Repasar funciones y clases",
                 fecha = "2026-09-02",
                 progreso = 65,
-                diasRestantes = 3,
                 prioridad = Prioridad.ALTA
             )
         )
@@ -122,7 +121,6 @@ private fun TarjetaActividadPreviewTituloLargo() {
                 descripcion = "Comprobar que el diseño no se rompa con textos extensos",
                 fecha = "2026-09-06",
                 progreso = 20,
-                diasRestantes = 7,
                 prioridad = Prioridad.MEDIA
             )
         )
@@ -140,7 +138,6 @@ private fun TarjetaActividadPreviewCompletada() {
                 descripcion = "Debe mostrar el estado Completada",
                 fecha = "2026-08-29",
                 progreso = 100,
-                diasRestantes = 0,
                 prioridad = Prioridad.MEDIA
             )
         )
@@ -158,7 +155,6 @@ private fun TarjetaActividadPreviewSinIniciar() {
                 descripcion = "Debe mostrar el estado Pendiente",
                 fecha = "2026-09-09",
                 progreso = 0,
-                diasRestantes = 10,
                 prioridad = Prioridad.BAJA
             )
         )

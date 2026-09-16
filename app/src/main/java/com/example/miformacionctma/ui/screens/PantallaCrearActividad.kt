@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.miformacionctma.model.Competencia
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.ui.state.FormularioActividadUiState
 
@@ -39,11 +40,13 @@ import com.example.miformacionctma.ui.state.FormularioActividadUiState
 @Composable
 fun PantallaCrearActividad(
     uiState: FormularioActividadUiState,
+    competencias: List<Competencia>,
     onTituloChange: (String) -> Unit,
     onDescripcionChange: (String) -> Unit,
     onFechaChange: (String) -> Unit,
     onPrioridadChange: (Prioridad) -> Unit,
     onProgresoChange: (Int) -> Unit,
+    onCompetenciaChange: (Long?) -> Unit,
     onGuardarClick: () -> Unit,
     onVolver: () -> Unit
 ) {
@@ -129,6 +132,7 @@ fun PantallaCrearActividad(
                 modifier = Modifier.fillMaxWidth()
             )
 
+
             // CAMPO: PRIORIDAD
             Text(
                 text = "Prioridad",
@@ -150,6 +154,28 @@ fun PantallaCrearActividad(
                                     Prioridad.ALTA -> "Alta"
                                 }
                             )
+                        }
+                    )
+                }
+            }
+
+            // CAMPO: COMPETENCIA
+            Text(
+                text = "Competencia",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                competencias.forEach { competencia ->
+                    FilterChip(
+                        selected = uiState.competenciaId == competencia.id,
+                        onClick = {
+                            onCompetenciaChange(competencia.id)
+                        },
+                        label = {
+                            Text(competencia.nombre)
                         }
                     )
                 }

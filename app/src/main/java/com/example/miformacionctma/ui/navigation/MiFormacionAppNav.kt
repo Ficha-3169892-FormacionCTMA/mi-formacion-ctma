@@ -5,6 +5,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,14 +38,16 @@ fun MiFormacionAppNav(
             application.preferenciasRepository
         )
     )
-    val actividades by viewModel.actividadesOrdenadas.collectAsState()
     val ordenarPorPrioridad by viewModel.ordenarPorPrioridad.collectAsState()
+    val actividades by viewModel.actividadesOrdenadas.collectAsState()
+    val competencias by viewModel.competencias.collectAsState()
 
     // Estado del formulario de creación preservado en rotaciones
     var formTitulo by rememberSaveable { mutableStateOf("") }
     var formDescripcion by rememberSaveable { mutableStateOf("") }
     var formFecha by rememberSaveable { mutableStateOf("") }
     var formPrioridad by rememberSaveable { mutableStateOf(Prioridad.MEDIA) }
+    var formCompetenciaId by rememberSaveable { mutableStateOf<Long?>(null) }
     var formProgreso by rememberSaveable { mutableIntStateOf(0) }
 
     // Computación de errores usando ReglasActividad
@@ -68,6 +71,7 @@ fun MiFormacionAppNav(
         fechaError = fechaError,
         fechaTocado = formFechaTocado,
         prioridad = formPrioridad,
+        competenciaId = formCompetenciaId,
         progreso = formProgreso
     )
 
@@ -98,6 +102,7 @@ fun MiFormacionAppNav(
         composable(Destino.Crear.ruta) {
             PantallaCrearActividad(
                 uiState = uiStateFormulario,
+                competencias = competencias,
                 onTituloChange = {
                     formTitulo = it
                     formTituloTocado = true
@@ -111,6 +116,9 @@ fun MiFormacionAppNav(
                     formFechaTocado = true
                 },
                 onPrioridadChange = { formPrioridad = it },
+                onCompetenciaChange = { competenciaId ->
+                    formCompetenciaId = competenciaId
+                },
                 onProgresoChange = { formProgreso = it },
                 onGuardarClick = {
                     if (uiStateFormulario.puedeGuardar) {
@@ -120,7 +128,7 @@ fun MiFormacionAppNav(
                             descripcion = formDescripcion.trim(),
                             fecha = formFecha.trim(),
                             progreso = formProgreso,
-                            diasRestantes = 7,
+                            competenciaId = formCompetenciaId,
                             prioridad = formPrioridad
                         )
 
@@ -131,6 +139,7 @@ fun MiFormacionAppNav(
                         formDescripcion = ""
                         formFecha = ""
                         formPrioridad = Prioridad.MEDIA
+                        formCompetenciaId = null
                         formProgreso = 0
 
                         formTituloTocado = false
@@ -154,9 +163,15 @@ fun MiFormacionAppNav(
             )
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getLong("actividadId") ?: -1L
+
+            val resultado by produceState<Pair<ActividadFormativa, String?>?>(initialValue = null, id) {
+                value = viewModel.obtenerConCompetencia(id)
+            }
+
             PantallaDetalleActividad(
                 actividadId = id,
                 actividades = actividades,
+                competenciaNombre = resultado?.second,
                 onVolver = {
                     navController.popBackStack()
                 }

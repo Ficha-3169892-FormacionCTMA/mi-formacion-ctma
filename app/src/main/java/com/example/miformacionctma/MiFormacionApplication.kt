@@ -18,7 +18,10 @@ class MiFormacionApplication : Application() {
     }
 
     val actividadRepository: ActividadRepository by lazy {
-        RoomActividadRepository(database.actividadDao())
+        RoomActividadRepository(
+            database.actividadDao(),
+            database.competenciaDao()
+        )
     }
 
     val preferenciasRepository: PreferenciasRepository by lazy {

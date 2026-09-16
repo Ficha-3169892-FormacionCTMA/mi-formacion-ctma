@@ -8,6 +8,6 @@ data class ActividadFormativa(
     val descripcion: String = "",
     val fecha: String,
     val progreso: Int,
-    val diasRestantes: Int,
-    val prioridad: Prioridad
+    val prioridad: Prioridad,
+    val competenciaId: Long? = null
 )

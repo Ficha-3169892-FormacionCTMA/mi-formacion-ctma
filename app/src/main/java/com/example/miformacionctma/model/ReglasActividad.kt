@@ -1,5 +1,10 @@
 package com.example.miformacionctma.model
 
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 object ReglasActividad {
     // - Validaciones de campos para el formulario de la semana 4) -
 
@@ -22,14 +27,34 @@ object ReglasActividad {
     // Fecha obligatoria con formato YYYY-MM-DD
     fun validarFecha(valor: String): String? {
         val limpio = valor.trim()
+
         if (limpio.isEmpty()) return "La fecha es obligatoria"
-        val regexFecha = Regex("""^\d{4}-\d{2}-\d{2}$""")
-        return if (!limpio.matches(regexFecha)) "Formato inválido (AAAA-MM-DD)" else null
+
+        val formato = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        formato.isLenient = false
+
+        return try {
+            formato.parse(limpio)
+            null
+        } catch (e: ParseException) {
+            "Fecha inválida (AAAA-MM-DD)"
+        }
     }
 
     // Progreso: entre 0 y 100
     fun validarProgreso(valor: Int): String? {
         return if (valor !in 0..100) "El progreso debe estar entre 0 y 100" else null
+    }
+
+    // Días restantes: calculado automáticamente
+    private fun diasRestantes(actividad: ActividadFormativa): Long {
+        val formato = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        formato.isLenient = false
+
+        val fechaLimite = formato.parse(actividad.fecha) ?: return 0L
+        val hoy = formato.parse(formato.format(Date())) ?: return 0L
+
+        return (fechaLimite.time - hoy.time) / (1000L * 60 * 60 * 24)
     }
 
     // - Validaciones de semanas anteriores -
@@ -46,14 +71,14 @@ object ReglasActividad {
     fun estadoActividad(actividad: ActividadFormativa): String {
         return when {
             actividad.progreso >= 100 -> "Completada"
-            actividad.diasRestantes < 0 -> "Vencida"
+            diasRestantes(actividad) < 0 -> "Vencida"
             actividad.progreso > 0 -> "En proceso"
             else -> "Pendiente"
         }
     }
 
     fun actividadesUrgentes(actividades: List<ActividadFormativa>): List<ActividadFormativa> {
-        return actividades.filter { it.progreso < 100 && it.diasRestantes <= 2 }
+        return actividades.filter { it.progreso < 100 && diasRestantes(it) <= 2 }
     }
 
     fun promedioProgreso(actividades: List<ActividadFormativa>): Double {
@@ -80,7 +105,7 @@ object ReglasActividad {
                 // Prioridad alta primero
                 { -it.prioridad.ordinal },
                 // Menos días primero
-                { it.diasRestantes }
+                { diasRestantes(it) }
             )
         )
     }

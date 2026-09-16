@@ -13,6 +13,7 @@ data class FormularioActividadUiState(
     val fechaError: String? = null,
     val fechaTocado: Boolean = false,
     val prioridad: Prioridad = Prioridad.MEDIA,
+    val competenciaId: Long? = null,
     val progreso: Int = 0,
     val progresoError: String? = null
 ) {

@@ -11,7 +11,6 @@ object ActividadesDemo {
             descripcion = "Crear la interfaz principal usando Jetpack Compose y Material 3.",
             fecha = "2026-09-02",
             progreso = 65,
-            diasRestantes = 3,
             prioridad = Prioridad.ALTA
         ),
         ActividadFormativa(
@@ -20,7 +19,6 @@ object ActividadesDemo {
             descripcion = "Implementar TarjetaActividad como composable reutilizable y desacoplado.",
             fecha = "2026-09-04",
             progreso = 40,
-            diasRestantes = 5,
             prioridad = Prioridad.ALTA
         ),
         ActividadFormativa(
@@ -29,7 +27,6 @@ object ActividadesDemo {
             descripcion = "Comprobar que el diseño no se recorte cuando el texto sea demasiado extenso.",
             fecha = "2026-09-06",
             progreso = 20,
-            diasRestantes = 7,
             prioridad = Prioridad.MEDIA
         ),
         ActividadFormativa(
@@ -38,7 +35,6 @@ object ActividadesDemo {
             descripcion = "Mostrar un mensaje comprensible cuando no existan actividades registradas.",
             fecha = "2026-08-29",
             progreso = 100,
-            diasRestantes = 0,
             prioridad = Prioridad.MEDIA
         ),
         ActividadFormativa(
@@ -47,7 +43,6 @@ object ActividadesDemo {
             descripcion = "Centralizar colores, tamaños y estilos del proyecto para evitar duplicación.",
             fecha = "2026-09-01",
             progreso = 55,
-            diasRestantes = 2,
             prioridad = Prioridad.ALTA
         ),
         ActividadFormativa(
@@ -56,7 +51,6 @@ object ActividadesDemo {
             descripcion = "Probar escalado de texto, contraste y tamaños táctiles adecuados para distintos usuarios.",
             fecha = "2026-09-05",
             progreso = 15,
-            diasRestantes = 6,
             prioridad = Prioridad.MEDIA
         ),
         ActividadFormativa(
@@ -65,7 +59,6 @@ object ActividadesDemo {
             descripcion = "Usar key = { it.id } para mejorar la recomposición y mantener el estado de los elementos.",
             fecha = "2026-08-30",
             progreso = 80,
-            diasRestantes = 1,
             prioridad = Prioridad.ALTA
         ),
         ActividadFormativa(
@@ -74,7 +67,6 @@ object ActividadesDemo {
             descripcion = "Cambiar entre lista y cuadrícula según el ancho disponible del dispositivo.",
             fecha = "2026-09-03",
             progreso = 30,
-            diasRestantes = 4,
             prioridad = Prioridad.MEDIA
         ),
         ActividadFormativa(
@@ -83,7 +75,6 @@ object ActividadesDemo {
             descripcion = "Registrar hallazgos encontrados durante las pruebas y las correcciones realizadas.",
             fecha = "2026-09-07",
             progreso = 10,
-            diasRestantes = 8,
             prioridad = Prioridad.BAJA
         ),
         ActividadFormativa(
@@ -92,7 +83,6 @@ object ActividadesDemo {
             descripcion = "Verificar funcionamiento, capturas, commits y explicación técnica del incremento desarrollado.",
             fecha = "2026-09-09",
             progreso = 0,
-            diasRestantes = 10,
             prioridad = Prioridad.MEDIA
         )
     )
