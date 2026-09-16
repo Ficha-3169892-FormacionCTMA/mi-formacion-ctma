@@ -1,12 +1,12 @@
 package com.example.miformacionctma.ui.actividades
 
-import com.example.miformacionctma.data.local.entity.ActividadEntity
+import com.example.miformacionctma.model.ActividadFormativa
 
 // Estado de la lista principal de actividades (Consulta)
 sealed interface ListadoUiState {
     data object Cargando : ListadoUiState
     data object Vacio : ListadoUiState
-    data class Contenido(val actividades: List<ActividadEntity>) : ListadoUiState
+    data class Contenido(val actividades: List<ActividadFormativa>) : ListadoUiState
     data class Error(val mensaje: String) : ListadoUiState
 }
 

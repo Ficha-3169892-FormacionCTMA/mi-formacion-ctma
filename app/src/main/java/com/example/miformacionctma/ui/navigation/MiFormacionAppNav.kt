@@ -19,8 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.miformacionctma.data.local.entity.ActividadEntity
-import com.example.miformacionctma.data.local.entity.toActividadFormativa
+import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.model.ReglasActividad
 import com.example.miformacionctma.ui.actividades.ActividadViewModel
@@ -36,13 +35,12 @@ fun MiFormacionAppNav(
 ) {
     val navController = rememberNavController()
 
-    // Estado reactivo de la base de datos
+    // Estado reactivo de la base de datos (emite List<ActividadFormativa>)
     val listadoState by viewModel.listadoUiState.collectAsStateWithLifecycle()
 
     // Lista mapeada a modelo UI para pantallas secundarias
     val actividadesFormativas = (listadoState as? ListadoUiState.Contenido)
         ?.actividades
-        ?.map { it.toActividadFormativa() }
         ?: emptyList()
 
     // Estado del formulario preservado en rotaciones
@@ -92,7 +90,7 @@ fun MiFormacionAppNav(
                 }
                 is ListadoUiState.Contenido -> {
                     PantallaActividades(
-                        actividades = estado.actividades.map { it.toActividadFormativa() },
+                        actividades = estado.actividades,
                         onActividadClick = { id ->
                             navController.navigate(Destino.Detalle.crearRuta(id)) {
                                 launchSingleTop = true
@@ -166,12 +164,14 @@ fun MiFormacionAppNav(
                 onProgresoChange = { formProgreso = it },
                 onGuardarClick = {
                     if (uiStateFormulario.puedeGuardar) {
-                        val nuevaActividad = ActividadEntity(
+                        val nuevaActividad = ActividadFormativa(
+                            id = System.currentTimeMillis(),
                             titulo = formTitulo,
                             descripcion = formDescripcion,
                             fecha = formFecha,
                             prioridad = formPrioridad,
-                            progreso = formProgreso
+                            progreso = formProgreso,
+                            diasRestantes = 0
                         )
 
                         viewModel.agregarActividad(nuevaActividad)
@@ -213,12 +213,12 @@ fun MiFormacionAppNav(
                 },
                 onEliminarClick = { idEliminar ->
                     val estadoContenido = listadoState as? ListadoUiState.Contenido
-                    val entidadAEliminar = estadoContenido?.actividades?.find {
-                        it.id.toLong() == idEliminar
+                    val actividadAEliminar = estadoContenido?.actividades?.find {
+                        it.id == idEliminar
                     }
 
-                    if (entidadAEliminar != null) {
-                        viewModel.eliminarActividad(entidadAEliminar)
+                    if (actividadAEliminar != null) {
+                        viewModel.eliminarActividad(actividadAEliminar)
                         navController.popBackStack()
                     }
                 },
@@ -239,7 +239,7 @@ fun MiFormacionAppNav(
         ) { backStackEntry ->
             val idEditar = backStackEntry.arguments?.getLong("actividadId") ?: -1L
             val estadoContenido = listadoState as? ListadoUiState.Contenido
-            val actividadExistente = estadoContenido?.actividades?.find { it.id.toLong() == idEditar }
+            val actividadExistente = estadoContenido?.actividades?.find { it.id == idEditar }
 
             // Precargar los datos de la actividad en los campos del formulario
             LaunchedEffect(actividadExistente) {

@@ -2,10 +2,8 @@ package com.example.miformacionctma.ui.actividades
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.miformacionctma.data.local.entity.ActividadEntity
 import com.example.miformacionctma.data.repository.ActividadRepository
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
+import com.example.miformacionctma.model.ActividadFormativa
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,10 +28,14 @@ class ActividadViewModel(
     private val _operacionUiState = MutableStateFlow<OperacionUiState>(OperacionUiState.Inactiva)
     val operacionUiState: StateFlow<OperacionUiState> = _operacionUiState.asStateFlow()
 
+    init {
+        sincronizarConServidor()
+    }
+
     val listadoUiState: StateFlow<ListadoUiState> = _queryBusqueda
         .debounce(300L)
         .flatMapLatest { query ->
-            repository.obtenerTodasLasActividades().map { lista: List<ActividadEntity> ->
+            repository.observeActividades().map { lista: List<ActividadFormativa> ->
                 val listaFiltrada = if (query.isBlank()) {
                     lista
                 } else {
@@ -51,7 +53,7 @@ class ActividadViewModel(
             }
         }
         .catch { e ->
-            emit(ListadoUiState.Error(e.message ?: "Error al consultar la base de datos"))
+            emit(ListadoUiState.Error(e.message ?: "Error al consultar los datos"))
         }
         .stateIn(
             scope = viewModelScope,
@@ -59,51 +61,37 @@ class ActividadViewModel(
             initialValue = ListadoUiState.Cargando
         )
 
+    fun sincronizarConServidor() {
+        viewModelScope.launch {
+            repository.refresh()
+        }
+    }
+
     fun actualizarBusqueda(nuevaQuery: String) {
         _queryBusqueda.value = nuevaQuery
     }
 
-    fun agregarActividad(actividad: ActividadEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _operacionUiState.value = OperacionUiState.EnCurso
-            try {
-                repository.insertarActividad(actividad)
-                _operacionUiState.value = OperacionUiState.Exitosa
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                _operacionUiState.value = OperacionUiState.Fallida(e.message ?: "Error al guardar")
-            }
-        }
-    }
-
-    fun actualizarActividad(actividad: ActividadEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _operacionUiState.value = OperacionUiState.EnCurso
-            try {
-                repository.actualizarActividad(actividad)
-                _operacionUiState.value = OperacionUiState.Exitosa
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                _operacionUiState.value = OperacionUiState.Fallida(e.message ?: "Error al actualizar")
-            }
-        }
-    }
-
-    fun eliminarActividad(actividad: ActividadEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                repository.eliminarActividad(actividad)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                _operacionUiState.value = OperacionUiState.Fallida(e.message ?: "Error al eliminar")
-            }
-        }
-    }
-
     fun reiniciarEstadoOperacion() {
         _operacionUiState.value = OperacionUiState.Inactiva
+    }
+
+    // --- Métodos CRUD utilizando ActividadFormativa ---
+
+    fun agregarActividad(actividad: ActividadFormativa) {
+        viewModelScope.launch {
+            repository.insertActividad(actividad)
+        }
+    }
+
+    fun actualizarActividad(actividad: ActividadFormativa) {
+        viewModelScope.launch {
+            repository.updateActividad(actividad)
+        }
+    }
+
+    fun eliminarActividad(actividad: ActividadFormativa) {
+        viewModelScope.launch {
+            repository.deleteActividad(actividad)
+        }
     }
 }
