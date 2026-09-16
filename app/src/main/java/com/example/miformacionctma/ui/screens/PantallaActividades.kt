@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -79,7 +80,9 @@ fun ContenidoAdaptable(
 fun PantallaActividades(
     actividades: List<ActividadFormativa>,
     onActividadClick: (Long) -> Unit = {},
-    onCrearClick: () -> Unit = {}
+    onCrearClick: () -> Unit = {},
+    ordenarPorPrioridad: Boolean = false,
+    onOrdenPorPrioridadChange: (Boolean) -> Unit = {}
 ) {
     // Estado para rastrear el texto de búsqueda
     var textoBusqueda by rememberSaveable { mutableStateOf("") }
@@ -129,6 +132,18 @@ fun PantallaActividades(
                     item { SeccionPresentacion(resumen = resumen) }
                     item { Spacer(modifier = Modifier.height(12.dp)) }
                     item { EncabezadoActividades() }
+
+                    item {
+                        FilterChip(
+                            selected = ordenarPorPrioridad,
+                            onClick = {
+                                onOrdenPorPrioridadChange(!ordenarPorPrioridad)
+                            },
+                            label = {
+                                Text("Ordenar por prioridad")
+                            }
+                        )
+                    }
 
                     // Componente de la Barra de Búsqueda
                     item {

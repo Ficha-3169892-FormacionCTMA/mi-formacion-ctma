@@ -24,6 +24,7 @@ import com.example.miformacionctma.ui.state.FormularioActividadUiState
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModelFactory
 
+
 @Composable
 fun MiFormacionAppNav(
     application: MiFormacionApplication
@@ -31,10 +32,13 @@ fun MiFormacionAppNav(
     val navController = rememberNavController()
 
     val viewModel: ActividadesViewModel = viewModel(
-        factory = ActividadesViewModelFactory(application.actividadRepository)
+        factory = ActividadesViewModelFactory(
+            application.actividadRepository,
+            application.preferenciasRepository
+        )
     )
-
-    val actividades by viewModel.actividades.collectAsState()
+    val actividades by viewModel.actividadesOrdenadas.collectAsState()
+    val ordenarPorPrioridad by viewModel.ordenarPorPrioridad.collectAsState()
 
     // Estado del formulario de creación preservado en rotaciones
     var formTitulo by rememberSaveable { mutableStateOf("") }
@@ -75,6 +79,8 @@ fun MiFormacionAppNav(
         composable(Destino.Lista.ruta) {
             PantallaActividades(
                 actividades = actividades,
+                ordenarPorPrioridad = ordenarPorPrioridad,
+                onOrdenPorPrioridadChange = viewModel::guardarOrdenPorPrioridad,
                 onActividadClick = { id ->
                     navController.navigate(Destino.Detalle.crearRuta(id)) {
                         launchSingleTop = true
