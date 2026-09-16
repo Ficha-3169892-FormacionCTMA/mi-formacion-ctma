@@ -1,19 +1,19 @@
 package com.example.miformacionctma.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.miformacionctma.domain.ActividadesDemo
+import com.example.miformacionctma.MiFormacionApplication
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.model.ReglasActividad
@@ -21,17 +21,20 @@ import com.example.miformacionctma.ui.screens.PantallaActividades
 import com.example.miformacionctma.ui.screens.PantallaCrearActividad
 import com.example.miformacionctma.ui.screens.PantallaDetalleActividad
 import com.example.miformacionctma.ui.state.FormularioActividadUiState
+import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
+import com.example.miformacionctma.ui.viewmodel.ActividadesViewModelFactory
 
 @Composable
-fun MiFormacionAppNav() {
+fun MiFormacionAppNav(
+    application: MiFormacionApplication
+) {
     val navController = rememberNavController()
 
-    // Fuente de verdad de la lista de actividades
-    val actividades = remember {
-        mutableStateListOf<ActividadFormativa>().apply {
-            addAll(ActividadesDemo.listaInicial)
-        }
-    }
+    val viewModel: ActividadesViewModel = viewModel(
+        factory = ActividadesViewModelFactory(application.actividadRepository)
+    )
+
+    val actividades by viewModel.actividades.collectAsState()
 
     // Estado del formulario de creación preservado en rotaciones
     var formTitulo by rememberSaveable { mutableStateOf("") }
@@ -114,7 +117,8 @@ fun MiFormacionAppNav() {
                             diasRestantes = 7,
                             prioridad = formPrioridad
                         )
-                        actividades.add(nuevaActividad)
+
+                        viewModel.insertar(nuevaActividad)
 
                         // Limpiar formulario y reiniciar las banderas de interacción
                         formTitulo = ""

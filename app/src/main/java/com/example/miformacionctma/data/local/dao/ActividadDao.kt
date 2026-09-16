@@ -33,4 +33,7 @@ interface ActividadDao {
         ORDER BY id ASC
     """)
     fun buscarPorTitulo(texto: String): Flow<List<ActividadEntity>>
+
+    @Query("SELECT COUNT(*) FROM actividades")
+    suspend fun contarActividades(): Int
 }

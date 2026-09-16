@@ -8,13 +8,16 @@ import com.example.miformacionctma.ui.navigation.MiFormacionAppNav
 import com.example.miformacionctma.ui.theme.MiFormacionCTMATheme
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        val application = application as MiFormacionApplication
+
         setContent {
             MiFormacionCTMATheme {
-                MiFormacionAppNav()
+                MiFormacionAppNav(application)
             }
         }
     }

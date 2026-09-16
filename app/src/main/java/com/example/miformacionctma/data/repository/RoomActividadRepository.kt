@@ -3,6 +3,7 @@ package com.example.miformacionctma.data.repository
 import com.example.miformacionctma.data.local.dao.ActividadDao
 import com.example.miformacionctma.data.local.toDomain
 import com.example.miformacionctma.data.local.toEntity
+import com.example.miformacionctma.domain.ActividadesDemo
 import com.example.miformacionctma.model.ActividadFormativa
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -32,5 +33,13 @@ class RoomActividadRepository(
 
     override suspend fun eliminar(actividad: ActividadFormativa) {
         dao.eliminar(actividad.toEntity())
+    }
+
+    override suspend fun inicializarDatos() {
+        if (dao.contarActividades() == 0) {
+            ActividadesDemo.listaInicial.forEach { actividad ->
+                dao.insertar(actividad.toEntity())
+            }
+        }
     }
 }

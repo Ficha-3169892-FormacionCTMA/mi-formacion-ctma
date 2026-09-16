@@ -14,4 +14,6 @@ interface ActividadRepository {
     suspend fun actualizar(actividad: ActividadFormativa)
 
     suspend fun eliminar(actividad: ActividadFormativa)
+
+    suspend fun inicializarDatos()
 }
