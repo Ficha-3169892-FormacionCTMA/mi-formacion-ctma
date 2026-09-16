@@ -1,9 +1,10 @@
-package com.example.miformacionctma.ui.navigation
-
 sealed class Destino(val ruta: String) {
-    data object Lista : Destino("lista_screen")
-    data object Crear : Destino("crear_screen")
-    data object Detalle : Destino("detalle_screen/{actividadId}") {
-        fun crearRuta(actividadId: Long) = "detalle_screen/$actividadId"
+    object Lista : Destino("lista")
+    object Crear : Destino("crear")
+    object Detalle : Destino("detalle/{actividadId}") {
+        fun crearRuta(id: Long) = "detalle/$id"
+    }
+    object Editar : Destino("editar/{actividadId}") {
+        fun crearRuta(id: Long) = "editar/$id"
     }
 }

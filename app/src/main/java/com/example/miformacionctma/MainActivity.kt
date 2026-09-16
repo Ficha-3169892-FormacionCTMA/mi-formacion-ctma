@@ -9,8 +9,8 @@ import com.example.miformacionctma.data.local.database.AppDatabase
 import com.example.miformacionctma.data.repository.ActividadRepository
 import com.example.miformacionctma.ui.navigation.MiFormacionAppNav
 import com.example.miformacionctma.ui.theme.MiFormacionCTMATheme
-import com.example.miformacionctma.ui.viewmodel.ActividadViewModel
-import com.example.miformacionctma.ui.viewmodel.ActividadViewModelFactory
+import com.example.miformacionctma.ui.actividades.ActividadViewModel
+import com.example.miformacionctma.ui.actividades.ActividadViewModelFactory
 
 class MainActivity : ComponentActivity() {
 

@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.core.ktx)
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
 
     // Dependencias de Room
     val roomVersion = "2.7.0"

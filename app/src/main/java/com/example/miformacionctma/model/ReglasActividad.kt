@@ -20,11 +20,17 @@ object ReglasActividad {
     }
 
     // Fecha obligatoria con formato YYYY-MM-DD
-    fun validarFecha(valor: String): String? {
-        val limpio = valor.trim()
-        if (limpio.isEmpty()) return "La fecha es obligatoria"
-        val regexFecha = Regex("""^\d{4}-\d{2}-\d{2}$""")
-        return if (!limpio.matches(regexFecha)) "Formato inválido (AAAA-MM-DD)" else null
+    fun validarFecha(fecha: String): String? {
+        if (fecha.isBlank()) return "La fecha es obligatoria"
+
+        // Expresión regular que acepta separadores / o -
+        val regexFecha = Regex("""^(0[1-9]|[12][0-9]|3[01])[/.-](0[1-9]|1[0-2])[/.-]\d{4}$""")
+
+        return if (!regexFecha.matches(fecha)) {
+            "Formato inválido (DD/MM/YYYY)"
+        } else {
+            null
+        }
     }
 
     // Progreso: entre 0 y 100

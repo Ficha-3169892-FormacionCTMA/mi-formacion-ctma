@@ -4,19 +4,22 @@ import com.example.miformacionctma.data.local.dao.ActividadDao
 import com.example.miformacionctma.data.local.entity.ActividadEntity
 import kotlinx.coroutines.flow.Flow
 
-class ActividadRepository(private val actividadDao: ActividadDao) {
+class ActividadRepository(
+    private val actividadDao: ActividadDao
+) {
+    fun obtenerTodasLasActividades(): Flow<List<ActividadEntity>> {
+        return actividadDao.obtenerTodasLasActividades()
+    }
 
-    val todasLasActividades: Flow<List<ActividadEntity>> = actividadDao.obtenerTodasLasActividades()
-
-    suspend fun insertar(actividad: ActividadEntity) {
+    suspend fun insertarActividad(actividad: ActividadEntity) {
         actividadDao.insertarActividad(actividad)
     }
 
-    suspend fun actualizar(actividad: ActividadEntity) {
+    suspend fun actualizarActividad(actividad: ActividadEntity) {
         actividadDao.actualizarActividad(actividad)
     }
 
-    suspend fun eliminar(actividad: ActividadEntity) {
+    suspend fun eliminarActividad(actividad: ActividadEntity) {
         actividadDao.eliminarActividad(actividad)
     }
 }

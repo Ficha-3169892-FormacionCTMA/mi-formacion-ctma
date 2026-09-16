@@ -25,10 +25,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -45,14 +41,13 @@ fun PantallaCrearActividad(
     onPrioridadChange: (Prioridad) -> Unit,
     onProgresoChange: (Int) -> Unit,
     onGuardarClick: () -> Unit,
-    onVolver: () -> Unit
+    onVolver: () -> Unit,
+    tituloPantalla: String = "Crear Actividad"
 ) {
-    var enProcesoGuardado by remember { mutableStateOf(false) }
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Detalle de Actividad") },
+                title = { Text(tituloPantalla) },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
                         Icon(
@@ -117,7 +112,7 @@ fun PantallaCrearActividad(
                 value = uiState.fecha,
                 onValueChange = onFechaChange,
                 label = { Text("Fecha límite *") },
-                placeholder = { Text("Año-Mes-Día (Ej: 2026-09-15)") },
+                placeholder = { Text("Día/Mes/Año (Ej: 15/09/2026)") },
                 isError = mostrarErrorFecha,
                 supportingText = {
                     if (mostrarErrorFecha) {
@@ -158,7 +153,7 @@ fun PantallaCrearActividad(
             // CAMPO: PROGRESO
             Column {
                 Text(
-                    text = "Progreso inicial: ${uiState.progreso}%",
+                    text = "Progreso: ${uiState.progreso}%",
                     style = MaterialTheme.typography.titleMedium
                 )
                 Slider(
@@ -172,18 +167,13 @@ fun PantallaCrearActividad(
 
             // BOTÓN GUARDAR
             Button(
-                onClick = {
-                    if (!enProcesoGuardado && uiState.puedeGuardar) {
-                        enProcesoGuardado = true
-                        onGuardarClick()
-                    }
-                },
-                enabled = uiState.puedeGuardar && !enProcesoGuardado,
+                onClick = onGuardarClick,
+                enabled = uiState.puedeGuardar,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Text(if (enProcesoGuardado) "Guardando..." else "Guardar Actividad")
+                Text(if (tituloPantalla.contains("Editar", ignoreCase = true)) "Guardar Cambios" else "Guardar Actividad")
             }
         }
     }
