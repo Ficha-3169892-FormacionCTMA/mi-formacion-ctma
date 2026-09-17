@@ -18,3 +18,18 @@
 | **CP-14** | HU-08 / CA-08.1 | Limites        | Formulario abierto     | Deslizar control de progreso a 0% y 100%         | Ambos valores son aceptados y procesados                   | **PASÓ** |
 | **CP-15** | HU-03 / CA-03.1 | Caso de uso    | Lista disponible       | Abrir detalle de una actividad con 75% avance    | La pantalla muestra correctamente la cifra 75%             | **PASÓ** |
 | **CP-16** | HU-02 / CA-02.1 | Negocio        | Actividades en lista   | Cargar ítem con 1 día restante                   | Se despliega resaltado con el estado de urgente            | **PASÓ** |
+
+## Pruebas adicionales de persistencia
+
+Con la incorporación de persistencia local mediante Room se agregaron verificaciones específicas
+para la nueva capa de datos.
+
+| ID    | Componente     | Técnica                | Verificación                                                      | Estado |
+|-------|----------------|------------------------|-------------------------------------------------------------------|--------|
+| PT-01 | `ActividadDao` | Prueba de persistencia | Verificar operaciones de almacenamiento y consulta de actividades | PASÓ   |
+| PT-02 | Migración Room | Prueba de migración    | Verificar la actualización del esquema de base de datos           | PASÓ   |
+| PT-03 | Base de datos  | Inspección             | Verificar la tabla `actividades`                                  | PASÓ   |
+| PT-04 | Base de datos  | Inspección             | Verificar la tabla `competencias`                                 | PASÓ   |
+
+Estas pruebas complementan los casos CP-01 a CP-16 y se enfocan específicamente en la persistencia
+local incorporada durante la Guía 6.

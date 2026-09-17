@@ -15,9 +15,6 @@ interface CompetenciaDao {
     @Query("SELECT * FROM competencias ORDER BY nombre ASC")
     fun observarTodas(): Flow<List<CompetenciaEntity>>
 
-    @Query("SELECT * FROM competencias WHERE id = :id LIMIT 1")
-    suspend fun buscarPorId(id: Long): CompetenciaEntity?
-
     @Insert
     suspend fun insertarTodas(competencias: List<CompetenciaEntity>)
 

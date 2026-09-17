@@ -10,30 +10,45 @@
 
 ## 1. Introducción
 
-El presente documento constituye el informe de pruebas de software y plan de validación para la aplicación móvil **Mi ormaciónCTMA**, desarrollada en el marco del programa de formación Análisis y Desarrollo de Software (ADSO) del SENA CTMA.
+El presente documento constituye el informe de pruebas de software y plan de validación para la
+aplicación móvil **Mi ormaciónCTMA**, desarrollada en el marco del programa de formación Análisis y
+Desarrollo de Software (ADSO) del SENA CTMA.
 
-El objetivo fundamental de esta fase es verificar y validar la calidad técnica del software mediante la ejecución automatizada de pruebas unitarias y la verificación manual en dispositivos móviles reales (Android). A través de esta batería de pruebas se garantiza el cumplimiento estricto de las reglas de negocio, la robustez en el manejo de excepciones y la estabilidad de la interfaz de usuario ante eventos del ciclo de vida (como la rotación de pantalla y la gestión de la pila de navegación).
+El objetivo fundamental de esta fase es verificar y validar la calidad técnica del software mediante
+la ejecución automatizada de pruebas unitarias y la verificación manual en dispositivos móviles
+reales (Android). A través de esta batería de pruebas se garantiza el cumplimiento estricto de las
+reglas de negocio, la robustez en el manejo de excepciones y la estabilidad de la interfaz de
+usuario ante eventos del ciclo de vida (como la rotación de pantalla y la gestión de la pila de
+navegación).
 
 ---
 
 ## 2. Contexto y Arquitectura del Sistema
 
-La aplicación **MiFormaciónCTMA** está estructurada bajo los principios de la arquitectura recomendada para Android (Clean Architecture / MVVM simplificado), dividiendo las responsabilidades en capas claras:
+La aplicación **MiFormaciónCTMA** está estructurada bajo los principios de la arquitectura
+recomendada para Android (Clean Architecture / MVVM simplificado), dividiendo las responsabilidades
+en capas claras:
 
 1. **Capa de Modelo (`model`):**
-   - `ActividadFormativa.kt`: Data class que define los atributos fundamentales de las actividades académicas (ID, título, descripción, fecha, porcentaje de progreso, días restantes y prioridad).
-   - `Prioridad.kt`: Enum class que clasifica las prioridades en `BAJA`, `MEDIA` y `ALTA`.
-   - `ReglasActividad.kt`: Objeto (`object`) de dominio que encapsula las funciones puras y la lógica de negocio para validaciones, cálculo de estados, filtrados y ordenamiento.
+    - `ActividadFormativa.kt`: Data class que define los atributos fundamentales de las actividades
+      académicas (ID, título, descripción, fecha, porcentaje de progreso, días restantes y
+      prioridad).
+    - `Prioridad.kt`: Enum class que clasifica las prioridades en `BAJA`, `MEDIA` y `ALTA`.
+    - `ReglasActividad.kt`: Objeto (`object`) de dominio que encapsula las funciones puras y la
+      lógica de negocio para validaciones, cálculo de estados, filtrados y ordenamiento.
 
 2. **Capa de Pruebas Unitarias (`test`):**
-   - `ReglasActividadTest.kt`: Suite de pruebas base desarrollada para la verificación de funciones del dominio.
-   - `PlanesDePruebaTest.kt`: Suite de pruebas completa que implementa la totalidad de los 16 Casos de Prueba (CP-01 a CP-16) definidos en el plan de pruebas del proyecto.
+    - `ReglasActividadTest.kt`: Suite de pruebas base desarrollada para la verificación de funciones
+      del dominio.
+    - `PlanesDePruebaTest.kt`: Suite de pruebas completa que implementa la totalidad de los 16 Casos
+      de Prueba (CP-01 a CP-16) definidos en el plan de pruebas del proyecto.
 
 ---
 
 ## 3. Plan de Pruebas y Casos de Uso (CP-01 a CP-16)
 
-A continuación se detalla la especificación formal de cada uno de los 16 casos de prueba diseñados para evaluar los módulos de creación, listado, búsqueda y detalle de actividades.
+A continuación se detalla la especificación formal de cada uno de los 16 casos de prueba diseñados
+para evaluar los módulos de creación, listado, búsqueda y detalle de actividades.
 
 ### Tabla 1: Matriz de Especificación de Casos de Prueba
 
@@ -58,9 +73,11 @@ A continuación se detalla la especificación formal de cada uno de los 16 casos
 
 ## 4. Resultados de la Ejecución de Pruebas Unitarias
 
-La suite de pruebas fue ejecutada de manera automatizada utilizando la herramienta JUnit 4 integrada en el entorno Android Studio.
+La suite de pruebas fue ejecutada de manera automatizada utilizando la herramienta JUnit 4 integrada
+en el entorno Android Studio.
 
-* **Total de pruebas ejecutadas:** 20 (4 pruebas en `ReglasActividadTest.kt` y 16 pruebas en `PlanesDePruebaTest.kt`).
+* **Total de pruebas ejecutadas:** 20 (4 pruebas en `ReglasActividadTest.kt` y 16 pruebas en
+  `PlanesDePruebaTest.kt`).
 * **Pruebas exitosas (Passed):** 20 (100%).
 * **Pruebas fallidas (Failed):** 0 (0%).
 * **Tiempo total de ejecución:** 364 ms.
@@ -103,46 +120,94 @@ Calculating task graph as no cached configuration is available for tasks: :app:t
 19. *estadoActividad_devuelvePendiente*: Exitoso (Passed)
 20. *validarTitulo_evaluaLimitesCorrectamente*: Exitoso (Passed)
 
+### 4.2 Pruebas de persistencia y migración
+
+Como parte de la implementación de persistencia local se realizaron pruebas adicionales sobre la
+base de datos Room.
+
+Estas pruebas complementan los casos de prueba funcionales definidos anteriormente y permiten
+verificar específicamente la capa de persistencia.
+
+Se verificaron los siguientes aspectos:
+
+* Operaciones realizadas mediante los DAO.
+* Lectura y almacenamiento de información en la base de datos local.
+* Migración entre versiones del esquema.
+* Existencia y estructura de las tablas `actividades` y `competencias`.
+* Conversión entre entidades de persistencia y modelos de dominio mediante los mapeadores.
+
+Las pruebas de DAO y migración finalizaron correctamente.
+
+Como evidencia adicional se inspeccionó la base de datos mediante el visor de Android Studio,
+comprobando la presencia de las tablas correspondientes.
+
+**Evidencias:**
+
+1. Prueba de DAO.
+2. Prueba de migración.
+3. Tabla `actividades`.
+4. Tabla `competencias`.
+
+Estas evidencias se encuentran en `docs/semana_06/evidencias/`.
+
 ---
 
 ## 5. Guía de Verificación Manual en Dispositivo Móvil Real
 
-Para la sustentación presencial o virtual del proyecto, se establece el procedimiento secuencial para la comprobación funcional en el dispositivo físico:
+Para la sustentación presencial o virtual del proyecto, se establece el procedimiento secuencial
+para la comprobación funcional en el dispositivo físico:
 
 1. **Instalación y Despliegue:**
-   * Conectar el dispositivo Android vía cable USB asegurando que la opción *Depuración por USB* se encuentre activa.
-   * Ejecutar la aplicación desde Android Studio seleccionando el terminal físico objetivo.
+    * Conectar el dispositivo Android vía cable USB asegurando que la opción *Depuración por USB* se
+      encuentre activa.
+    * Ejecutar la aplicación desde Android Studio seleccionando el terminal físico objetivo.
 
 2. **Prueba de Formularios y Validaciones (CP-02, CP-03, CP-10, CP-14):**
-   * Acceder al módulo de creación de actividad.
-   * Ingresar un título con menos de tres caracteres (por ejemplo, "AB") y presionar el botón *Guardar*; validar la presentación de la alerta: *"Usa al menos 3 caracteres"*.
-   * Ingresar una fecha en formato no válido (por ejemplo, "15/09/2026") y confirmar el despliegue del mensaje: *"Formato inválido (AAAA-MM-DD)"*.
+    * Acceder al módulo de creación de actividad.
+    * Ingresar un título con menos de tres caracteres (por ejemplo, "AB") y presionar el botón
+      *Guardar*; validar la presentación de la alerta: *"Usa al menos 3 caracteres"*.
+    * Ingresar una fecha en formato no válido (por ejemplo, "15/09/2026") y confirmar el despliegue
+      del mensaje: *"Formato inválido (AAAA-MM-DD)"*.
 
 3. **Prueba de Ciclo de Vida y Estado de Interfaz (CP-04, CP-12):**
-   * Diligenciar parcialmente el formulario sin guardar (ingresando título, descripción y ajustando el control deslizante de progreso al 50%).
-   * Rotar el dispositivo horizontalmente para activar la vista apaisada y verificar que el borrador mantenga los datos ingresados.
+    * Diligenciar parcialmente el formulario sin guardar (ingresando título, descripción y ajustando
+      el control deslizante de progreso al 50%).
+    * Rotar el dispositivo horizontalmente para activar la vista apaisada y verificar que el
+      borrador mantenga los datos ingresados.
 
 4. **Prueba de Filtro y Búsqueda de Información (CP-09, CP-11):**
-   * Ingresar el término "Kotlin" en el campo de búsqueda de la lista principal y confirmar la actualización inmediata de la vista.
-   * Digitar una cadena sin coincidencias (por ejemplo, "XYZ999") y validar la renderización del componente visual de lista vacía.
+    * Ingresar el término "Kotlin" en el campo de búsqueda de la lista principal y confirmar la
+      actualización inmediata de la vista.
+    * Digitar una cadena sin coincidencias (por ejemplo, "XYZ999") y validar la renderización del
+      componente visual de lista vacía.
 
 5. **Prueba de Navegación y Control de Pila (CP-06, CP-08, CP-13):**
-   * Seleccionar una tarjeta de actividad para navegar hacia la vista de detalle y comprobar la coincidencia del identificador transmitido.
-   * Accionar el control *Volver* o ejecutar el gesto de retroceso del sistema operativo para validar el retorno ordenado a la vista principal sin cierres inesperados.
+    * Seleccionar una tarjeta de actividad para navegar hacia la vista de detalle y comprobar la
+      coincidencia del identificador transmitido.
+    * Accionar el control *Volver* o ejecutar el gesto de retroceso del sistema operativo para
+      validar el retorno ordenado a la vista principal sin cierres inesperados.
 
 ---
 
 ## 6. Conclusiones
 
-1. La implementación de las pruebas automatizadas mediante JUnit demostró una cobertura completa de las reglas de negocio declaradas en `ReglasActividad.kt`, asegurando un comportamiento determinista de la aplicación ante datos válidos e inválidos.
-2. La arquitectura adoptada facilitó la independencia entre la lógica de dominio y los componentes visuales, lo que permitió simular y validar estados de interfaz sin incurrir en ejecuciones lentas de emuladores.
-3. El proyecto **MiFormaciónCTMA** cumple satisfactoriamente con la totalidad de criterios de aceptación exigidos en el Plan de Pruebas, garantizando estabilidad para su presentación funcional.
+1. La implementación de las pruebas automatizadas mediante JUnit demostró una cobertura completa de
+   las reglas de negocio declaradas en `ReglasActividad.kt`, asegurando un comportamiento
+   determinista de la aplicación ante datos válidos e inválidos.
+2. La arquitectura adoptada facilitó la independencia entre la lógica de dominio y los componentes
+   visuales, lo que permitió simular y validar estados de interfaz sin incurrir en ejecuciones
+   lentas de emuladores.
+3. El proyecto **MiFormaciónCTMA** cumple satisfactoriamente con la totalidad de criterios de
+   aceptación exigidos en el Plan de Pruebas, garantizando estabilidad para su presentación
+   funcional.
 
 ---
 
 ## 7. Referencias
 
 * Beck, K. (2003). *Test-driven development: By example*. Addison-Wesley Professional.
-* Google Developers. (2026). *Guide to app architecture: Android Developers*. https://developer.android.com/topic/architecture
+* Google Developers. (2026). *Guide to app architecture: Android
+  Developers*. https://developer.android.com/topic/architecture
 * JUnit.org. (2026). *JUnit 4 Documentation*. https://junit.org/junit4/
-* Servicio Nacional de Aprendizaje (SENA). (2026). *Diseño de pruebas unitarias y de integración para software móvil*. Centro de Tecnología de la Manufactura Avanzada (CTMA).
+* Servicio Nacional de Aprendizaje (SENA). (2026). *Diseño de pruebas unitarias y de integración
+  para software móvil*. Centro de Tecnología de la Manufactura Avanzada (CTMA).

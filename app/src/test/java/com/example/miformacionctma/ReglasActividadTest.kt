@@ -6,14 +6,16 @@ import com.example.miformacionctma.model.ReglasActividad
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class ReglasActividadTest {
 
     @Test
     fun promedioProgreso_calculaCorrectamente() {
         val actividades = listOf(
-            ActividadFormativa(1, "A", "Sin descripción", "2026-09-01", 100, 0, Prioridad.ALTA),
-            ActividadFormativa(2, "B", "Sin descripción", "2026-09-02", 50, 0, Prioridad.MEDIA)
+            ActividadFormativa(1, "A", "Sin descripción", "2026-09-01", 100, Prioridad.ALTA),
+            ActividadFormativa(2, "B", "Sin descripción", "2026-09-02", 50, Prioridad.MEDIA)
         )
 
         val promedio = ReglasActividad.promedioProgreso(actividades)
@@ -23,13 +25,39 @@ class ReglasActividadTest {
 
     @Test
     fun actividadesUrgentes_filtraCorrectamente() {
+        val fechaPrueba = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse("2026-09-01")!!
+
         val actividades = listOf(
-            ActividadFormativa(1, "Urgente", "Sin descripción", "2026-09-01", 20, 1, Prioridad.ALTA),
-            ActividadFormativa(2, "Normal", "Sin descripción", "2026-09-05", 20, 5, Prioridad.MEDIA),
-            ActividadFormativa(3, "Completada", "Sin descripción", "2026-09-01", 100, 1, Prioridad.BAJA)
+            ActividadFormativa(
+                1,
+                "Urgente",
+                "Sin descripción",
+                "2026-09-02",
+                20,
+                Prioridad.ALTA,
+                completada = false
+            ), ActividadFormativa(
+                2,
+                "Normal",
+                "Sin descripción",
+                "2026-09-10",
+                20,
+                Prioridad.MEDIA,
+                completada = false
+            ), ActividadFormativa(
+                3,
+                "Completada",
+                "Sin descripción",
+                "2026-09-02",
+                100,
+                Prioridad.BAJA,
+                completada = true
+            )
         )
 
-        val urgentes = ReglasActividad.actividadesUrgentes(actividades)
+        val urgentes = ReglasActividad.actividadesUrgentes(
+            actividades, fechaPrueba
+        )
 
         assertEquals(1, urgentes.size)
         assertEquals("Urgente", urgentes.first().titulo)
@@ -37,17 +65,21 @@ class ReglasActividadTest {
 
     @Test
     fun estadoActividad_devuelvePendiente() {
+        val fechaPrueba = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse("2026-09-01")!!
+
         val actividad = ActividadFormativa(
             id = 1,
             titulo = "Pendiente",
             descripcion = "Sin descripción",
-            fecha = "2026-09-01",
+            fecha = "2026-09-10",
             progreso = 0,
-            diasRestantes = 3,
-            prioridad = Prioridad.BAJA
+            prioridad = Prioridad.BAJA,
+            completada = false
         )
 
-        val estado = ReglasActividad.estadoActividad(actividad)
+        val estado = ReglasActividad.estadoActividad(
+            actividad, fechaPrueba
+        )
 
         assertEquals("Pendiente", estado)
     }

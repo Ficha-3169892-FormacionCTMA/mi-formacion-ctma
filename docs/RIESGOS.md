@@ -77,15 +77,18 @@ El nivel de riesgo se obtiene mediante la siguiente fórmula:
 ### R01 — Actividades pendientes no visibles
 
 **Descripción:**  
-Existe el riesgo de que la aplicación no muestre correctamente las actividades pendientes al abrir la pantalla principal.
+Existe el riesgo de que la aplicación no muestre correctamente las actividades pendientes al abrir
+la pantalla principal.
 
 **Historias relacionadas:** HU-01, HU-06.
 
 **Consecuencia:**  
-El aprendiz podría no identificar las actividades que debe realizar y tendría dificultades para organizar su tiempo de estudio.
+El aprendiz podría no identificar las actividades que debe realizar y tendría dificultades para
+organizar su tiempo de estudio.
 
 **Mitigación:**  
-Realizar pruebas funcionales que comprueben que las actividades se muestran correctamente en la pantalla principal y que la navegación hacia ellas funciona de manera adecuada.
+Realizar pruebas funcionales que comprueben que las actividades se muestran correctamente en la
+pantalla principal y que la navegación hacia ellas funciona de manera adecuada.
 
 **Evidencia relacionada:** CP-06, CP-08, CP-09 y CP-11.
 
@@ -96,15 +99,18 @@ Realizar pruebas funcionales que comprueben que las actividades se muestran corr
 ### R02 — Clasificación incorrecta de actividades pendientes
 
 **Descripción:**  
-Existe el riesgo de que una actividad sea clasificada incorrectamente y no sea identificada como pendiente cuando debería serlo.
+Existe el riesgo de que una actividad sea clasificada incorrectamente y no sea identificada como
+pendiente cuando debería serlo.
 
 **Historias relacionadas:** HU-01, HU-04.
 
 **Consecuencia:**  
-El aprendiz podría interpretar incorrectamente su carga de trabajo y dejar de atender una actividad que requiere su atención.
+El aprendiz podría interpretar incorrectamente su carga de trabajo y dejar de atender una actividad
+que requiere su atención.
 
 **Mitigación:**  
-Mantener centralizadas las reglas de negocio encargadas de determinar el estado de las actividades y realizar pruebas con diferentes valores de progreso y fechas.
+Mantener centralizadas las reglas de negocio encargadas de determinar el estado de las actividades y
+realizar pruebas con diferentes valores de progreso y fechas.
 
 **Evidencia relacionada:** Reglas de negocio de la aplicación (`ReglasActividadTest.kt`).
 
@@ -115,7 +121,8 @@ Mantener centralizadas las reglas de negocio encargadas de determinar el estado 
 ### R03 — Actividad próxima a vencer no identificada
 
 **Descripción:**  
-Existe el riesgo de que una actividad con pocos días restantes no sea marcada correctamente como urgente.
+Existe el riesgo de que una actividad con pocos días restantes no sea marcada correctamente como
+urgente.
 
 **Historia relacionada:** HU-02.
 
@@ -123,7 +130,8 @@ Existe el riesgo de que una actividad con pocos días restantes no sea marcada c
 El aprendiz podría no priorizar una actividad próxima a vencer y aumentar el riesgo de incumplirla.
 
 **Mitigación:**  
-Definir una regla clara para determinar cuándo una actividad debe considerarse urgente y realizar pruebas con diferentes cantidades de días restantes.
+Definir una regla clara para determinar cuándo una actividad debe considerarse urgente y realizar
+pruebas con diferentes cantidades de días restantes.
 
 **Evidencia relacionada:** CP-16.
 
@@ -134,15 +142,18 @@ Definir una regla clara para determinar cuándo una actividad debe considerarse 
 ### R04 — Cálculo incorrecto de días restantes
 
 **Descripción:**  
-Existe el riesgo de que el cálculo de los días restantes de una actividad presente errores relacionados con las fechas.
+Existe el riesgo de que el cálculo de los días restantes de una actividad presente errores
+relacionados con las fechas.
 
 **Historias relacionadas:** HU-02, HU-04.
 
 **Consecuencia:**  
-Una actividad podría ser marcada como urgente cuando no corresponde o podría no ser marcada como urgente cuando debería serlo.
+Una actividad podría ser marcada como urgente cuando no corresponde o podría no ser marcada como
+urgente cuando debería serlo.
 
 **Mitigación:**  
-Validar el formato de las fechas y realizar pruebas con actividades vencidas, próximas a vencer y con fechas futuras.
+Validar el formato de las fechas y realizar pruebas con actividades vencidas, próximas a vencer y
+con fechas futuras.
 
 **Evidencia relacionada:** CP-03 valida el formato de fecha `AAAA-MM-DD`.
 
@@ -153,39 +164,48 @@ Validar el formato de las fechas y realizar pruebas con actividades vencidas, pr
 ### R05 — Porcentaje de progreso incorrecto
 
 **Descripción:**  
-Existe el riesgo de que el porcentaje de progreso mostrado en una actividad no corresponda con el avance registrado.
+Existe el riesgo de que el porcentaje de progreso mostrado en una actividad no corresponda con el
+avance registrado.
 
 **Historias relacionadas:** HU-03, HU-08.
 
 **Consecuencia:**  
-El instructor podría realizar un seguimiento incorrecto del proceso formativo debido a información de progreso inexacta.
+El instructor podría realizar un seguimiento incorrecto del proceso formativo debido a información
+de progreso inexacta.
 
 **Mitigación:**  
-Validar los valores de progreso y realizar pruebas utilizando diferentes porcentajes, incluyendo 0 %, valores intermedios y 100 %.
+Validar los valores de progreso y realizar pruebas utilizando diferentes porcentajes, incluyendo
+0 %, valores intermedios y 100 %.
 
 **Evidencia relacionada:** CP-14 y CP-15.
 
-**Estado:** Controlado mediante pruebas de validación de entradas continuas del slider y despliegue en detalle.
+**Estado:** Controlado mediante pruebas de validación de entradas continuas del slider y despliegue
+en detalle.
 
 ---
 
 ### R06 — Pérdida de información
 
-**Descripción:**  
-Existe el riesgo de que las actividades registradas y su información de progreso se pierdan cuando la aplicación se cierra o se reinicia.
+**Descripción:**
+Existe el riesgo de que las actividades registradas y su información de progreso se pierdan cuando
+la aplicación se cierra o se reinicia.
 
 **Historias relacionadas:** HU-01 y HU-03.
 
-**Consecuencia:**  
-El aprendiz podría perder información necesaria para organizar sus actividades y el instructor podría dejar de disponer de información relacionada con el avance formativo.
+**Consecuencia:**
+El aprendiz podría perder información necesaria para organizar sus actividades y el instructor
+podría dejar de disponer de información relacionada con el avance formativo.
 
-**Mitigación:**  
-Implementar un mecanismo de persistencia de datos y realizar pruebas que comprueben que la información permanece disponible después de cerrar y volver a abrir la aplicación.
+**Mitigación:**
+Se implementó persistencia local mediante Room, utilizando entidades, DAO y un repositorio como
+punto central de acceso a los datos. También se implementaron pruebas de DAO y migración para
+verificar el funcionamiento de la persistencia.
 
-**Evidencia relacionada:**  
-No existe actualmente un caso de prueba específico que compruebe la persistencia tras matar el proceso completo de la app.
+**Evidencia relacionada:**
+Pruebas de DAO, prueba de migración y verificación de las tablas `actividades` y `competencias`
+mediante el visor de base de datos de Android Studio.
 
-**Estado:** Pendiente.
+**Estado:** Controlado mediante persistencia local y pruebas automatizadas.
 
 **Prioridad:** Crítica.
 
@@ -194,15 +214,18 @@ No existe actualmente un caso de prueba específico que compruebe la persistenci
 ### R07 — Regresión durante el desarrollo
 
 **Descripción:**  
-Los cambios realizados durante el desarrollo pueden introducir errores en funcionalidades que anteriormente funcionaban correctamente.
+Los cambios realizados durante el desarrollo pueden introducir errores en funcionalidades que
+anteriormente funcionaban correctamente.
 
 **Historias relacionadas:** HU-01, HU-04.
 
 **Consecuencia:**  
-Una modificación podría afectar la lista de actividades, la identificación de actividades urgentes o la visualización del progreso.
+Una modificación podría afectar la lista de actividades, la identificación de actividades urgentes o
+la visualización del progreso.
 
 **Mitigación:**  
-Ejecutar las pruebas funcionales después de cambios importantes y mantener pruebas automatizadas para las reglas principales de negocio.
+Ejecutar las pruebas funcionales después de cambios importantes y mantener pruebas automatizadas
+para las reglas principales de negocio.
 
 **Evidencia relacionada:** CP-01 a CP-16 y suite unitaria en `ReglasActividadTest.kt`.
 
@@ -213,15 +236,18 @@ Ejecutar las pruebas funcionales después de cambios importantes y mantener prue
 ### R08 — Identificador de actividad inexistente
 
 **Descripción:**  
-Existe el riesgo de que la navegación hacia el detalle reciba un identificador de actividad que no exista en los datos registrados.
+Existe el riesgo de que la navegación hacia el detalle reciba un identificador de actividad que no
+exista en los datos registrados.
 
 **Historias relacionadas:** HU-03, HU-07.
 
 **Consecuencia:**  
-La aplicación podría presentar un error, mostrar información incorrecta o impedir que el usuario continúe con la navegación.
+La aplicación podría presentar un error, mostrar información incorrecta o impedir que el usuario
+continúe con la navegación.
 
 **Mitigación:**  
-Validar que el identificador recibido corresponda a una actividad existente y manejar adecuadamente los casos en los que no se encuentre información asociada.
+Validar que el identificador recibido corresponda a una actividad existente y manejar adecuadamente
+los casos en los que no se encuentre información asociada.
 
 **Evidencia relacionada:** CP-07.
 
@@ -232,15 +258,18 @@ Validar que el identificador recibido corresponda a una actividad existente y ma
 ### R09 — Pérdida de borrador en el formulario por rotación
 
 **Descripción:**  
-Existe el riesgo de que el texto y las opciones seleccionadas en el formulario de creación se reinicien al cambiar la orientación del dispositivo.
+Existe el riesgo de que el texto y las opciones seleccionadas en el formulario de creación se
+reinicien al cambiar la orientación del dispositivo.
 
 **Historias relacionadas:** HU-04, HU-05.
 
 **Consecuencia:**  
-El aprendiz perdería la información ingresada parcialmente y tendría que volver a diligenciar el formulario completo.
+El aprendiz perdería la información ingresada parcialmente y tendría que volver a diligenciar el
+formulario completo.
 
 **Mitigación:**  
-Elevar el estado del formulario e implementar `rememberSaveable` para retener la información durante la recreación de la Activity.
+Elevar el estado del formulario e implementar `rememberSaveable` para retener la información durante
+la recreación de la Activity.
 
 **Evidencia relacionada:** CP-04 y CP-12.
 
@@ -251,15 +280,18 @@ Elevar el estado del formulario e implementar `rememberSaveable` para retener la
 ### R10 — Búsqueda inconsistente o limpia tras rotación
 
 **Descripción:**  
-Existe el riesgo de que la barra de búsqueda pierda el filtro aplicado o no actualice la lista inmediatamente al ingresar caracteres.
+Existe el riesgo de que la barra de búsqueda pierda el filtro aplicado o no actualice la lista
+inmediatamente al ingresar caracteres.
 
 **Historia relacionada:** HU-06.
 
 **Consecuencia:**  
-El aprendiz tendría que escribir nuevamente el criterio de búsqueda al rotar la pantalla o vería datos no filtrados.
+El aprendiz tendría que escribir nuevamente el criterio de búsqueda al rotar la pantalla o vería
+datos no filtrados.
 
 **Mitigación:**  
-Persistir la variable `textoBusqueda` mediante `rememberSaveable` y conectar el filtrado directamente al estado inmutable.
+Persistir la variable `textoBusqueda` mediante `rememberSaveable` y conectar el filtrado
+directamente al estado inmutable.
 
 **Evidencia relacionada:** CP-09 y CP-11.
 
@@ -270,7 +302,8 @@ Persistir la variable `textoBusqueda` mediante `rememberSaveable` y conectar el 
 ### R11 — Títulos formados únicamente por espacios en blanco
 
 **Descripción:**  
-Existe el riesgo de que un usuario ingrese múltiples espacios vacíos en el campo de título y el sistema lo acepte como un texto válido.
+Existe el riesgo de que un usuario ingrese múltiples espacios vacíos en el campo de título y el
+sistema lo acepte como un texto válido.
 
 **Historia relacionada:** HU-04.
 
@@ -278,7 +311,8 @@ Existe el riesgo de que un usuario ingrese múltiples espacios vacíos en el cam
 Se registrarían actividades invisibles o vacías en la lista principal, afectando la usabilidad.
 
 **Mitigación:**  
-Aplicar la función `.trim()` a las entradas de texto antes de verificar la longitud y la presencia de caracteres.
+Aplicar la función `.trim()` a las entradas de texto antes de verificar la longitud y la presencia
+de caracteres.
 
 **Evidencia relacionada:** CP-10 y prueba unitaria en `validarTitulo_evaluaLimitesCorrectamente`.
 
@@ -289,12 +323,14 @@ Aplicar la función `.trim()` a las entradas de texto antes de verificar la long
 ### R12 — Duplicación de instancias en la pila de navegación (*back stack*)
 
 **Descripción:**  
-Existe el riesgo de que al presionar repetidamente el botón de retorno o guardar se apilen múltiples instancias de la pantalla de lista.
+Existe el riesgo de que al presionar repetidamente el botón de retorno o guardar se apilen múltiples
+instancias de la pantalla de lista.
 
 **Historia relacionada:** HU-07.
 
 **Consecuencia:**  
-El usuario tendría que presionar el botón de atrás múltiples veces para salir de la aplicación o navegar entre pantallas.
+El usuario tendría que presionar el botón de atrás múltiples veces para salir de la aplicación o
+navegar entre pantallas.
 
 **Mitigación:**  
 Utilizar la función `popBackStack()` para remover el destino actual de la pila antes de retornar.
@@ -308,15 +344,18 @@ Utilizar la función `popBackStack()` para remover el destino actual de la pila 
 ### R13 — Desincronización del control slider de progreso
 
 **Descripción:**  
-Existe el riesgo de que el valor visual del slider de progreso no coincida con el entero retenido en el estado del formulario.
+Existe el riesgo de que el valor visual del slider de progreso no coincida con el entero retenido en
+el estado del formulario.
 
 **Historia relacionada:** HU-08.
 
 **Consecuencia:**  
-Se guardaría una actividad con un porcentaje de avance distinto al que el usuario creyó haber seleccionado.
+Se guardaría una actividad con un porcentaje de avance distinto al que el usuario creyó haber
+seleccionado.
 
 **Mitigación:**  
-Manejar el valor del slider como un estado numérico entero (0 a 100) actualizado de forma unidireccional (UDF).
+Manejar el valor del slider como un estado numérico entero (0 a 100) actualizado de forma
+unidireccional (UDF).
 
 **Evidencia relacionada:** CP-14.
 
@@ -326,7 +365,8 @@ Manejar el valor del slider como un estado numérico entero (0 a 100) actualizad
 
 ## 5. Conclusiones
 
-El análisis permite identificar los principales riesgos asociados a las funcionalidades definidas para **Mi Formación CTMA**.
+El análisis permite identificar los principales riesgos asociados a las funcionalidades definidas
+para **Mi Formación CTMA**.
 
 Los riesgos con mayor prioridad están relacionados principalmente con:
 
@@ -338,6 +378,9 @@ Los riesgos con mayor prioridad están relacionados principalmente con:
 - La validación de identificadores de actividades.
 - La conservación de datos en formulario ante eventos del ciclo de vida (rotación).
 
-Se recomienda priorizar la implementación y validación de la **persistencia de datos en base de datos local**, así como mantener ejecutada la suite completa de casos de prueba (`CP-01` al `CP-16`).
+Se recomienda priorizar la implementación y validación de la **persistencia de datos en base de
+datos local**, así como mantener ejecutada la suite completa de casos de prueba (`CP-01` al
+`CP-16`).
 
-El seguimiento periódico de esta matriz permitirá actualizar la probabilidad, impacto y estado de cada riesgo a medida que avance el desarrollo del proyecto.
+El seguimiento periódico de esta matriz permitirá actualizar la probabilidad, impacto y estado de
+cada riesgo a medida que avance el desarrollo del proyecto.

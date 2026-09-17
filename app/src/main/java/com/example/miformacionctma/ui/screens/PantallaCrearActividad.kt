@@ -95,7 +95,8 @@ fun PantallaCrearActividad(
             )
 
             // CAMPO: DESCRIPCIÓN
-            val mostrarErrorDescripcion = uiState.descripcionTocado && uiState.descripcionError != null
+            val mostrarErrorDescripcion =
+                uiState.descripcionTocado && uiState.descripcionError != null
             OutlinedTextField(
                 value = uiState.descripcion,
                 onValueChange = onDescripcionChange,
@@ -104,7 +105,10 @@ fun PantallaCrearActividad(
                 isError = mostrarErrorDescripcion,
                 supportingText = {
                     if (mostrarErrorDescripcion) {
-                        Text(text = uiState.descripcionError, color = MaterialTheme.colorScheme.error)
+                        Text(
+                            text = uiState.descripcionError,
+                            color = MaterialTheme.colorScheme.error
+                        )
                     } else {
                         Text("${uiState.descripcion.length}/240 caracteres")
                     }

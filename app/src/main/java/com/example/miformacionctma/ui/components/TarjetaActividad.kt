@@ -52,7 +52,6 @@ fun TarjetaActividad(
                 )
             }
 
-            EstadoActividad(texto = textoEstado)
 
             Text(
                 text = "Progreso: $progresoSeguro%",
@@ -77,10 +76,12 @@ fun TarjetaActividad(
                 )
 
                 Text(
-                    text = "Fecha: ${actividad.fecha}",
+                    text = "Fecha límite: ${actividad.fecha}",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
+
+            EstadoActividad(texto = textoEstado)
         }
     }
 }

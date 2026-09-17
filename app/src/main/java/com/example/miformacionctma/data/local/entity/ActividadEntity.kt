@@ -19,5 +19,6 @@ data class ActividadEntity(
     val fecha: String,
     val progreso: Int,
     val prioridad: String,
-    val competenciaId: Long? = null
+    val competenciaId: Long? = null,
+    val completada: Boolean = false
 )

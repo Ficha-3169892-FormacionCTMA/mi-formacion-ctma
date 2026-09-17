@@ -9,5 +9,6 @@ data class ActividadFormativa(
     val fecha: String,
     val progreso: Int,
     val prioridad: Prioridad,
-    val competenciaId: Long? = null
+    val competenciaId: Long? = null,
+    val completada: Boolean = false
 )

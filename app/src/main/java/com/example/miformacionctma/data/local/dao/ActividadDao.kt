@@ -28,20 +28,18 @@ interface ActividadDao {
     @Query("SELECT * FROM actividades WHERE id = :id LIMIT 1")
     suspend fun obtenerPorId(id: Long): ActividadEntity?
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM actividades
         WHERE titulo LIKE '%' || :texto || '%'
         COLLATE NOCASE
         ORDER BY id ASC
-    """)
+    """
+    )
     fun buscarPorTitulo(texto: String): Flow<List<ActividadEntity>>
 
     @Query("SELECT COUNT(*) FROM actividades")
     suspend fun contarActividades(): Int
-
-    @Transaction
-    @Query("SELECT * FROM actividades ORDER BY id ASC")
-    fun observarActividadesConCompetencia(): Flow<List<ActividadConCompetencia>>
 
     @Transaction
     @Query("SELECT * FROM actividades WHERE id = :id LIMIT 1")

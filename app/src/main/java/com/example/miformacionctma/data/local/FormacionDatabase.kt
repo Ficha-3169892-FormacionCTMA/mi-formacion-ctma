@@ -12,7 +12,7 @@ import com.example.miformacionctma.data.local.entity.CompetenciaEntity
         ActividadEntity::class,
         CompetenciaEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class FormacionDatabase : RoomDatabase() {

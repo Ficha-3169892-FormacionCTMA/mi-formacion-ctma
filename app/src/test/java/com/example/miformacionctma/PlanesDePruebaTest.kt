@@ -8,6 +8,8 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class PlanesDePruebaTest {
 
@@ -25,11 +27,14 @@ class PlanesDePruebaTest {
         assertEquals("Usa al menos 3 caracteres", error)
     }
 
-    // CP-03: Fecha inválida (Formato incorrecto)
+    // CP-03: Fecha inválida
     @Test
     fun cp03_fechaInvalida_exigeFormatoCorrecto() {
-        val error = ReglasActividad.validarFecha("15-09-2026")
-        assertEquals("Formato inválido (AAAA-MM-DD)", error)
+        val errorFormato = ReglasActividad.validarFecha("15-09-2026")
+        assertEquals("Fecha inválida (AAAA-MM-DD)", errorFormato)
+
+        val errorFechaInexistente = ReglasActividad.validarFecha("2020-20-20")
+        assertEquals("Fecha inválida (AAAA-MM-DD)", errorFechaInexistente)
     }
 
     // CP-04: Conservar borrador por rotación (Simulación)
@@ -62,7 +67,8 @@ class PlanesDePruebaTest {
     // CP-06: Transferencia de ID a vista detalle
     @Test
     fun cp06_seleccionarTarjeta_transfiereIdCorrectamente() {
-        val actividad = ActividadFormativa(101L, "Taller Kotlin", "Desc", "2026-09-10", 0, 5, Prioridad.MEDIA)
+        val actividad =
+            ActividadFormativa(101L, "Taller Kotlin", "Desc", "2026-09-10", 0, Prioridad.MEDIA)
         val rutaDestino = "detalle/${actividad.id}"
         assertTrue("La ruta debe incluir el ID", rutaDestino.contains("101"))
     }
@@ -71,7 +77,7 @@ class PlanesDePruebaTest {
     @Test
     fun cp07_idInexistente_manejaErrorSinCrash() {
         val lista = listOf(
-            ActividadFormativa(1L, "Java", "Desc", "2026-09-10", 0, 5, Prioridad.BAJA)
+            ActividadFormativa(1L, "Java", "Desc", "2026-09-10", 0, Prioridad.BAJA)
         )
         val idBuscado = -1L
         val encontrada = lista.find { it.id == idBuscado }
@@ -92,8 +98,8 @@ class PlanesDePruebaTest {
     @Test
     fun cp09_busquedaKotlin_filtraCoincidencias() {
         val lista = listOf(
-            ActividadFormativa(1L, "Taller Kotlin", "Desc", "2026-09-10", 10, 4, Prioridad.ALTA),
-            ActividadFormativa(2L, "Guía Java", "Desc", "2026-09-12", 20, 6, Prioridad.BAJA)
+            ActividadFormativa(1L, "Taller Kotlin", "Desc", "2026-09-10", 10, Prioridad.ALTA),
+            ActividadFormativa(2L, "Guía Java", "Desc", "2026-09-12", 20, Prioridad.BAJA)
         )
         val resultado = ReglasActividad.buscarPorTitulo(lista, "Kotlin")
 
@@ -112,7 +118,7 @@ class PlanesDePruebaTest {
     @Test
     fun cp11_busquedaSinCoincidencias_despliegaEstadoVacio() {
         val lista = listOf(
-            ActividadFormativa(1L, "Kotlin", "Desc", "2026-09-10", 0, 2, Prioridad.MEDIA)
+            ActividadFormativa(1L, "Kotlin", "Desc", "2026-09-10", 0, Prioridad.MEDIA)
         )
         val resultado = ReglasActividad.buscarPorTitulo(lista, "XYZ999")
 
@@ -148,17 +154,24 @@ class PlanesDePruebaTest {
     // CP-15: Visualización de progreso en detalle
     @Test
     fun cp15_detalleActividad_muestraPorcentajeCorrecto() {
-        val actividad = ActividadFormativa(1L, "Móviles", "Desc", "2026-09-10", 75, 2, Prioridad.ALTA)
+        val actividad = ActividadFormativa(1L, "Móviles", "Desc", "2026-09-10", 75, Prioridad.ALTA)
         assertEquals(75, actividad.progreso)
     }
 
     // CP-16: Marcado de urgencia con <= 2 días restantes
     @Test
     fun cp16_actividadDosDiasRestantes_marcaUrgente() {
+        val fechaPrueba = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse("2026-09-01")!!
+
         val actividades = listOf(
-            ActividadFormativa(1L, "Urgente", "Desc", "2026-09-02", 20, 2, Prioridad.ALTA)
+            ActividadFormativa(
+                1L, "Urgente", "Desc", "2026-09-02", 20, Prioridad.ALTA, completada = false
+            )
         )
-        val urgentes = ReglasActividad.actividadesUrgentes(actividades)
+
+        val urgentes = ReglasActividad.actividadesUrgentes(
+            actividades, fechaPrueba
+        )
 
         assertEquals(1, urgentes.size)
         assertEquals("Urgente", urgentes.first().titulo)

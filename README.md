@@ -1,6 +1,8 @@
 # MiFormacionCTMA
 
-Aplicación Android desarrollada con **Kotlin** y **Jetpack Compose** para organizar actividades, compromisos y evidencias del proceso formativo CTMA, aplicando conceptos de **UI declarativa, Material 3, accesibilidad y trabajo colaborativo con SCRUM**.
+Aplicación Android desarrollada con **Kotlin** y **Jetpack Compose** para organizar actividades,
+compromisos y evidencias del proceso formativo CTMA, aplicando conceptos de **UI declarativa,
+Material 3, accesibilidad y trabajo colaborativo con SCRUM**.
 
 ---
 
@@ -40,20 +42,28 @@ También puede ejecutarse mediante un **AVD Android** compatible.
 
 ## Pruebas realizadas
 
-Se implementaron **pruebas unitarias con JUnit** para verificar:
+Se implementaron pruebas automatizadas con **JUnit** para verificar reglas de negocio, persistencia
+y migración de datos.
 
-- `promedioProgreso()`
-- `actividadesUrgentes()`
-- `estadoActividad()`
+Las pruebas incluyen:
 
-Todas las pruebas finalizan correctamente.
+* Reglas de negocio de `ReglasActividad`, mediante `ReglasActividadTest`.
+* Casos de prueba funcionales definidos en `PlanesDePruebaTest`, incluyendo validaciones,
+  navegación, búsqueda, progreso y manejo de actividades.
+* Persistencia y operaciones del `ActividadDao`.
+* Migración de la base de datos entre versiones.
+* Validación de la estructura y contenido de las entidades persistidas.
+
+Todas las pruebas ejecutadas finalizan correctamente.
+
 
 ---
 
 ## Organización del proyecto
 
 - `app/` → código fuente Android.
-- `docs/` → documentación organizada por semanas, con respuestas, análisis y evidencias de cada actividad.
+- `docs/` → documentación organizada por semanas, con respuestas, análisis y evidencias de cada
+  actividad.
 - `README.md` → información general y guía de ejecución del proyecto.
 - `.gitignore` → archivos y carpetas excluidos del control de versiones.
 
@@ -61,7 +71,8 @@ Todas las pruebas finalizan correctamente.
 
 ## Trabajo colaborativo y SCRUM
 
-El proyecto fue desarrollado utilizando un **repositorio compartido en GitHub** y trabajo en **ramas por integrante**, aplicando conceptos de:
+El proyecto fue desarrollado utilizando un **repositorio compartido en GitHub** y trabajo en **ramas
+por integrante**, aplicando conceptos de:
 
 - **SCRUM Master y Development Team**
 - Incrementos funcionales por Sprint
@@ -72,4 +83,20 @@ El proyecto fue desarrollado utilizando un **repositorio compartido en GitHub** 
 
 ## Estado actual
 
-El proyecto cuenta con una **interfaz funcional, adaptable y accesible**, lista para continuar con futuras iteraciones relacionadas con **persistencia de datos, navegación y arquitectura avanzada en Compose**.
+El proyecto cuenta con una **interfaz funcional, adaptable y accesible**, junto con persistencia
+local mediante **Room**.
+
+La información de actividades y competencias se almacena en una base de datos local y el acceso a
+los datos se centraliza mediante la capa de repositorio, manteniendo una separación entre la
+interfaz, la lógica de dominio y la persistencia.
+
+También se implementaron y verificaron pruebas relacionadas con:
+
+* Operaciones de los DAO.
+* Migración de la base de datos.
+* Persistencia de información.
+* Validaciones y reglas de negocio.
+* Funcionamiento de la interfaz y navegación.
+
+El proyecto queda preparado para futuras iteraciones relacionadas con navegación, arquitectura y
+nuevas funcionalidades de la aplicación.

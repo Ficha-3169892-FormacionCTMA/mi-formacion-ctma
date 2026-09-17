@@ -25,7 +25,6 @@ import com.example.miformacionctma.ui.state.FormularioActividadUiState
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModelFactory
 
-
 @Composable
 fun MiFormacionAppNav(
     application: MiFormacionApplication
@@ -129,7 +128,8 @@ fun MiFormacionAppNav(
                             fecha = formFecha.trim(),
                             progreso = formProgreso,
                             competenciaId = formCompetenciaId,
-                            prioridad = formPrioridad
+                            prioridad = formPrioridad,
+                            completada = formProgreso >= 100
                         )
 
                         viewModel.insertar(nuevaActividad)
@@ -164,7 +164,10 @@ fun MiFormacionAppNav(
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getLong("actividadId") ?: -1L
 
-            val resultado by produceState<Pair<ActividadFormativa, String?>?>(initialValue = null, id) {
+            val resultado by produceState<Pair<ActividadFormativa, String?>?>(
+                initialValue = null,
+                id
+            ) {
                 value = viewModel.obtenerConCompetencia(id)
             }
 
@@ -173,6 +176,10 @@ fun MiFormacionAppNav(
                 actividades = actividades,
                 competenciaNombre = resultado?.second,
                 onVolver = {
+                    navController.popBackStack()
+                },
+                onEliminar = { actividad ->
+                    viewModel.eliminar(actividad)
                     navController.popBackStack()
                 }
             )

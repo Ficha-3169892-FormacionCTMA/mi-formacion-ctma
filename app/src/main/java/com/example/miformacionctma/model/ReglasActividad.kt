@@ -36,7 +36,7 @@ object ReglasActividad {
         return try {
             formato.parse(limpio)
             null
-        } catch (e: ParseException) {
+        } catch (_: ParseException) {
             "Fecha inválida (AAAA-MM-DD)"
         }
     }
@@ -47,12 +47,14 @@ object ReglasActividad {
     }
 
     // Días restantes: calculado automáticamente
-    private fun diasRestantes(actividad: ActividadFormativa): Long {
+    private fun diasRestantes(
+        actividad: ActividadFormativa, fechaReferencia: Date = Date()
+    ): Long {
         val formato = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         formato.isLenient = false
 
         val fechaLimite = formato.parse(actividad.fecha) ?: return 0L
-        val hoy = formato.parse(formato.format(Date())) ?: return 0L
+        val hoy = formato.parse(formato.format(fechaReferencia)) ?: return 0L
 
         return (fechaLimite.time - hoy.time) / (1000L * 60 * 60 * 24)
     }
@@ -68,17 +70,23 @@ object ReglasActividad {
         return errores
     }
 
-    fun estadoActividad(actividad: ActividadFormativa): String {
+    fun estadoActividad(
+        actividad: ActividadFormativa, fechaReferencia: Date = Date()
+    ): String {
         return when {
-            actividad.progreso >= 100 -> "Completada"
-            diasRestantes(actividad) < 0 -> "Vencida"
+            actividad.completada -> "Completada"
+            diasRestantes(actividad, fechaReferencia) < 0 -> "Vencida"
             actividad.progreso > 0 -> "En proceso"
             else -> "Pendiente"
         }
     }
 
-    fun actividadesUrgentes(actividades: List<ActividadFormativa>): List<ActividadFormativa> {
-        return actividades.filter { it.progreso < 100 && diasRestantes(it) <= 2 }
+    fun actividadesUrgentes(
+        actividades: List<ActividadFormativa>, fechaReferencia: Date = Date()
+    ): List<ActividadFormativa> {
+        return actividades.filter {
+            !it.completada && diasRestantes(it, fechaReferencia) <= 2
+        }
     }
 
     fun promedioProgreso(actividades: List<ActividadFormativa>): Double {
@@ -90,8 +98,7 @@ object ReglasActividad {
     }
 
     fun buscarPorTitulo(
-        actividades: List<ActividadFormativa>,
-        texto: String
+        actividades: List<ActividadFormativa>, texto: String
     ): List<ActividadFormativa> {
         val termino = texto.trim().lowercase()
         return actividades.filter { it.titulo.trim().lowercase().contains(termino) }
@@ -105,8 +112,7 @@ object ReglasActividad {
                 // Prioridad alta primero
                 { -it.prioridad.ordinal },
                 // Menos días primero
-                { diasRestantes(it) }
-            )
+                { diasRestantes(it) })
         )
     }
 }

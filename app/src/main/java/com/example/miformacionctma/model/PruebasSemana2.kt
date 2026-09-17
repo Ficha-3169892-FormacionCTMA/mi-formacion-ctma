@@ -9,7 +9,8 @@ object PruebasSemana2 {
             descripcion = "Intento de registro sin título",
             fecha = "2026-09-15",
             progreso = 50,
-            prioridad = Prioridad.MEDIA
+            prioridad = Prioridad.MEDIA,
+            completada = false
         )
 
         println("Escenario 1 (Título Vacío):")
@@ -22,7 +23,8 @@ object PruebasSemana2 {
             descripcion = "Progreso fuera de rango",
             fecha = "2026-09-10",
             progreso = 120,
-            prioridad = Prioridad.MEDIA
+            prioridad = Prioridad.MEDIA,
+            completada = false
         )
 
         println("\nEscenario 2 (Progreso Inválido):")
@@ -35,7 +37,8 @@ object PruebasSemana2 {
             descripcion = "Actividad con plazo expirado",
             fecha = "2026-08-01",
             progreso = 80,
-            prioridad = Prioridad.ALTA
+            prioridad = Prioridad.ALTA,
+            completada = false
         )
 
         println("\nEscenario 3 (Vencida):")
@@ -48,7 +51,8 @@ object PruebasSemana2 {
             descripcion = "Actividad entregada al 100%",
             fecha = "2026-08-20",
             progreso = 100,
-            prioridad = Prioridad.MEDIA
+            prioridad = Prioridad.MEDIA,
+            completada = true
         )
 
         println("\nEscenario 4 (Completada):")
@@ -66,7 +70,8 @@ object PruebasSemana2 {
                 descripcion = "Introducción al lenguaje",
                 fecha = "2026-09-05",
                 progreso = 10,
-                prioridad = Prioridad.BAJA
+                prioridad = Prioridad.BAJA,
+                completada = false
             )
         )
 
@@ -75,9 +80,33 @@ object PruebasSemana2 {
 
         // Escenario 7: ordenamiento de actividades
         val listaParaOrdenar = listOf(
-            ActividadFormativa(6L, "Normal Baja", "Prioridad baja", "2026-09-12", 0, Prioridad.BAJA),
-            ActividadFormativa(7L, "Actividad Vencida", "Vencida", "2026-08-10", 20, Prioridad.MEDIA),
-            ActividadFormativa(8L, "Normal Alta", "Prioridad alta", "2026-09-02", 10, Prioridad.ALTA)
+            ActividadFormativa(
+                6L,
+                "Normal Baja",
+                "Prioridad baja",
+                "2026-09-12",
+                0,
+                Prioridad.BAJA,
+                completada = false
+            ),
+            ActividadFormativa(
+                7L,
+                "Actividad Vencida",
+                "Vencida",
+                "2026-08-10",
+                20,
+                Prioridad.MEDIA,
+                completada = false
+            ),
+            ActividadFormativa(
+                8L,
+                "Normal Alta",
+                "Prioridad alta",
+                "2026-09-02",
+                10,
+                Prioridad.ALTA,
+                completada = false
+            )
         )
 
         println("\nEscenario 7 (Ordenadas):")

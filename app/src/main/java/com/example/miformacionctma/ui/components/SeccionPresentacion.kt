@@ -118,18 +118,54 @@ fun SeccionAgile(
             ) {
                 Text("Principios Ágiles", style = MaterialTheme.typography.titleMedium)
 
-                PrincipioItem("1. Satisfacer al cliente", "Entregar valor útil desde etapas tempranas y de forma continua.")
-                PrincipioItem("2. Aceptar cambios", "Los cambios en los requisitos pueden mejorar el producto final.")
-                PrincipioItem("3. Entregas frecuentes", "Mostrar funcionalidades funcionando en periodos cortos.")
-                PrincipioItem("4. Trabajo conjunto", "Desarrolladores y usuarios deben colaborar constantemente.")
-                PrincipioItem("5. Equipos motivados", "Las personas motivadas producen mejores resultados.")
-                PrincipioItem("6. Comunicación directa", "Hablar directamente reduce errores y acelera decisiones.")
-                PrincipioItem("7. Software funcional", "El progreso real se mide por funcionalidades que funcionan.")
-                PrincipioItem("8. Ritmo sostenible", "El equipo debe mantener una carga de trabajo equilibrada.")
-                PrincipioItem("9. Excelencia técnica", "El buen diseño y el código limpio facilitan la evolución del sistema.")
-                PrincipioItem("10. Simplicidad", "Hacer solo lo necesario evita trabajo innecesario.")
-                PrincipioItem("11. Autoorganización", "Los equipos organizan su propio trabajo y toman decisiones técnicas.")
-                PrincipioItem("12. Mejora continua", "El equipo revisa su trabajo y busca mejorar en cada Sprint.")
+                PrincipioItem(
+                    "1. Satisfacer al cliente",
+                    "Entregar valor útil desde etapas tempranas y de forma continua."
+                )
+                PrincipioItem(
+                    "2. Aceptar cambios",
+                    "Los cambios en los requisitos pueden mejorar el producto final."
+                )
+                PrincipioItem(
+                    "3. Entregas frecuentes",
+                    "Mostrar funcionalidades funcionando en periodos cortos."
+                )
+                PrincipioItem(
+                    "4. Trabajo conjunto",
+                    "Desarrolladores y usuarios deben colaborar constantemente."
+                )
+                PrincipioItem(
+                    "5. Equipos motivados",
+                    "Las personas motivadas producen mejores resultados."
+                )
+                PrincipioItem(
+                    "6. Comunicación directa",
+                    "Hablar directamente reduce errores y acelera decisiones."
+                )
+                PrincipioItem(
+                    "7. Software funcional",
+                    "El progreso real se mide por funcionalidades que funcionan."
+                )
+                PrincipioItem(
+                    "8. Ritmo sostenible",
+                    "El equipo debe mantener una carga de trabajo equilibrada."
+                )
+                PrincipioItem(
+                    "9. Excelencia técnica",
+                    "El buen diseño y el código limpio facilitan la evolución del sistema."
+                )
+                PrincipioItem(
+                    "10. Simplicidad",
+                    "Hacer solo lo necesario evita trabajo innecesario."
+                )
+                PrincipioItem(
+                    "11. Autoorganización",
+                    "Los equipos organizan su propio trabajo y toman decisiones técnicas."
+                )
+                PrincipioItem(
+                    "12. Mejora continua",
+                    "El equipo revisa su trabajo y busca mejorar en cada Sprint."
+                )
             }
         }
     }

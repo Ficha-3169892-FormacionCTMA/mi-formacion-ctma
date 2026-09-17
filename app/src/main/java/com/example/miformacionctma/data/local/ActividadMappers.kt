@@ -15,7 +15,8 @@ fun ActividadEntity.toDomain(): ActividadFormativa {
         progreso = progreso,
         prioridad = runCatching { Prioridad.valueOf(prioridad) }
             .getOrDefault(Prioridad.MEDIA),
-        competenciaId = competenciaId
+        competenciaId = competenciaId,
+        completada = completada
     )
 }
 
@@ -27,7 +28,8 @@ fun ActividadFormativa.toEntity(): ActividadEntity {
         fecha = fecha,
         progreso = progreso,
         prioridad = prioridad.name,
-        competenciaId = competenciaId
+        competenciaId = competenciaId,
+        completada = completada
     )
 }
 

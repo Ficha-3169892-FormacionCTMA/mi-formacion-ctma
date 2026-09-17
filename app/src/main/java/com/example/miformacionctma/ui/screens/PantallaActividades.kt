@@ -96,7 +96,7 @@ fun PantallaActividades(
 
     val urgentes = ReglasActividad.actividadesUrgentes(actividades).size
     val promedio = ReglasActividad.promedioProgreso(actividades).toInt()
-    val completadas = actividades.count { it.progreso >= 100 }
+    val completadas = actividades.count { it.completada }
 
     val resumen = buildString {
         appendLine("Urgentes: $urgentes")
@@ -167,7 +167,9 @@ fun PantallaActividades(
                         }
                     } else {
                         items(actividadesFiltradas, key = { it.id }) { actividad ->
-                            TarjetaActividad(actividad = actividad, onClick = { onActividadClick(actividad.id) })
+                            TarjetaActividad(
+                                actividad = actividad,
+                                onClick = { onActividadClick(actividad.id) })
                         }
                     }
 
