@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
     <files-path name="evidencias" path="evidencias/" />
-    <cache-path name="cache_evidencias" path="." />
+    <files-path name="internal_files" path="." />
+    <cache-path name="cache" path="." />
+    <external-path name="external_files" path="." />
 </paths>

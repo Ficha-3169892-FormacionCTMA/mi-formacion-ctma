@@ -49,6 +49,7 @@ class ActividadRepositoryImpl(
 
     override suspend fun refrescarDesdeServidor() {
         val actividadesRemotas = remote.obtenerActividades()
+        android.util.Log.d("ActividadRepository", "Recibidas ${actividadesRemotas.size} actividades del servidor")
         val entities = actividadesRemotas.map { it.toDomain().toEntity() }
         dao.refrescarTodo(entities)
     }

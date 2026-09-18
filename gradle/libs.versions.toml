@@ -20,6 +20,7 @@ retrofit = "3.0.0"
 kotlinxSerialization = "1.9.0"
 okhttp = "5.1.0"
 coil = "3.0.4"
+coil-network-okhttp = "3.0.4"
 mockk = "1.13.8"
 
 [libraries]
@@ -86,6 +87,7 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 
 okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil-network-okhttp" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
