@@ -1,13 +1,13 @@
 package com.example.miformacionctma.ui.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -18,10 +18,11 @@ import com.example.miformacionctma.MiFormacionApplication
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.model.ReglasActividad
-import com.example.miformacionctma.ui.screens.PantallaActividades
+import com.example.miformacionctma.ui.screens.PantallaActividadesRoute
 import com.example.miformacionctma.ui.screens.PantallaCrearActividad
 import com.example.miformacionctma.ui.screens.PantallaDetalleActividad
 import com.example.miformacionctma.ui.state.FormularioActividadUiState
+import com.example.miformacionctma.ui.state.ListadoUiState
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModelFactory
 
@@ -37,9 +38,12 @@ fun MiFormacionAppNav(
             application.preferenciasRepository
         )
     )
-    val ordenarPorPrioridad by viewModel.ordenarPorPrioridad.collectAsState()
-    val actividades by viewModel.actividadesOrdenadas.collectAsState()
-    val competencias by viewModel.competencias.collectAsState()
+    val ordenarPorPrioridad by viewModel.ordenarPorPrioridad.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val textoBusqueda by viewModel.textoBusqueda.collectAsStateWithLifecycle()
+    val competencias by viewModel.competencias.collectAsStateWithLifecycle()
+
+    val listaActividades = (uiState as? ListadoUiState.Contenido)?.actividades ?: emptyList()
 
     // Estado del formulario de creación preservado en rotaciones
     var formTitulo by rememberSaveable { mutableStateOf("") }
@@ -80,10 +84,8 @@ fun MiFormacionAppNav(
     ) {
         // Destino 1 - Listado de actividades
         composable(Destino.Lista.ruta) {
-            PantallaActividades(
-                actividades = actividades,
-                ordenarPorPrioridad = ordenarPorPrioridad,
-                onOrdenPorPrioridadChange = viewModel::guardarOrdenPorPrioridad,
+            PantallaActividadesRoute(
+                viewModel = viewModel,
                 onActividadClick = { id ->
                     navController.navigate(Destino.Detalle.crearRuta(id)) {
                         launchSingleTop = true
@@ -122,7 +124,7 @@ fun MiFormacionAppNav(
                 onGuardarClick = {
                     if (uiStateFormulario.puedeGuardar) {
                         val nuevaActividad = ActividadFormativa(
-                            id = (actividades.maxOfOrNull { it.id } ?: 0L) + 1L,
+                            id = (listaActividades.maxOfOrNull { it.id } ?: 0L) + 1L,
                             titulo = formTitulo.trim(),
                             descripcion = formDescripcion.trim(),
                             fecha = formFecha.trim(),
@@ -173,7 +175,7 @@ fun MiFormacionAppNav(
 
             PantallaDetalleActividad(
                 actividadId = id,
-                actividades = actividades,
+                actividades = listaActividades,
                 competenciaNombre = resultado?.second,
                 onVolver = {
                     navController.popBackStack()
@@ -186,3 +188,4 @@ fun MiFormacionAppNav(
         }
     }
 }
+

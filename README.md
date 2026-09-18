@@ -2,7 +2,8 @@
 
 Aplicación Android desarrollada con **Kotlin** y **Jetpack Compose** para organizar actividades,
 compromisos y evidencias del proceso formativo CTMA, aplicando conceptos de **UI declarativa,
-Material 3, accesibilidad y trabajo colaborativo con SCRUM**.
+Material 3, accesibilidad, concurrencia avanzada con Corrutinas y flujos reactivos (Flow), y trabajo
+colaborativo con SCRUM**.
 
 ---
 
@@ -40,36 +41,91 @@ También puede ejecutarse mediante un **AVD Android** compatible.
 
 ---
 
-## Pruebas realizadas
+## Arquitectura del Proyecto
 
-Se implementaron pruebas automatizadas con **JUnit** para verificar reglas de negocio, persistencia
-y migración de datos.
+La aplicación implementa una **Arquitectura en Capas Guiada por el Dominio (Clean Architecture)**
+adaptando las pautas recomendadas de flujo unidireccional (UVI):
 
-Las pruebas incluyen:
-
-* Reglas de negocio de `ReglasActividad`, mediante `ReglasActividadTest`.
-* Casos de prueba funcionales definidos en `PlanesDePruebaTest`, incluyendo validaciones,
-  navegación, búsqueda, progreso y manejo de actividades.
-* Persistencia y operaciones del `ActividadDao`.
-* Migración de la base de datos entre versiones.
-* Validación de la estructura y contenido de las entidades persistidas.
-
-Todas las pruebas ejecutadas finalizan correctamente.
-
+1. **Capa de Interfaz de Usuario (UI Layer):**
+    - Diseñada bajo el patrón **Route - Screen**. `PantallaActividadesRoute` es el componente
+      acoplado a la infraestructura que maneja el ciclo de vida del ViewModel, mientras que
+      `PantallaActividadesScreen` es una función Composable sin estado (*stateless*), lo que
+      incrementa su testabilidad y facilita las vistas previas (*Previews*).
+    - Recolección de estados de forma eficiente mediante el operador consciente del ciclo de vida *
+      *`collectAsStateWithLifecycle()`**.
+2. **Capa del Presentador Lógico (ViewModel):**
+    - Centraliza las interacciones y funciona como el cerebro reactivo de la aplicación.
+    - Combina flujos reactivos fríos transformándolos en un único estado inmutable expuesto mediante
+      un `StateFlow`.
+3. **Capa de Datos (Data Layer - Repositorios/Fuentes de Datos):**
+    - **Room Database:** Almacena de forma persistente las entidades exponiendo flujos asíncronos
+      continuos a través de DAOs.
+    - **DataStore Preferences:** Guarda configuraciones efímeras del usuario de manera
+      transaccional (ej. criterios de ordenamiento).
+    - Mapeo completo en la capa de datos (`toDomain()` / `toEntity()`) que impide la filtración de
+      componentes de Room hacia la interfaz de usuario.
 
 ---
 
-## Organización del proyecto
+## Concurrencia y Justificación de Dispatchers
 
-- `app/` → código fuente Android.
+El proyecto sigue una estricta política de **Main-Safety** para garantizar animaciones fluidas y una
+interfaz libre de bloqueos:
+
+- **Asincronía Reactiva Continuada (`Flow`):** Room y DataStore exponen streams asíncronos continuos
+  que operan de forma segura nativa en hilos de background independientes. Por este motivo, se evitó
+  la inyección innecesaria o redundante de `withContext(Dispatchers.IO)` en la capa del ViewModel,
+  manteniendo el código limpio y ágil (*main-safe by default*).
+- **Cancelación Cooperativa con `flatMapLatest`:** Implementado en la barra de búsqueda. Cuando el
+  usuario escribe rápidamente, el operador cancela de forma automática la corrutina de la consulta
+  SQLite obsoleta anterior, enviando a la base de datos únicamente la petición más reciente.
+- **Optimización de Recursos con `WhileSubscribed(5_000)`:** El flujo compartido caliente (
+  `stateIn`) retiene la información en memoria durante interrupciones breves de la UI (como la
+  rotación del dispositivo), pero suspende las consultas a la base de datos si la aplicación pasa a
+  segundo plano más de 5 segundos, optimizando la batería y la RAM.
+- **Manejo Correcto de `CancellationException`:** Todas las corrutinas de mutación de datos (
+  `insertar`, `actualizar`, `eliminar`) dentro del `viewModelScope` capturan excepciones controladas
+  en bloques `try/catch` pero relanzan explícitamente cualquier `CancellationException` para no
+  interferir con la maquinaria interna de cancelación cooperativa de Kotlin.
+
+---
+
+## Pruebas Realizadas y Testing Determinista
+
+Se implementaron pruebas automatizadas con **JUnit** para verificar reglas de negocio, persistencia,
+flujos de estado y migración de datos. La suite incluye un total de **24 pruebas automatizadas** que
+finalizan correctamente en verde:
+
+* **Pruebas de ViewModel y Flujos de Estado (`ActividadesViewModelTest`):**
+    - Implementadas bajo entornos de tiempo virtual con **`runTest`** y `StandardTestDispatcher`
+      eliminando por completo retardos físicos o bloqueos como `Thread.sleep()`.
+    - Simulación aislada de la capa de datos mediante dobles de prueba (**`FakeActividadRepository`
+      ** y **`FakePreferenciasRepository`**).
+    - Prueba de flujos calientes mediante recolección explícita dentro del **`backgroundScope`** y
+      avance controlado de reloj con `advanceUntilIdle()`.
+    - Verificación exitosa de la máquina de estados: transiciones predecibles de
+      `Cargando` $\rightarrow$ `Vacio` $\rightarrow$ `Contenido`.
+* **Reglas de negocio funcionales (`PlanesDePruebaTest` y `ReglasActividadTest`):**
+    - Casos de prueba funcionales incluyendo validaciones de entrada, navegación entre pantallas con
+      paso de argumentos, búsquedas, control del slider de progreso (límites 0% y 100%) y marcado de
+      alertas de urgencia (fechas <= 2 días restantes).
+* **Persistencia e Infraestructura Local:**
+    - Operaciones, conteos y consultas relacionales en `ActividadDaoTest`.
+    - Migración de la base de datos entre versiones y validación estructural en `MigrationTest`.
+
+---
+
+## Organización del Proyecto
+
+- `app/` → código fuente Android organizado por capas (data, domain, model, ui).
 - `docs/` → documentación organizada por semanas, con respuestas, análisis y evidencias de cada
   actividad.
-- `README.md` → información general y guía de ejecución del proyecto.
+- `README.md` → información general, justificación de arquitectura y guía de ejecución del proyecto.
 - `.gitignore` → archivos y carpetas excluidos del control de versiones.
 
 ---
 
-## Trabajo colaborativo y SCRUM
+## Trabajo Colaborativo y SCRUM
 
 El proyecto fue desarrollado utilizando un **repositorio compartido en GitHub** y trabajo en **ramas
 por integrante**, aplicando conceptos de:
@@ -81,22 +137,14 @@ por integrante**, aplicando conceptos de:
 
 ---
 
-## Estado actual
+## Estado Actual
 
-El proyecto cuenta con una **interfaz funcional, adaptable y accesible**, junto con persistencia
-local mediante **Room**.
+El proyecto cuenta con una **arquitectura totalmente reactiva, funcional, adaptable y accesible**,
+implementando persistencia local robusta mediante **Room** y almacenamiento de preferencias con *
+*DataStore**.
 
-La información de actividades y competencias se almacena en una base de datos local y el acceso a
-los datos se centraliza mediante la capa de repositorio, manteniendo una separación entre la
-interfaz, la lógica de dominio y la persistencia.
-
-También se implementaron y verificaron pruebas relacionadas con:
-
-* Operaciones de los DAO.
-* Migración de la base de datos.
-* Persistencia de información.
-* Validaciones y reglas de negocio.
-* Funcionamiento de la interfaz y navegación.
-
-El proyecto queda preparado para futuras iteraciones relacionadas con navegación, arquitectura y
-nuevas funcionalidades de la aplicación.
+Toda la gestión de datos se maneja bajo flujos asíncronos asumiendo la responsabilidad de la
+seguridad de hilos (*main-safety*), aislando por completo las entidades SQLite de la capa visual. La
+interfaz responde en tiempo real a las consultas, permitiendo búsquedas de cancelación optimizada
+por hardware y ordenamiento dinámico preservado ante rotaciones accidentales. La estabilidad
+completa está garantizada por una amplia suite de 24 pruebas unitarias e instrumentadas en verde.
