@@ -3,8 +3,10 @@ package com.example.miformacionctma.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -40,7 +42,8 @@ fun PantallaDetalleActividad(
     actividades: List<ActividadFormativa>,
     onVolver: () -> Unit,
     onEditarClick: (Long) -> Unit = {},
-    onEliminarClick: (Long) -> Unit = {}
+    onEliminarClick: (Long) -> Unit = {},
+    onEvidenciaClick: (Long) -> Unit = {}
 ) {
     val actividad = actividades.find { it.id == actividadId }
     var mostrarConfirmarEliminar by remember { mutableStateOf(false) }
@@ -126,6 +129,15 @@ fun PantallaDetalleActividad(
                         progress = { actividad.progreso / 100f },
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = { onEvidenciaClick(actividad.id) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Ver Evidencias Fotográficas")
+                    }
                 }
 
                 if (mostrarConfirmarEliminar) {

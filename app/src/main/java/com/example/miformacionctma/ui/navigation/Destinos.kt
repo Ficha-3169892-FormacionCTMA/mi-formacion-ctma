@@ -9,4 +9,7 @@ sealed class Destino(val ruta: String) {
     data object Editar : Destino("editar_screen/{actividadId}") {
         fun crearRuta(actividadId: Long) = "editar_screen/$actividadId"
     }
+    data object Evidencias : Destino("evidencias_screen/{actividadId}") {
+        fun crearRuta(actividadId: Long) = "evidencias_screen/$actividadId"
+    }
 }

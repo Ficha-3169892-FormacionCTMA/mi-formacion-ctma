@@ -124,10 +124,10 @@ class ActividadesViewModel(
                     fechaActualizacion = obtenerFechaActual()
                 )
 
-            } catch (cancelada: CancellationException) {
-                throw cancelada
-
-            } catch (error: Exception) {
+            } catch (error: Throwable) {
+                if (error is CancellationException) {
+                    throw error
+                }
                 _operacion.value =
                     OperacionUiState.Fallida(
                         error.message

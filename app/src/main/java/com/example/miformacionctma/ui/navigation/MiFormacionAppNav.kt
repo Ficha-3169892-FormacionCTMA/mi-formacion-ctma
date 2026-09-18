@@ -32,6 +32,12 @@ import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModelFactory
 import com.example.miformacionctma.data.remote.RemoteActividadDataSource
 import com.example.miformacionctma.data.remote.RetrofitInstance
+import com.example.miformacionctma.data.remote.RemoteEvidenciaDataSource
+import com.example.miformacionctma.data.repository.EvidenciaRepositoryImpl
+import com.example.miformacionctma.ui.screens.EvidenciaScreen
+import com.example.miformacionctma.ui.viewmodel.EvidenciaViewModel
+import com.example.miformacionctma.ui.viewmodel.EvidenciaViewModelFactory
+
 @Composable
 fun MiFormacionAppNav() {
     val navController = rememberNavController()
@@ -63,6 +69,20 @@ fun MiFormacionAppNav() {
             repository = repository,
             preferenciasRepository = preferenciasRepository
         )
+    )
+
+    // Setup for Evidencias
+    val remoteEvidencia = remember {
+        RemoteEvidenciaDataSource(
+            RetrofitInstance.storageApi,
+            RetrofitInstance.evidenciaApi
+        )
+    }
+    val evidenciaRepository = remember(database) {
+        EvidenciaRepositoryImpl(context, database.evidenciaDao(), remoteEvidencia)
+    }
+    val evidenciaViewModel: EvidenciaViewModel = viewModel(
+        factory = EvidenciaViewModelFactory(evidenciaRepository)
     )
 
     val actividadesState by actividadesViewModel.uiState
@@ -215,6 +235,7 @@ fun MiFormacionAppNav() {
                 },
 
                 onVolver = {
+                    actividadesViewModel.limpiarOperacion()
                     navController.popBackStack()
                 }
             )
@@ -238,6 +259,7 @@ fun MiFormacionAppNav() {
                 actividadId = id,
                 actividades = actividades,
                 onVolver = {
+                    actividadesViewModel.limpiarOperacion()
                     navController.popBackStack()
                 },
                 onEditarClick = { editarId ->
@@ -258,8 +280,14 @@ fun MiFormacionAppNav() {
                     }
                 },
                 onEliminarClick = { eliminarId ->
+                    actividadesViewModel.limpiarOperacion()
                     actividadesViewModel.eliminar(eliminarId)
                     navController.popBackStack()
+                },
+                onEvidenciaClick = { actividadId ->
+                    navController.navigate(Destino.Evidencias.crearRuta(actividadId)) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -318,8 +346,25 @@ fun MiFormacionAppNav() {
                 },
 
                 onVolver = {
+                    actividadesViewModel.limpiarOperacion()
                     navController.popBackStack()
                 }
+            )
+        }
+
+        composable(
+            route = Destino.Evidencias.ruta,
+            arguments = listOf(
+                navArgument("actividadId") {
+                    type = NavType.LongType
+                }
+            )
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getLong("actividadId") ?: -1L
+            EvidenciaScreen(
+                actividadId = id,
+                viewModel = evidenciaViewModel,
+                onBack = { navController.popBackStack() }
             )
         }
     }

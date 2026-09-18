@@ -25,7 +25,7 @@ fun ActividadEntity.toDomain(): ActividadFormativa {
         fecha = fecha,
         progreso = progreso,
         diasRestantes = diasRestantes,
-        prioridad = Prioridad.valueOf(prioridad)
+        prioridad = Prioridad.valueOf(prioridad.uppercase())
     )
 }
 

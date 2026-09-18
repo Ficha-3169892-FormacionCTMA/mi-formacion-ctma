@@ -9,6 +9,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.util.concurrent.TimeUnit
 import okhttp3.logging.HttpLoggingInterceptor
+
 interface SessionTokenProvider {
     fun obtenerToken(): String
 }
@@ -16,6 +17,12 @@ interface SessionTokenProvider {
 object RetrofitInstance {
 
     private const val BASE_URL = BuildConfig.SUPABASE_URL
+
+    val PROJECT_URL = if (BASE_URL.contains("/rest/v1/")) {
+        BASE_URL.substringBefore("/rest/v1/") + "/"
+    } else {
+        BASE_URL
+    }
 
     var tokenProvider: SessionTokenProvider = object : SessionTokenProvider {
         override fun obtenerToken(): String {
@@ -40,12 +47,14 @@ object RetrofitInstance {
         .callTimeout(30, TimeUnit.SECONDS)
         .addInterceptor(logging)
         .addInterceptor { chain ->
-            val request: Request = chain.request()
-                .newBuilder()
-                .addHeader("apikey", tokenProvider.obtenerToken())
-                .build()
+            val token = tokenProvider.obtenerToken()
+            val requestBuilder = chain.request().newBuilder()
+                .addHeader("apikey", token)
+            
+            // Supabase REST y Storage requieren Authorization: Bearer
+            requestBuilder.addHeader("Authorization", "Bearer $token")
 
-            chain.proceed(request)
+            chain.proceed(requestBuilder.build())
         }
         .build()
 
@@ -60,5 +69,37 @@ object RetrofitInstance {
             )
             .build()
             .create(ActividadApi::class.java)
+    }
+
+    val evidenciaApi: EvidenciaApi by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(
+                json.asConverterFactory(
+                    "application/json".toMediaType()
+                )
+            )
+            .build()
+            .create(EvidenciaApi::class.java)
+    }
+
+    val storageApi: SupabaseStorageApi by lazy {
+        val storageUrl = if (BASE_URL.contains("/rest/v1/")) {
+            BASE_URL.replace("/rest/v1/", "/storage/v1/")
+        } else {
+            // Manejo de URL sin slash final
+            val base = BASE_URL.removeSuffix("/")
+            if (base.endsWith("/rest/v1")) {
+                base.replace("/rest/v1", "/storage/v1/")
+            } else {
+                base + "/storage/v1/"
+            }
+        }
+        Retrofit.Builder()
+            .baseUrl(storageUrl)
+            .client(client)
+            .build()
+            .create(SupabaseStorageApi::class.java)
     }
 }

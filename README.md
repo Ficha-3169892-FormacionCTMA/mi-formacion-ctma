@@ -59,6 +59,49 @@ Todas las pruebas finalizan correctamente.
 
 ---
 
+## Laboratorio Incremental — Semana 9: Dispositivo y Seguridad
+
+### 1. Sistema de Evidencias Fotográficas
+Se ha implementado un sistema robusto para asociar evidencias fotográficas a las actividades formativas:
+- **Flujo:** Selección/Captura -> Validación -> Guardado Local (Privado) -> Previsualización -> Confirmación -> Sincronización Remota.
+- **Relación:** 1:N entre `Actividad` y `Evidencias`.
+- **Persistencia:** Room (Metadatos y URI local) + Almacenamiento Interno (Archivos físicos) + Supabase Storage (Remoto).
+- **Estados de Sincronización:** `LOCAL`, `SUBIENDO`, `SINCRONIZADA`, `FALLIDA`.
+
+### 2. Seguridad y Privacidad
+- **Almacenamiento Seguro:** Las imágenes se copian a un subdirectorio privado (`files/evidencias/`) inaccesible para otras aplicaciones.
+- **FileProvider:** Uso estricto de `content://` mediante `FileProvider` para la captura con cámara, evitando `file://` y fugas de seguridad.
+- **Redacción de Logs:** Configuración de `OkHttp` para redactar cabeceras `Authorization` y `apikey` en Logcat.
+- **HTTPS:** Comunicación obligatoria cifrada con Supabase.
+- **Permisos:** Gestión reactiva de `POST_NOTIFICATIONS` en Android 13+ y uso de `PickVisualMedia` para evitar permisos de galería innecesarios.
+
+### 3. Validaciones de Archivos
+- **MIME Type:** Solo se aceptan imágenes (`image/*`).
+- **Tamaño Máximo:** Límite de 5MB por archivo.
+- **Integridad:** Validación de URIs legibles y generación de nombres únicos (`EVI_...`).
+
+### 4. Matriz de Riesgos
+| Riesgo | Impacto | Mitigación |
+| :--- | :--- | :--- |
+| Pérdida de red durante subida | Alto | Estado `FALLIDA` y opción de `Reintentar`. |
+| Agotamiento de almacenamiento local | Medio | Validación de tamaño y limpieza de archivos al eliminar. |
+| Acceso no autorizado a imágenes | Alto | Uso de almacenamiento privado (`filesDir`). |
+| Fuga de tokens en logs | Crítico | Redacción quirúrgica en `HttpLoggingInterceptor`. |
+| Imágenes corruptas o inválidas | Medio | Validación de lectura y MIME antes de persistir. |
+| Incompatibilidad de cámara externa | Bajo | Implementación estricta con `FileProvider` y `TakePicture`. |
+| Denegación de permisos de notificación | Bajo | Flujo funcional degradado (app sigue usable). |
+| Desbordamiento de base de datos | Bajo | No se guardan bytes, solo metadatos y rutas. |
+
+### 5. Verificación (Casos de Prueba CA01-CA09)
+Se implementó una suite de pruebas que garantiza el cumplimiento de los 9 casos requeridos:
+- **CA01-CA03:** Éxito en captura, selección y uso de FileProvider.
+- **CA04:** Rechazo de archivos inválidos o pesados.
+- **CA05-CA06:** Resiliencia ante reinicios y fallos de sincronización.
+- **CA07-CA08:** Manejo de permisos y eliminación limpia (lógica y física).
+- **CA09:** Auditoría de seguridad en configuración y logs.
+
+---
+
 ## Trabajo colaborativo y SCRUM
 
 El proyecto fue desarrollado utilizando un **repositorio compartido en GitHub** y trabajo en **ramas por integrante**, aplicando conceptos de:
