@@ -131,5 +131,12 @@ class ActividadesViewModelTest {
         override suspend fun guardarOrden(orden: String) {
             _orden.value = orden
         }
+
+        override val accessToken: Flow<String?> = flowOf(null)
+        override val userId: Flow<String?> = flowOf(null)
+        override val userRole: Flow<String?> = flowOf(null)
+
+        override suspend fun guardarSesion(token: String, id: String, rol: String) {}
+        override suspend fun borrarSesion() {}
     }
 }

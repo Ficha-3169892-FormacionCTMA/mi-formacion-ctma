@@ -1,22 +1,15 @@
 package com.example.miformacionctma.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProgressIndicatorDefaults
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
-import com.example.miformacionctma.ui.theme.MiFormacionCTMATheme
 
 @Composable
 fun TarjetaActividad(
@@ -27,44 +20,55 @@ fun TarjetaActividad(
     val progresoSeguro = actividad.progreso.coerceIn(0, 100)
 
     val textoEstado = when {
-        progresoSeguro >= 100 -> "Completada"
-        progresoSeguro > 0 -> "En proceso"
-        else -> "Pendiente"
+        progresoSeguro >= 100 -> "COMPLETADA"
+        progresoSeguro > 0 -> "EN PROCESO"
+        else -> "PENDIENTE"
     }
 
     Card(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
                 text = actividad.titulo,
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
             )
 
             if (actividad.descripcion.isNotBlank()) {
                 Text(
                     text = actividad.descripcion,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.DarkGray,
+                    maxLines = 2
                 )
             }
 
-            EstadoActividad(texto = textoEstado)
-
-            Text(
-                text = "Progreso: $progresoSeguro%",
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                EstadoActividad(texto = textoEstado)
+                if (actividad.estudianteNombre != null) {
+                    Text(
+                        text = actividad.estudianteNombre,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Gray
+                    )
+                }
+            }
 
             LinearProgressIndicator(
                 progress = { progresoSeguro / 100f },
-                modifier = Modifier.fillMaxWidth(),
-                color = ProgressIndicatorDefaults.linearColor,
-                trackColor = ProgressIndicatorDefaults.linearTrackColor,
-                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                modifier = Modifier.fillMaxWidth().height(6.dp),
+                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
             )
 
             Row(
@@ -72,95 +76,16 @@ fun TarjetaActividad(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Prioridad: ${textoPrioridad(actividad.prioridad)}",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "Prioridad: ${actividad.prioridad.name}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
                 )
-
                 Text(
-                    text = "Fecha: ${actividad.fecha}",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = actividad.fecha,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
                 )
             }
         }
-    }
-}
-
-private fun textoPrioridad(prioridad: Prioridad): String {
-    return when (prioridad) {
-        Prioridad.BAJA -> "Baja"
-        Prioridad.MEDIA -> "Media"
-        Prioridad.ALTA -> "Alta"
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun TarjetaActividadPreviewNormal() {
-    MiFormacionCTMATheme {
-        TarjetaActividad(
-            actividad = ActividadFormativa(
-                id = 1L,
-                titulo = "Kotlin básico",
-                descripcion = "Repasar funciones y clases",
-                fecha = "2026-09-02",
-                progreso = 65,
-                diasRestantes = 3,
-                prioridad = Prioridad.ALTA
-            )
-        )
-    }
-}
-
-@Preview(showBackground = true, widthDp = 320)
-@Composable
-private fun TarjetaActividadPreviewTituloLargo() {
-    MiFormacionCTMATheme {
-        TarjetaActividad(
-            actividad = ActividadFormativa(
-                id = 2L,
-                titulo = "Validar títulos extremadamente largos dentro de una tarjeta reutilizable de actividades para Compose",
-                descripcion = "Comprobar que el diseño no se rompa con textos extensos",
-                fecha = "2026-09-06",
-                progreso = 20,
-                diasRestantes = 7,
-                prioridad = Prioridad.MEDIA
-            )
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun TarjetaActividadPreviewCompletada() {
-    MiFormacionCTMATheme {
-        TarjetaActividad(
-            actividad = ActividadFormativa(
-                id = 3L,
-                titulo = "Actividad completada",
-                descripcion = "Debe mostrar el estado Completada",
-                fecha = "2026-08-29",
-                progreso = 100,
-                diasRestantes = 0,
-                prioridad = Prioridad.MEDIA
-            )
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun TarjetaActividadPreviewSinIniciar() {
-    MiFormacionCTMATheme {
-        TarjetaActividad(
-            actividad = ActividadFormativa(
-                id = 4L,
-                titulo = "Actividad pendiente",
-                descripcion = "Debe mostrar el estado Pendiente",
-                fecha = "2026-09-09",
-                progreso = 0,
-                diasRestantes = 10,
-                prioridad = Prioridad.BAJA
-            )
-        )
     }
 }

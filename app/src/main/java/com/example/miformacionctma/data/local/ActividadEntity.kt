@@ -14,7 +14,10 @@ data class ActividadEntity(
     val fecha: String,
     val progreso: Int,
     val diasRestantes: Int,
-    val prioridad: String
+    val prioridad: String,
+    val instructorId: String? = null,
+    val estudianteId: String? = null,
+    val estudianteNombre: String? = null
 )
 
 fun ActividadEntity.toDomain(): ActividadFormativa {
@@ -25,7 +28,10 @@ fun ActividadEntity.toDomain(): ActividadFormativa {
         fecha = fecha,
         progreso = progreso,
         diasRestantes = diasRestantes,
-        prioridad = Prioridad.valueOf(prioridad.uppercase())
+        prioridad = Prioridad.valueOf(prioridad.uppercase()),
+        instructorId = instructorId,
+        estudianteId = estudianteId,
+        estudianteNombre = estudianteNombre
     )
 }
 
@@ -37,6 +43,9 @@ fun ActividadFormativa.toEntity(): ActividadEntity {
         fecha = fecha,
         progreso = progreso,
         diasRestantes = diasRestantes,
-        prioridad = prioridad.name
+        prioridad = prioridad.name,
+        instructorId = instructorId,
+        estudianteId = estudianteId,
+        estudianteNombre = estudianteNombre
     )
 }

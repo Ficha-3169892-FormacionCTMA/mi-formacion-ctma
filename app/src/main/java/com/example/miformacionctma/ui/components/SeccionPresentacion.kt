@@ -2,25 +2,22 @@ package com.example.miformacionctma.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.miformacionctma.R
-import com.example.miformacionctma.domain.ActividadesDemo
-import com.example.miformacionctma.model.ActividadFormativa
-import com.example.miformacionctma.model.ReglasActividad
-import com.example.miformacionctma.ui.theme.MiFormacionCTMATheme
 
 @Composable
 fun SeccionPresentacion(
@@ -30,17 +27,21 @@ fun SeccionPresentacion(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Mi Formación CTMA",
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        Text(
-            text = "Hola, Aprendices",
-            style = MaterialTheme.typography.bodyLarge
-        )
+        Column {
+            Text(
+                text = "MI FORMACIÓN CTMA",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "CENTRO DE TECNOLOGÍA MANUFACTURA AVANZADA",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray
+            )
+        }
 
         Image(
             painter = painterResource(id = R.drawable.ilustracion_formacion),
@@ -48,29 +49,31 @@ fun SeccionPresentacion(
             contentScale = ContentScale.FillWidth,
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(MaterialTheme.shapes.medium)
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = MaterialTheme.shapes.medium
-                )
+                .clip(RoundedCornerShape(12.dp))
         )
 
         Card(
             onClick = { onResumenClick() },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "Resumen del Sprint",
-                    style = MaterialTheme.typography.titleMedium
+                    text = "ESTADO DEL SPRINT",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = resumen.trimEnd(),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    lineHeight = 20.sp
                 )
             }
         }
@@ -85,36 +88,24 @@ fun SeccionAgile(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Fundamentos Ágiles y SCRUM",
-            style = MaterialTheme.typography.headlineSmall
+            text = "FUNDAMENTOS ÁGILES",
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.Black,
+            fontWeight = FontWeight.Bold
         )
 
         Card(
             onClick = { onCardClick() },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text("Valores Ágiles", style = MaterialTheme.typography.titleMedium)
-                Text("• Individuos e interacciones", style = MaterialTheme.typography.bodyMedium)
-                Text("• Software funcionando", style = MaterialTheme.typography.bodyMedium)
-                Text("• Colaboración con el cliente", style = MaterialTheme.typography.bodyMedium)
-                Text("• Respuesta al cambio", style = MaterialTheme.typography.bodyMedium)
-            }
-        }
-
-        Card(
-            onClick = { onCardClick() },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text("Principios Ágiles", style = MaterialTheme.typography.titleMedium)
 
@@ -136,33 +127,17 @@ fun SeccionAgile(
 }
 
 @Composable
-private fun PrincipioItem(titulo: String, descripcion: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(titulo, style = MaterialTheme.typography.bodyMedium)
-        Text(descripcion, style = MaterialTheme.typography.bodySmall)
+private fun AgileBullet(text: String) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Text(text = "• ", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+        Text(text = text, style = MaterialTheme.typography.bodySmall, color = Color.DarkGray)
     }
 }
 
-fun construirTextoResumen(actividades: List<ActividadFormativa>): String {
-    val urgentes = ReglasActividad.actividadesUrgentes(actividades).size
-    val promedio = ReglasActividad.promedioProgreso(actividades)
-    val completadas = actividades.count { it.progreso >= 100 }
-    val total = actividades.size
-
-    return """
-        Urgentes: $urgentes
-        Promedio: ${"%.1f".format(promedio)}%
-        Completadas: $completadas
-        Total actividades: $total
-    """.trimIndent()
-}
-
-@Preview(showBackground = true)
 @Composable
-private fun SeccionPresentacionPreview() {
-    MiFormacionCTMATheme {
-        SeccionPresentacion(
-            resumen = construirTextoResumen(ActividadesDemo.listaInicial)
-        )
+private fun PrincipioItem(titulo: String, descripcion: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(titulo, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+        Text(descripcion, style = MaterialTheme.typography.bodySmall, color = Color.DarkGray)
     }
 }

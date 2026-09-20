@@ -22,7 +22,7 @@ class RemoteActividadDataSourceTest {
     class SimulatedActividadApi : ActividadApi {
         var scenario: String = "200"
 
-        override suspend fun obtenerActividades(): Response<List<ActividadDto>> {
+        override suspend fun obtenerActividades(select: String): Response<List<ActividadDto>> {
             return when (scenario) {
                 "200" -> Response.success(
                     listOf(
@@ -42,7 +42,7 @@ class RemoteActividadDataSourceTest {
             return Response.success(emptyList())
         }
 
-        override suspend fun crearActividad(prefer: String, actividad: CrearActividadDto): Response<List<ActividadDto>> {
+        override suspend fun crearActividad(prefer: String, select: String, actividad: CrearActividadDto): Response<List<ActividadDto>> {
             return Response.success(emptyList())
         }
 

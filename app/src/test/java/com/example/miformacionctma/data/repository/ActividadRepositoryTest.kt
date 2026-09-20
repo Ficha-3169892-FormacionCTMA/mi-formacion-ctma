@@ -110,13 +110,13 @@ class ActividadRepositoryTest {
     class FakeActividadApi : ActividadApi {
         var actividades = listOf<ActividadDto>()
 
-        override suspend fun obtenerActividades(): Response<List<ActividadDto>> =
+        override suspend fun obtenerActividades(select: String): Response<List<ActividadDto>> =
             Response.success(actividades)
 
         override suspend fun obtenerActividad(id: String, select: String): Response<List<ActividadDto>> =
             Response.success(actividades.filter { "eq.${it.id}" == id })
 
-        override suspend fun crearActividad(prefer: String, actividad: CrearActividadDto): Response<List<ActividadDto>> {
+        override suspend fun crearActividad(prefer: String, select: String, actividad: CrearActividadDto): Response<List<ActividadDto>> {
             val nuevoDto = ActividadDto(101L, actividad.titulo, actividad.descripcion, actividad.fecha, actividad.progreso, actividad.diasRestantes, actividad.prioridad)
             return Response.success(listOf(nuevoDto))
         }

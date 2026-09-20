@@ -1,50 +1,41 @@
 package com.example.miformacionctma.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.miformacionctma.domain.ActividadesDemo
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.ReglasActividad
+import com.example.miformacionctma.model.Rol
 import com.example.miformacionctma.ui.components.SeccionAgile
 import com.example.miformacionctma.ui.components.SeccionPresentacion
 import com.example.miformacionctma.ui.components.TarjetaActividad
 import com.example.miformacionctma.ui.state.ListadoUiState
 import com.example.miformacionctma.ui.state.OperacionUiState
-import com.example.miformacionctma.ui.theme.MiFormacionCTMATheme
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
 
 @Composable
 fun ActividadesRoute(
     viewModel: ActividadesViewModel,
+    userRole: Rol = Rol.ESTUDIANTE,
     onActividadClick: (Long) -> Unit = {},
-    onCrearClick: () -> Unit = {}
+    onCrearClick: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val busqueda by viewModel.busqueda.collectAsStateWithLifecycle()
@@ -55,30 +46,30 @@ fun ActividadesRoute(
     }
 
     when (val state = uiState) {
-
         ListadoUiState.Cargando -> {
             EstadoCargando()
         }
-
         ListadoUiState.Vacio -> {
             EstadoVacio(
-                onCrearClick = onCrearClick
+                userRole = userRole,
+                onCrearClick = onCrearClick,
+                onLogout = onLogout
             )
         }
-
         is ListadoUiState.Contenido -> {
-            ContenidoAdaptable(
+            PantallaActividades(
                 actividades = state.actividades,
+                userRole = userRole,
                 busqueda = busqueda,
                 onBuscar = viewModel::cambiarBusqueda,
                 onActividadClick = onActividadClick,
                 onCrearClick = onCrearClick,
                 onActualizar = viewModel::refrescarDesdeServidor,
                 actualizando = operacion is OperacionUiState.EnCurso,
-                operacion = operacion
+                operacion = operacion,
+                onLogout = onLogout
             )
         }
-
         is ListadoUiState.Error -> {
             EstadoError(
                 mensaje = state.mensaje,
@@ -88,65 +79,29 @@ fun ActividadesRoute(
     }
 }
 
-@Composable
-fun ContenidoAdaptable(
-    actividades: List<ActividadFormativa>,
-    modifier: Modifier = Modifier,
-    busqueda: String = "",
-    onBuscar: (String) -> Unit = {},
-    onActividadClick: (Long) -> Unit = {},
-    onCrearClick: () -> Unit = {},
-    onActualizar: () -> Unit = {},
-    actualizando: Boolean = false,
-    operacion: OperacionUiState = OperacionUiState.Inactiva
-) {
-    // Siempre usamos PantallaActividades para unificar la barra de herramientas, botón de actualizar,
-    // estados de operación separado (fecha y reintentar) y datos cacheados.
-    PantallaActividades(
-        actividades = actividades,
-        busqueda = busqueda,
-        onBuscar = onBuscar,
-        onActividadClick = onActividadClick,
-        onCrearClick = onCrearClick,
-        onActualizar = onActualizar,
-        actualizando = actualizando,
-        operacion = operacion
-    )
-}
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaActividades(
     actividades: List<ActividadFormativa>,
+    userRole: Rol = Rol.ESTUDIANTE,
     busqueda: String = "",
     onBuscar: (String) -> Unit = {},
     onActividadClick: (Long) -> Unit = {},
     onCrearClick: () -> Unit = {},
     onActualizar: () -> Unit = {},
     actualizando: Boolean = false,
-    operacion: OperacionUiState = OperacionUiState.Inactiva
+    operacion: OperacionUiState = OperacionUiState.Inactiva,
+    onLogout: () -> Unit = {}
 ) {
-    val urgentes =
-        ReglasActividad
-            .actividadesUrgentes(actividades)
-            .size
-
-    val promedio =
-        ReglasActividad
-            .promedioProgreso(actividades)
-            .toInt()
-
-    val completadas =
-        actividades.count {
-            it.progreso >= 100
-        }
+    val urgentes = ReglasActividad.actividadesUrgentes(actividades).size
+    val promedio = ReglasActividad.promedioProgreso(actividades).toInt()
+    val completadas = actividades.count { it.progreso >= 100 }
 
     val resumen = buildString {
         appendLine("Urgentes: $urgentes")
         appendLine("Promedio: $promedio%")
         appendLine("Completadas: $completadas")
-        appendLine(
-            "Total actividades: ${actividades.size}"
-        )
+        appendLine("Total actividades: ${actividades.size}")
     }
 
     Surface(
@@ -154,99 +109,109 @@ fun PantallaActividades(
         color = MaterialTheme.colorScheme.background
     ) {
         Scaffold(
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = onCrearClick
-                ) {
-                    Text(
-                        text = "+",
-                        style = MaterialTheme.typography.headlineMedium
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = "MI FORMACIÓN",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    actions = {
+                        IconButton(onClick = onLogout) {
+                            Text(
+                                "Salir",
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background
                     )
+                )
+            },
+            floatingActionButton = {
+                if (userRole == Rol.INSTRUCTOR) {
+                    FloatingActionButton(
+                        onClick = onCrearClick,
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = Color.White
+                    ) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = "Crear")
+                    }
                 }
             }
         ) { paddingValues ->
-
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
                 contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-
                 item {
-                    SeccionPresentacion(
-                        resumen = resumen
-                    )
+                    SeccionPresentacion(resumen = resumen)
                 }
-
                 item {
-                    Spacer(
-                        modifier = Modifier.height(12.dp)
-                    )
+                    EncabezadoActividades(userRole)
                 }
-
                 item {
-                    EncabezadoActividades()
-                }
-
-                item {
-                    Button(
+                    OutlinedButton(
                         onClick = onActualizar,
                         enabled = !actualizando,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            if (actualizando) {
-                                "Actualizando..."
-                            } else {
-                                "Actualizar desde servidor"
-                            }
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
                         )
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.size(8.dp))
+                            Text(
+                                if (actualizando) "ACTUALIZANDO..." else "REFRESCAR DATOS",
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
 
                 when (operacion) {
-
                     is OperacionUiState.Exitosa -> {
                         item {
-                            Text(
-                                text = "Actividades actualizadas correctamente.",
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-
-                        item {
-                            Text(
-                                text = "Última actualización: ${operacion.fechaActualizacion}",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
-
-                    is OperacionUiState.Fallida -> {
-                        item {
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                ),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
                                 Text(
-                                    text = operacion.mensaje,
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodyMedium
+                                    text = "Datos actualizados: ${operacion.fechaActualizacion}",
+                                    modifier = Modifier.padding(8.dp),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
-                                Button(
-                                    onClick = onActualizar,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                    )
-                                ) {
-                                    Text("Reintentar")
-                                }
                             }
                         }
                     }
-
+                    is OperacionUiState.Fallida -> {
+                        item {
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer
+                                ),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text(
+                                    text = operacion.mensaje,
+                                    modifier = Modifier.padding(8.dp),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                        }
+                    }
                     else -> Unit
                 }
 
@@ -254,212 +219,87 @@ fun PantallaActividades(
                     OutlinedTextField(
                         value = busqueda,
                         onValueChange = onBuscar,
-                        label = {
-                            Text(
-                                "Buscar actividad..."
-                            )
-                        },
+                        placeholder = { Text("Buscar actividad...") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
                     )
                 }
 
                 if (actividades.isEmpty()) {
-
                     item {
                         Text(
-                            text = if (busqueda.isBlank()) {
-                                "No hay actividades registradas."
-                            } else {
-                                "No se encontraron coincidencias para \"$busqueda\""
-                            },
+                            text = if (busqueda.isBlank()) "No hay actividades registradas." else "Sin resultados para \"$busqueda\"",
                             style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(
-                                vertical = 16.dp
-                            )
+                            color = Color.Gray,
+                            modifier = Modifier.padding(vertical = 16.dp)
                         )
                     }
-
                 } else {
-
-                    items(
-                        actividades,
-                        key = { it.id }
-                    ) { actividad ->
-
+                    items(actividades, key = { it.id }) { actividad ->
                         TarjetaActividad(
                             actividad = actividad,
-                            onClick = {
-                                onActividadClick(
-                                    actividad.id
-                                )
-                            }
+                            onClick = { onActividadClick(actividad.id) }
                         )
                     }
                 }
-
-                item {
-                    Spacer(
-                        modifier = Modifier.height(20.dp)
-                    )
-                }
-
-                item {
-                    SeccionAgile()
-                }
+                item { Spacer(modifier = Modifier.height(20.dp)) }
+                item { SeccionAgile() }
             }
         }
     }
 }
 
 @Composable
-private fun EncabezadoActividades() {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
+private fun EncabezadoActividades(rol: Rol) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            text = "Actividades Formativas",
-            style = MaterialTheme.typography.headlineSmall
+            text = if (rol == Rol.INSTRUCTOR) "Panel de Instructor" else "Mis Actividades",
+            style = MaterialTheme.typography.titleLarge,
+            color = Color.Black,
+            fontWeight = FontWeight.Bold
         )
-
         Text(
-            text = "Consulta tus actividades y revisa su progreso actual.",
-            style = MaterialTheme.typography.bodyMedium
+            text = "Gestiona y supervisa el progreso educativo.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
         )
     }
 }
 
 @Composable
 private fun EstadoCargando() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Cargando actividades...",
-                style = MaterialTheme.typography.bodyLarge
-            )
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+    }
+}
+
+@Composable
+private fun EstadoVacio(userRole: Rol, onCrearClick: () -> Unit, onLogout: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text(text = "Sin actividades", style = MaterialTheme.typography.titleMedium)
+            if (userRole == Rol.INSTRUCTOR) {
+                Button(onClick = onCrearClick) {
+                    Text("Crear primera actividad")
+                }
+            }
+            TextButton(onClick = onLogout) {
+                Text("Cerrar sesión")
+            }
         }
     }
 }
 
 @Composable
-private fun EstadoError(
-    mensaje: String,
-    onReintentar: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Ocurrió un error",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Text(
-                text = mensaje,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.error
-            )
-
-            Button(
-                onClick = onReintentar
-            ) {
+private fun EstadoError(mensaje: String, onReintentar: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(text = "Ocurrió un error", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+            Text(text = mensaje, style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+            Button(onClick = onReintentar) {
                 Text("Reintentar")
             }
         }
-    }
-}
-
-@Composable
-private fun EstadoVacio(
-    onCrearClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "No hay actividades registradas",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Text(
-                text = "Agrega una actividad para comenzar.",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Button(
-                onClick = onCrearClick
-            ) {
-                Text("Crear actividad")
-            }
-        }
-    }
-}
-
-@Preview(
-    name = "Actividades normales",
-    showBackground = true
-)
-@Composable
-private fun PantallaActividadesPreview() {
-    MiFormacionCTMATheme {
-
-        var busqueda by rememberSaveable {
-            mutableStateOf("")
-        }
-
-        PantallaActividades(
-            actividades = ActividadesDemo.listaInicial,
-            busqueda = busqueda,
-            onBuscar = {
-                busqueda = it
-            }
-        )
-    }
-}
-
-@Preview(
-    name = "Actividades anchas",
-    showBackground = true,
-    widthDp = 700
-)
-@Composable
-private fun PantallaActividadesPreviewAncha() {
-    MiFormacionCTMATheme {
-        ContenidoAdaptable(
-            actividades = ActividadesDemo.listaInicial
-        )
-    }
-}
-
-@Preview(
-    name = "Estado vacío",
-    showBackground = true
-)
-@Composable
-private fun EstadoVacioPreview() {
-    MiFormacionCTMATheme {
-        EstadoVacio(
-            onCrearClick = {}
-        )
     }
 }

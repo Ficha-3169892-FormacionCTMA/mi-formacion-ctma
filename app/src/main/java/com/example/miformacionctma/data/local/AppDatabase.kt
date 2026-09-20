@@ -13,7 +13,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ActividadEntity::class,
         EvidenciaEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -47,6 +47,14 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `actividades` ADD COLUMN `instructorId` TEXT")
+                db.execSQL("ALTER TABLE `actividades` ADD COLUMN `estudianteId` TEXT")
+                db.execSQL("ALTER TABLE `actividades` ADD COLUMN `estudianteNombre` TEXT")
+            }
+        }
+
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
@@ -56,7 +64,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "mi_formacion_ctma.db"
-                ).addMigrations(MIGRATION_1_2)
+                )
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .fallbackToDestructiveMigration() // Si la migración falla, recrea la DB en lugar de crashear
                     .build().also {
                     INSTANCE = it
                 }

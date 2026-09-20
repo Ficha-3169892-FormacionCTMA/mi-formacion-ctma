@@ -9,5 +9,8 @@ data class ActividadFormativa(
     val fecha: String,
     val progreso: Int,
     val diasRestantes: Int,
-    val prioridad: Prioridad
+    val prioridad: Prioridad,
+    val instructorId: String? = null,
+    val estudianteId: String? = null,
+    val estudianteNombre: String? = null
 )

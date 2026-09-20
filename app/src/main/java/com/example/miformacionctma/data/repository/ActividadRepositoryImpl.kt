@@ -49,7 +49,7 @@ class ActividadRepositoryImpl(
 
     override suspend fun refrescarDesdeServidor() {
         val actividadesRemotas = remote.obtenerActividades()
-        android.util.Log.d("ActividadRepository", "Recibidas ${actividadesRemotas.size} actividades del servidor")
+        // android.util.Log.d("ActividadRepository", "Recibidas ${actividadesRemotas.size} actividades del servidor")
         val entities = actividadesRemotas.map { it.toDomain().toEntity() }
         dao.refrescarTodo(entities)
     }
@@ -81,7 +81,9 @@ class ActividadRepositoryImpl(
             fecha = actividad.fecha,
             progreso = actividad.progreso,
             diasRestantes = actividad.diasRestantes,
-            prioridad = actividad.prioridad.name
+            prioridad = actividad.prioridad.name,
+            instructorId = actividad.instructorId,
+            estudianteId = actividad.estudianteId
         )
 
         val dto =
@@ -107,7 +109,9 @@ class ActividadRepositoryImpl(
             fecha = actividad.fecha,
             progreso = actividad.progreso,
             diasRestantes = actividad.diasRestantes,
-            prioridad = actividad.prioridad.name
+            prioridad = actividad.prioridad.name,
+            instructorId = actividad.instructorId,
+            estudianteId = actividad.estudianteId
         )
 
         val dto =

@@ -1,6 +1,8 @@
 package com.example.miformacionctma.ui.navigation
 
 sealed class Destino(val ruta: String) {
+    data object Login : Destino("login_screen")
+    data object Registro : Destino("registro_screen")
     data object Lista : Destino("lista_screen")
     data object Crear : Destino("crear_screen")
     data object Detalle : Destino("detalle_screen/{actividadId}") {

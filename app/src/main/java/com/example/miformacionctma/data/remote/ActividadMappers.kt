@@ -11,6 +11,12 @@ fun ActividadDto.toDomain(): ActividadFormativa {
         fecha = fecha,
         progreso = progreso,
         diasRestantes = diasRestantes,
-        prioridad = Prioridad.valueOf(prioridad.uppercase())
+        prioridad = try {
+            Prioridad.valueOf(prioridad.uppercase())
+        } catch (e: Exception) {
+            Prioridad.MEDIA
+        },
+        estudianteId = estudianteId,
+        estudianteNombre = perfilEstudiante?.nombreCompleto
     )
 }

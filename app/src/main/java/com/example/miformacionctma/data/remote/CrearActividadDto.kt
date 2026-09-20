@@ -1,6 +1,7 @@
 package com.example.miformacionctma.data.remote
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
 @Serializable
 data class CrearActividadDto(
@@ -9,5 +10,7 @@ data class CrearActividadDto(
     val fecha: String,
     val progreso: Int,
     val diasRestantes: Int,
-    val prioridad: String
+    val prioridad: String,
+    @SerialName("instructor_id") val instructorId: String? = null,
+    @SerialName("estudiante_id") val estudianteId: String? = null
 )

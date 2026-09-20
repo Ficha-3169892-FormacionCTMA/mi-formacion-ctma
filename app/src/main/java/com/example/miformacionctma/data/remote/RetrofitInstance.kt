@@ -24,15 +24,16 @@ object RetrofitInstance {
         BASE_URL
     }
 
-    var tokenProvider: SessionTokenProvider = object : SessionTokenProvider {
-        override fun obtenerToken(): String {
-            return BuildConfig.SUPABASE_KEY
-        }
+    private var sessionToken: String? = null
+
+    fun actualizarToken(nuevoToken: String?) {
+        sessionToken = nuevoToken
     }
 
     private val json = Json {
         ignoreUnknownKeys = true
         explicitNulls = false
+        coerceInputValues = true
     }
 
     private val logging = HttpLoggingInterceptor().apply {
@@ -47,12 +48,12 @@ object RetrofitInstance {
         .callTimeout(30, TimeUnit.SECONDS)
         .addInterceptor(logging)
         .addInterceptor { chain ->
-            val token = tokenProvider.obtenerToken()
+            val userToken = sessionToken ?: BuildConfig.SUPABASE_KEY
             val requestBuilder = chain.request().newBuilder()
-                .addHeader("apikey", token)
-            
-            // Supabase REST y Storage requieren Authorization: Bearer
-            requestBuilder.addHeader("Authorization", "Bearer $token")
+                // La apikey SIEMPRE debe ser la Anon Key del proyecto
+                .addHeader("apikey", BuildConfig.SUPABASE_KEY)
+                // Authorization cambia: es Anon Key para públicos, Access Token para privados
+                .addHeader("Authorization", "Bearer $userToken")
 
             chain.proceed(requestBuilder.build())
         }
@@ -101,5 +102,18 @@ object RetrofitInstance {
             .client(client)
             .build()
             .create(SupabaseStorageApi::class.java)
+    }
+
+    val authApi: AuthApi by lazy {
+        Retrofit.Builder()
+            .baseUrl(PROJECT_URL)
+            .client(client)
+            .addConverterFactory(
+                json.asConverterFactory(
+                    "application/json".toMediaType()
+                )
+            )
+            .build()
+            .create(AuthApi::class.java)
     }
 }
