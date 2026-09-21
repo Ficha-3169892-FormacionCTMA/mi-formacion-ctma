@@ -168,3 +168,20 @@ El uso del asistente de Inteligencia Artificial para esta iteración ha sido est
 - Refactorización de Retrofit con parámetros nombrados y tipados robustos.
 - Corrección quirúrgica del flujo MVI/MVVM asegurando la reactividad continua de la UI.
 
+---
+
+## Módulos y Pantallas Adicionales de la Aplicación (Nuevas Actualizaciones)
+
+### 1. Sistema de Autenticación y Flujo de Sesión
+- **Login (`LoginScreen`) y Registro (`RegisterScreen`):** Interfaces declarativas optimizadas que manejan estados de carga, validaciones del lado del cliente y retroalimentación interactiva frente a fallos emitidos por `AuthViewModel`.
+- **Persistencia de Estado:** Integración con `PreferenciasRepository` mediante Jetpack DataStore para guardar y leer de forma asíncrona y segura los tokens de acceso, permitiendo mantener la sesión activa entre reinicios de la aplicación.
+
+### 2. Gestión de Actividades Formativas
+- **Formulario Dinámico (`PantallaCrearActividad` / `PantallaEditarActividad`):** Diseñado con componentes Material 3 y validaciones instantáneas ligadas directamente a `ReglasActividad` (título obligatorio entre 3 y 80 caracteres, fechas formateadas como `AAAA-MM-DD` y barra de progreso ajustable de 0 a 100%).
+- **Pantalla de Detalle (`PantallaDetalleActividad`):** Visualiza los campos pormenorizados de cada compromiso junto a accesos directos dinámicos para abrir la sección de evidencias fotográficas ligada al id único de la actividad.
+
+### 3. Enrutamiento y Navegación Centralizada
+- **Contrato de Destinos (`Destinos.kt`):** Declara de forma tipada y segura las rutas usando un objeto sellado (`sealed class Destino`) que parametriza de forma limpia argumentos dinámicos como `{actividadId}` para los flujos de Detalle, Edición y Evidencias.
+- **Gráfico de Navegación (`MiFormacionAppNav.kt`):** Orquesta de manera reactiva el intercambio seguro de pantallas evaluando dinámicamente el estado de autenticación actual del usuario.
+
+
