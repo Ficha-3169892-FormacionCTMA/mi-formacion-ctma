@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import com.example.miformacionctma.BuildConfig
 import com.example.miformacionctma.data.local.database.AppDatabase
 import com.example.miformacionctma.data.remote.NetworkModule
 import com.example.miformacionctma.data.repository.OfflineFirstActividadRepository
@@ -19,8 +20,9 @@ class MainActivity : ComponentActivity() {
 
     private val repository by lazy {
         OfflineFirstActividadRepository(
-            api = NetworkModule.createActividadesApi(),
-            dao = database.actividadDao()
+            api = NetworkModule.createActividadesApi(BuildConfig.BASE_URL),
+            dao = database.actividadDao(),
+            evidenciaDao = database.evidenciaDao()
         )
     }
 

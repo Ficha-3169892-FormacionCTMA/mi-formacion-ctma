@@ -28,12 +28,30 @@ android {
             }
         }
     }
+
+    flavorDimensions.add("environment")
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            buildConfigField("String", "BASE_URL", "\"https://api-dev.ejemplo.com/\"")
+        }
+        create("stage") {
+            dimension = "environment"
+            buildConfigField("String", "BASE_URL", "\"https://api-stage.ejemplo.com/\"")
+        }
+        create("prod") {
+            dimension = "environment"
+            buildConfigField("String", "BASE_URL", "\"https://api.ejemplo.com/\"")
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

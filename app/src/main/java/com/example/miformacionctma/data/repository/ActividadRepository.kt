@@ -1,7 +1,9 @@
 package com.example.miformacionctma.data.repository
 
 import com.example.miformacionctma.data.local.dao.ActividadDao
+import com.example.miformacionctma.data.local.dao.EvidenciaDao
 import com.example.miformacionctma.data.local.entity.ActividadEntity
+import com.example.miformacionctma.data.local.entity.EvidenciaEntity
 import com.example.miformacionctma.data.remote.ActividadesApi
 import com.example.miformacionctma.data.remote.DataError
 import com.example.miformacionctma.data.remote.NetworkFailure
@@ -10,6 +12,9 @@ import com.example.miformacionctma.data.remote.model.toEntity
 import com.example.miformacionctma.model.ActividadFormativa
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 
 interface ActividadRepository {
@@ -18,11 +23,18 @@ interface ActividadRepository {
     suspend fun insertActividad(actividad: ActividadFormativa)
     suspend fun updateActividad(actividad: ActividadFormativa)
     suspend fun deleteActividad(actividad: ActividadFormativa)
+
+    // Métodos para gestionar evidencias
+    fun observarEvidencia(actividadId: Int): Flow<EvidenciaEntity?>
+    suspend fun guardarEvidenciaLocal(actividadId: Int, uri: String, tipo: String, tamano: Long)
+    suspend fun subirEvidenciaAlServidor(actividadId: Int, bytes: ByteArray, tipoMime: String, nombreArchivo: String): Result<Unit>
+    suspend fun eliminarEvidencia(actividadId: Int)
 }
 
 class OfflineFirstActividadRepository(
     private val api: ActividadesApi,
-    private val dao: ActividadDao
+    private val dao: ActividadDao,
+    private val evidenciaDao: EvidenciaDao
 ) : ActividadRepository {
 
     override fun observeActividades(): Flow<List<ActividadFormativa>> =
@@ -80,9 +92,52 @@ class OfflineFirstActividadRepository(
         )
         dao.eliminarActividad(entity)
     }
+
+    override fun observarEvidencia(actividadId: Int): Flow<EvidenciaEntity?> {
+        return evidenciaDao.observarEvidenciaPorActividad(actividadId)
+    }
+
+    override suspend fun guardarEvidenciaLocal(actividadId: Int, uri: String, tipo: String, tamano: Long) {
+        val evidencia = EvidenciaEntity(
+            actividadId = actividadId,
+            uri = uri,
+            tipo = tipo,
+            tamano = tamano,
+            estado = "LOCAL"
+        )
+        evidenciaDao.insertarEvidencia(evidencia)
+    }
+
+    override suspend fun subirEvidenciaAlServidor(actividadId: Int, bytes: ByteArray, tipoMime: String, nombreArchivo: String): Result<Unit> {
+        val evidenciaActual = evidenciaDao.obtenerEvidenciaPorActividad(actividadId)
+            ?: return Result.failure(Exception("No existe evidencia local"))
+
+        evidenciaDao.insertarEvidencia(evidenciaActual.copy(estado = "SUBIENDO"))
+
+        return try {
+            val mediaType = tipoMime.toMediaTypeOrNull()
+            val requestBody = bytes.toRequestBody(mediaType)
+            val part = MultipartBody.Part.createFormData("file", nombreArchivo, requestBody)
+
+            val response = api.subirEvidencia(actividadId.toString(), part)
+            if (response.isSuccessful) {
+                evidenciaDao.insertarEvidencia(evidenciaActual.copy(estado = "SINCRONIZADA"))
+                Result.success(Unit)
+            } else {
+                evidenciaDao.insertarEvidencia(evidenciaActual.copy(estado = "FALLIDA"))
+                Result.failure(Exception("Error del servidor: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            evidenciaDao.insertarEvidencia(evidenciaActual.copy(estado = "FALLIDA"))
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun eliminarEvidencia(actividadId: Int) {
+        evidenciaDao.eliminarEvidenciaPorActividad(actividadId)
+    }
 }
 
-// Fuera de la clase para actuar como función de extensión global del paquete
 fun ActividadEntity.toDomain(): ActividadFormativa {
     return ActividadFormativa(
         id = id.toLong(),

@@ -69,6 +69,8 @@ El nivel de riesgo se obtiene mediante la siguiente fórmula:
 | R11 | Registro de actividades con títulos con puros espacios en blanco.                                     | HU-04                  |            3 |       3 | 9 — Medio    |
 | R12 | Duplicación de instancias de pantallas en la pila de navegación (*back stack*).                       | HU-07                  |            2 |       4 | 8 — Medio    |
 | R13 | Desincronización entre el control slider y la variable de progreso.                                   | HU-08                  |            2 |       3 | 6 — Medio    |
+| R14 | Selección de archivos con tamaños excesivos o tipos MIME inválidos como evidencia.                     | HU-03                  |            3 |       4 | 12 — Alto    |
+| R15 | Pérdida de conectividad HTTPS interrumpiendo la sincronización de evidencias.                          | HU-03                  |            4 |       3 | 12 — Alto    |
 
 ---
 
@@ -321,6 +323,44 @@ Manejar el valor del slider como un estado numérico entero (0 a 100) actualizad
 **Evidencia relacionada:** CP-14.
 
 **Estado:** Controlado en la implementación de `PantallaCrearActividad`.
+
+---
+
+### R14 — Selección de archivos con tamaños excesivos o tipos MIME inválidos como evidencia
+
+**Descripción:**  
+Existe el riesgo de que un usuario intente adjuntar archivos que no son imágenes o que exceden el límite de tamaño de 5 MB.
+
+**Historia relacionada:** HU-03.
+
+**Consecuencia:**  
+Saturación del almacenamiento local o fallos en los servidores durante la transferencia multipart.
+
+**Mitigación:**  
+Validación en la interfaz de usuario con rechazos explícitos sin persistir la información inválida.
+
+**Evidencia relacionada:** CA 04.
+
+**Estado:** Controlado en `PantallaDetalleActividad.kt`.
+
+---
+
+### R15 — Pérdida de conectividad HTTPS interrumpiendo la sincronización de evidencias
+
+**Descripción:**  
+Existe el riesgo de que la red falle o se agote el tiempo de espera durante el envío de la evidencia fotográfica.
+
+**Historia relacionada:** HU-03.
+
+**Consecuencia:**  
+Pérdida de consistencia en el servidor y frustración del usuario.
+
+**Mitigación:**  
+Mecanismo de retención local en Room, transicionando el estado a "Fallida" y ofreciendo una opción explícita para reintentar la subida.
+
+**Evidencia relacionada:** CA 06.
+
+**Estado:** Controlado en `OfflineFirstActividadRepository.kt`.
 
 ---
 

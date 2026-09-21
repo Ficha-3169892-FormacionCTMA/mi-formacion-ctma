@@ -208,6 +208,7 @@ fun MiFormacionAppNav(
             PantallaDetalleActividad(
                 actividadId = id,
                 actividades = actividadesFormativas,
+                viewModel = viewModel,
                 onVolver = {
                     navController.popBackStack()
                 },

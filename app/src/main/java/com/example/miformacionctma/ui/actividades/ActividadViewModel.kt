@@ -94,4 +94,23 @@ class ActividadViewModel(
             repository.deleteActividad(actividad)
         }
     }
+
+    // --- Métodos de Gestión de Evidencias ---
+
+    fun observarEvidencia(actividadId: Int): kotlinx.coroutines.flow.Flow<com.example.miformacionctma.data.local.entity.EvidenciaEntity?> {
+        return repository.observarEvidencia(actividadId)
+    }
+
+    fun guardarYSubirEvidencia(actividadId: Int, uriStr: String, tipoMime: String, tamano: Long, bytes: ByteArray, nombreArchivo: String) {
+        viewModelScope.launch {
+            repository.guardarEvidenciaLocal(actividadId, uriStr, tipoMime, tamano)
+            repository.subirEvidenciaAlServidor(actividadId, bytes, tipoMime, nombreArchivo)
+        }
+    }
+
+    fun eliminarEvidencia(actividadId: Int) {
+        viewModelScope.launch {
+            repository.eliminarEvidencia(actividadId)
+        }
+    }
 }
