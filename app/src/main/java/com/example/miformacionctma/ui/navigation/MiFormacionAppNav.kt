@@ -75,10 +75,18 @@ fun MiFormacionAppNav() {
     }
 
     LaunchedEffect(authState) {
-        if (authState is AuthUiState.Autenticado) {
-            val user = (authState as AuthUiState.Autenticado).usuario
-            currentUserRole = user.rol
-            currentUserId = user.id
+        when (authState) {
+            is AuthUiState.Autenticado -> {
+                val user = (authState as AuthUiState.Autenticado).usuario
+                currentUserRole = user.rol
+                currentUserId = user.id
+            }
+            AuthUiState.Invitado -> {
+                navController.navigate(Destino.Login.ruta) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+            else -> Unit
         }
     }
 
@@ -179,7 +187,6 @@ fun MiFormacionAppNav() {
                 },
                 onLogout = {
                     authViewModel.logout()
-                    navController.navigate(Destino.Login.ruta) { popUpTo(0) }
                 }
             )
         }

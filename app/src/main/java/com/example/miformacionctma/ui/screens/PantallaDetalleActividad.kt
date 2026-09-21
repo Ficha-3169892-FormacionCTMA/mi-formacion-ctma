@@ -66,8 +66,10 @@ fun PantallaDetalleActividad(
                 .padding(24.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            if (actividad != null) {
-                Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                    if (actividad == null) {
+                        Text("No se encontró la actividad.", modifier = Modifier.align(Alignment.Center))
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                     Text(
                         text = actividad.titulo,
                         style = MaterialTheme.typography.headlineMedium,
