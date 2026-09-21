@@ -280,7 +280,20 @@ fun MiFormacionAppNav() {
             arguments = listOf(navArgument("actividadId") { type = NavType.LongType })
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getLong("actividadId") ?: -1L
-            EvidenciaScreen(actividadId = id, viewModel = evidenciaViewModel, onBack = { navController.popBackStack() })
+            val actividadSeleccionada = actividades.find { it.id == id }
+            val relacionadas = remember(actividades, actividadSeleccionada) {
+                if (actividadSeleccionada != null) {
+                    actividades.filter { it.titulo == actividadSeleccionada.titulo }
+                } else {
+                    emptyList()
+                }
+            }
+            EvidenciaScreen(
+                actividadId = id,
+                viewModel = evidenciaViewModel,
+                actividadesRelacionadas = relacionadas,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

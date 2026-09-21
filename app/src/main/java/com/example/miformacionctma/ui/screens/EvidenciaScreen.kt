@@ -33,6 +33,7 @@ import java.io.File
 fun EvidenciaScreen(
     actividadId: Long,
     viewModel: EvidenciaViewModel,
+    actividadesRelacionadas: List<com.example.miformacionctma.model.ActividadFormativa> = emptyList(),
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -48,8 +49,9 @@ fun EvidenciaScreen(
         }
     }
 
-    LaunchedEffect(actividadId) {
-        viewModel.cargarEvidencias(actividadId)
+    LaunchedEffect(actividadId, actividadesRelacionadas) {
+        val ids = actividadesRelacionadas.map { it.id }
+        viewModel.cargarEvidencias(actividadId, ids)
     }
 
     var tempUri by remember { mutableStateOf<Uri?>(null) }
@@ -120,8 +122,12 @@ fun EvidenciaScreen(
                     } else {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
                             items(state.evidencias) { evidencia ->
+                                val nombreEstudiante = remember(actividadesRelacionadas, evidencia.actividadId) {
+                                    actividadesRelacionadas.find { it.id == evidencia.actividadId }?.estudianteNombre
+                                }
                                 EvidenciaItem(
                                     evidencia = evidencia,
+                                    estudianteNombre = nombreEstudiante,
                                     onSync = { viewModel.sincronizar(evidencia.id) },
                                     onDelete = { viewModel.eliminar(evidencia.id) }
                                 )
@@ -140,6 +146,7 @@ fun EvidenciaScreen(
 @Composable
 fun EvidenciaItem(
     evidencia: Evidencia,
+    estudianteNombre: String? = null,
     onSync: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -164,6 +171,15 @@ fun EvidenciaItem(
             )
             
             Spacer(modifier = Modifier.height(8.dp))
+            if (!estudianteNombre.isNullOrBlank()) {
+                Text(
+                    text = "Subido por: $estudianteNombre",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
             Text(evidencia.nombreArchivo, style = MaterialTheme.typography.titleMedium)
             Text("Estado: ${evidencia.estado.name}", style = MaterialTheme.typography.bodySmall)
             if (evidencia.finalidad != null) {

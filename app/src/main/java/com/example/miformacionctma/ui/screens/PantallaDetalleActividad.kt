@@ -90,8 +90,19 @@ fun PantallaDetalleActividad(
                         InfoColumn("PRIORIDAD", actividad.prioridad.name)
                     }
                     
-                    if (actividad.estudianteNombre != null) {
-                        InfoColumn("ESTUDIANTE ASIGNADO", actividad.estudianteNombre)
+                    // Procesar la cantidad de estudiantes asignados si el rol es instructor
+                    val datosEstudianteAmostrar = remember(actividad, actividades, userRole) {
+                        if (userRole == Rol.INSTRUCTOR) {
+                            val grupo = actividades.filter { it.titulo.trim().lowercase() == actividad.titulo.trim().lowercase() }
+                            val cantidadEstudiantes = grupo.filter { !it.estudianteId.isNullOrBlank() }.size
+                            if (cantidadEstudiantes > 1) "$cantidadEstudiantes estudiantes" else actividad.estudianteNombre
+                        } else {
+                            actividad.estudianteNombre
+                        }
+                    }
+
+                    if (datosEstudianteAmostrar != null) {
+                        InfoColumn("ESTUDIANTE ASIGNADO", datosEstudianteAmostrar)
                     }
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

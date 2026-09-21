@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -93,16 +94,36 @@ fun PantallaActividades(
     operacion: OperacionUiState = OperacionUiState.Inactiva,
     onLogout: () -> Unit = {}
 ) {
-    val urgentes = ReglasActividad.actividadesUrgentes(actividades).size
-    val promedio = ReglasActividad.promedioProgreso(actividades).toInt()
-    val completadas = actividades.count { it.progreso >= 100 }
+    val actividadesProcesadas = remember(actividades, userRole, busqueda) {
+        if (userRole == Rol.INSTRUCTOR) {
+            actividades.groupBy { it.titulo.trim().lowercase() }.map { (_, grupo) ->
+                val principal = grupo.first()
+                val promedioProgreso = grupo.map { it.progreso }.average().toInt()
+                
+                // Contar cuántos tienen estudiante asignado en este grupo
+                val cantidadEstudiantes = grupo.filter { !it.estudianteId.isNullOrBlank() }.size
+                
+                principal.copy(
+                    progreso = promedioProgreso,
+                    estudianteNombre = if (cantidadEstudiantes > 1) "$cantidadEstudiantes estudiantes" else principal.estudianteNombre
+                )
+            }
+        } else {
+            actividades
+        }
+    }
+
+    val urgentes = ReglasActividad.actividadesUrgentes(actividadesProcesadas).size
+    val promedio = ReglasActividad.promedioProgreso(actividadesProcesadas).toInt()
+    val completadas = actividadesProcesadas.count { it.progreso >= 100 }
 
     val resumen = buildString {
         appendLine("Urgentes: $urgentes")
         appendLine("Promedio: $promedio%")
         appendLine("Completadas: $completadas")
-        appendLine("Total actividades: ${actividades.size}")
+        appendLine("Total actividades: ${actividadesProcesadas.size}")
     }
+
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -226,7 +247,7 @@ fun PantallaActividades(
                     )
                 }
 
-                if (actividades.isEmpty()) {
+                if (actividadesProcesadas.isEmpty()) {
                     item {
                         Text(
                             text = if (busqueda.isBlank()) "No hay actividades registradas." else "Sin resultados para \"$busqueda\"",
@@ -236,7 +257,7 @@ fun PantallaActividades(
                         )
                     }
                 } else {
-                    items(actividades, key = { it.id }) { actividad ->
+                    items(actividadesProcesadas, key = { it.id }) { actividad ->
                         TarjetaActividad(
                             actividad = actividad,
                             onClick = { onActividadClick(actividad.id) }

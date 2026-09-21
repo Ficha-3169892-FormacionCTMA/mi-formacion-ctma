@@ -28,22 +28,37 @@ class EvidenciaViewModel(
     private val _errorEvent = MutableStateFlow<String?>(null)
     val errorEvent = _errorEvent.asStateFlow()
 
-    fun cargarEvidencias(actividadId: Long) {
+    fun cargarEvidencias(actividadId: Long, idsRelacionados: List<Long> = emptyList()) {
         viewModelScope.launch {
-            // Intentar refrescar desde el servidor primero
-            try {
-                repository.refrescarDesdeServidor(actividadId)
-            } catch (e: Exception) {
-                // Silenciar error de red en el refresco inicial
+            val listaIds = (idsRelacionados + actividadId).distinct()
+            listaIds.forEach { id ->
+                try {
+                    repository.refrescarDesdeServidor(id)
+                } catch (e: Exception) {
+                    // Silenciar
+                }
             }
 
-            repository.observarEvidencias(actividadId)
-                .catch { e ->
-                    _uiState.value = EvidenciaUiState.Error(e.message ?: "Error desconocido")
-                }
-                .collect { evidencias ->
-                    _uiState.value = EvidenciaUiState.Contenido(evidencias)
-                }
+            // Unir todos los flujos de evidencias locales de las actividades relacionadas
+            // O una solución más limpia: usar una lista mutable recolectando de todos.
+            // Para mantenerlo reactivo y simple, podemos observar combinando o recolectando secuencialmente, 
+            // pero dado que es un flujo, podemos recolectar las evidencias de todos los idsRelacionados.
+            // O simplemente hacer un collect de cada uno o consultar el repositorio.
+            // Vamos a recolectar de todas las actividades asignadas al mismo grupo/tarea.
+            combineAndEmitEvidencias(listaIds)
+        }
+    }
+
+    private fun combineAndEmitEvidencias(listaIds: List<Long>) {
+        viewModelScope.launch {
+            val flujos = listaIds.map { repository.observarEvidencias(it) }
+            kotlinx.coroutines.flow.combine(flujos) { arrays ->
+                arrays.flatMap { it }
+            }.catch { e ->
+                _uiState.value = EvidenciaUiState.Error(e.message ?: "Error desconocido")
+            }.collect { evidencias ->
+                _uiState.value = EvidenciaUiState.Contenido(evidencias)
+            }
         }
     }
 
