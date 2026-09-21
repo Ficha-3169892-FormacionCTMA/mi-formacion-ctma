@@ -6,7 +6,7 @@ import com.example.miformacionctma.model.Prioridad
 object ActividadesDemo {
     val listaInicial = listOf(
         ActividadFormativa(
-            id = 1L,
+            id = "1",
             titulo = "Construir pantalla Compose accesible",
             descripcion = "Crear la interfaz principal usando Jetpack Compose y Material 3.",
             fecha = "2026-09-02",
@@ -15,7 +15,7 @@ object ActividadesDemo {
             prioridad = Prioridad.ALTA
         ),
         ActividadFormativa(
-            id = 2L,
+            id = "2",
             titulo = "Diseñar tarjeta reutilizable de actividades",
             descripcion = "Implementar TarjetaActividad como composable reutilizable y desacoplado.",
             fecha = "2026-09-04",
@@ -24,7 +24,7 @@ object ActividadesDemo {
             prioridad = Prioridad.ALTA
         ),
         ActividadFormativa(
-            id = 3L,
+            id = "3",
             titulo = "Validar títulos largos y adaptación visual en diferentes tamaños de pantalla",
             descripcion = "Comprobar que el diseño no se recorte cuando el texto sea demasiado extenso.",
             fecha = "2026-09-06",
@@ -33,7 +33,7 @@ object ActividadesDemo {
             prioridad = Prioridad.MEDIA
         ),
         ActividadFormativa(
-            id = 4L,
+            id = "4",
             titulo = "Preparar estado vacío de la pantalla",
             descripcion = "Mostrar un mensaje comprensible cuando no existan actividades registradas.",
             fecha = "2026-08-29",
@@ -42,7 +42,7 @@ object ActividadesDemo {
             prioridad = Prioridad.MEDIA
         ),
         ActividadFormativa(
-            id = 5L,
+            id = "5",
             titulo = "Aplicar tema Material 3 y tipografía consistente",
             descripcion = "Centralizar colores, tamaños y estilos del proyecto para evitar duplicación.",
             fecha = "2026-09-01",
@@ -51,7 +51,7 @@ object ActividadesDemo {
             prioridad = Prioridad.ALTA
         ),
         ActividadFormativa(
-            id = 6L,
+            id = "6",
             titulo = "Revisar accesibilidad con fuente grande",
             descripcion = "Probar escalado de texto, contraste y tamaños táctiles adecuados para distintos usuarios.",
             fecha = "2026-09-05",
@@ -60,7 +60,7 @@ object ActividadesDemo {
             prioridad = Prioridad.MEDIA
         ),
         ActividadFormativa(
-            id = 7L,
+            id = "7",
             titulo = "Implementar LazyColumn con claves estables",
             descripcion = "Usar key = { it.id } para mejorar la recomposición y mantener el estado de los elementos.",
             fecha = "2026-08-30",
@@ -69,7 +69,7 @@ object ActividadesDemo {
             prioridad = Prioridad.ALTA
         ),
         ActividadFormativa(
-            id = 8L,
+            id = "8",
             titulo = "Agregar adaptación para pantallas anchas con BoxWithConstraints",
             descripcion = "Cambiar entre lista y cuadrícula según el ancho disponible del dispositivo.",
             fecha = "2026-09-03",
@@ -78,7 +78,7 @@ object ActividadesDemo {
             prioridad = Prioridad.MEDIA
         ),
         ActividadFormativa(
-            id = 9L,
+            id = "9",
             titulo = "Documentar decisiones de UX y accesibilidad",
             descripcion = "Registrar hallazgos encontrados durante las pruebas y las correcciones realizadas.",
             fecha = "2026-09-07",
@@ -87,7 +87,7 @@ object ActividadesDemo {
             prioridad = Prioridad.BAJA
         ),
         ActividadFormativa(
-            id = 10L,
+            id = "10",
             titulo = "Preparar demostración final y revisión cruzada del Sprint de UI Compose",
             descripcion = "Verificar funcionamiento, capturas, commits y explicación técnica del incremento desarrollado.",
             fecha = "2026-09-09",

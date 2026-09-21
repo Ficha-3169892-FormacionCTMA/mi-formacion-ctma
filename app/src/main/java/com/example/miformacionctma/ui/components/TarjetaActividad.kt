@@ -99,7 +99,7 @@ private fun TarjetaActividadPreviewNormal() {
     MiFormacionCTMATheme {
         TarjetaActividad(
             actividad = ActividadFormativa(
-                id = 1L,
+                id = "1",
                 titulo = "Kotlin básico",
                 descripcion = "Repasar funciones y clases",
                 fecha = "2026-09-02",
@@ -117,7 +117,7 @@ private fun TarjetaActividadPreviewTituloLargo() {
     MiFormacionCTMATheme {
         TarjetaActividad(
             actividad = ActividadFormativa(
-                id = 2L,
+                id = "2",
                 titulo = "Validar títulos extremadamente largos dentro de una tarjeta reutilizable de actividades para Compose",
                 descripcion = "Comprobar que el diseño no se rompa con textos extensos",
                 fecha = "2026-09-06",
@@ -135,7 +135,7 @@ private fun TarjetaActividadPreviewCompletada() {
     MiFormacionCTMATheme {
         TarjetaActividad(
             actividad = ActividadFormativa(
-                id = 3L,
+                id = "3",
                 titulo = "Actividad completada",
                 descripcion = "Debe mostrar el estado Completada",
                 fecha = "2026-08-29",
@@ -153,7 +153,7 @@ private fun TarjetaActividadPreviewSinIniciar() {
     MiFormacionCTMATheme {
         TarjetaActividad(
             actividad = ActividadFormativa(
-                id = 4L,
+                id = "4",
                 titulo = "Actividad pendiente",
                 descripcion = "Debe mostrar el estado Pendiente",
                 fecha = "2026-09-09",

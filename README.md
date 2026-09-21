@@ -70,6 +70,21 @@ El proyecto fue desarrollado utilizando un **repositorio compartido en GitHub** 
 
 ---
 
+## Persistencia Local (Semana 6)
+
+Se incorporó persistencia local estructurada con **Room 3** y almacenamiento de preferencias liviano con **Preferences DataStore**, siguiendo el patrón de **Fuente Única de Verdad (Single Source of Truth - SSOT)**.
+
+### Recorrido del Dato (Arquitectura)
+1. **Lectura / Observación:** `Room Database / DataStore` → `Flow<List<Entity>>` → `Repository contrato` → `ViewModel (combina flows)` → `UiState` → `Jetpack Compose UI` (recomposición automática ante cambios).
+2. **Escritura / Registro:** `Compose UI (Event)` → `ViewModel` → `Repository` → `DAO (suspend)` → `Room SQLite` → Disparo automático de nueva emisión de Flow hacia la UI.
+
+### Próximos pasos (Semana 8: Sincronización con API)
+Al incorporar una API Remota en la Semana 8:
+- La API externa actualizará la base de datos local de Room de forma asíncrona.
+- La UI continuará leyendo de Room de manera reactiva (Offline-First), manteniendo a Room como la única fuente canónica de verdad.
+
+---
+
 ## Estado actual
 
 El proyecto cuenta con una **interfaz funcional, adaptable y accesible**, lista para continuar con futuras iteraciones relacionadas con **persistencia de datos, navegación y arquitectura avanzada en Compose**.

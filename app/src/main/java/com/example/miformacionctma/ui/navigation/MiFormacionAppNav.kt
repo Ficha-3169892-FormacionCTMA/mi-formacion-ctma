@@ -3,35 +3,56 @@ package com.example.miformacionctma.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.miformacionctma.domain.ActividadesDemo
+import com.example.miformacionctma.data.local.crearDatabase
+import com.example.miformacionctma.data.repository.PreferenciasRepository
+import com.example.miformacionctma.data.repository.RoomActividadRepository
+import com.example.miformacionctma.data.repository.dataStore
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.model.ReglasActividad
-import com.example.miformacionctma.ui.screens.PantallaActividades
+import com.example.miformacionctma.ui.screens.ContenidoAdaptable
 import com.example.miformacionctma.ui.screens.PantallaCrearActividad
 import com.example.miformacionctma.ui.screens.PantallaDetalleActividad
 import com.example.miformacionctma.ui.state.FormularioActividadUiState
+import com.example.miformacionctma.ui.state.ListadoUiState
+import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 
 @Composable
 fun MiFormacionAppNav() {
     val navController = rememberNavController()
+    val context = LocalContext.current.applicationContext
 
-    // Fuente de verdad de la lista de actividades
-    val actividades = remember {
-        mutableStateListOf<ActividadFormativa>().apply {
-            addAll(ActividadesDemo.listaInicial)
+    // Manual injection of database & repository as per guideline single instance scope
+    val database = remember { crearDatabase(context) }
+    val repoActividades = remember { RoomActividadRepository(database.actividadDao()) }
+    val repoPreferencias = remember { PreferenciasRepository(context.dataStore) }
+
+    val factory = remember {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return ActividadesViewModel(repoActividades, repoPreferencias) as T
+            }
         }
     }
+
+    val viewModel: ActividadesViewModel = viewModel(factory = factory)
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val textoBusqueda by viewModel.textoBusqueda.collectAsStateWithLifecycle()
 
     // Estado del formulario de creación preservado en rotaciones
     var formTitulo by rememberSaveable { mutableStateOf("") }
@@ -70,8 +91,10 @@ fun MiFormacionAppNav() {
     ) {
         // Destino 1 - Listado de actividades
         composable(Destino.Lista.ruta) {
-            PantallaActividades(
-                actividades = actividades,
+            ContenidoAdaptable(
+                uiState = uiState,
+                textoBusqueda = textoBusqueda,
+                onBusquedaChange = viewModel::cambiarBusqueda,
                 onActividadClick = { id ->
                     navController.navigate(Destino.Detalle.crearRuta(id)) {
                         launchSingleTop = true
@@ -81,7 +104,8 @@ fun MiFormacionAppNav() {
                     navController.navigate(Destino.Crear.ruta) {
                         launchSingleTop = true
                     }
-                }
+                },
+                onReintentar = { viewModel.cambiarBusqueda(textoBusqueda) }
             )
         }
 
@@ -105,8 +129,9 @@ fun MiFormacionAppNav() {
                 onProgresoChange = { formProgreso = it },
                 onGuardarClick = {
                     if (uiStateFormulario.puedeGuardar) {
+                        val maxId = System.currentTimeMillis().toString()
                         val nuevaActividad = ActividadFormativa(
-                            id = (actividades.maxOfOrNull { it.id } ?: 0L) + 1L,
+                            id = maxId,
                             titulo = formTitulo.trim(),
                             descripcion = formDescripcion.trim(),
                             fecha = formFecha.trim(),
@@ -114,7 +139,7 @@ fun MiFormacionAppNav() {
                             diasRestantes = 7,
                             prioridad = formPrioridad
                         )
-                        actividades.add(nuevaActividad)
+                        viewModel.guardar(nuevaActividad)
 
                         // Limpiar formulario y reiniciar las banderas de interacción
                         formTitulo = ""
@@ -140,13 +165,17 @@ fun MiFormacionAppNav() {
         composable(
             route = Destino.Detalle.ruta,
             arguments = listOf(
-                navArgument("actividadId") { type = NavType.LongType }
+                navArgument("actividadId") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getLong("actividadId") ?: -1L
+            val id = backStackEntry.arguments?.getString("actividadId") ?: ""
+            val listaActividades = when (val s = uiState) {
+                is ListadoUiState.Contenido -> s.actividades
+                else -> emptyList()
+            }
             PantallaDetalleActividad(
                 actividadId = id,
-                actividades = actividades,
+                actividades = listaActividades,
                 onVolver = {
                     navController.popBackStack()
                 }
