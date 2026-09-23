@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "56ed362f40bfb0d9909ddce172bddbb3",
+    "identityHash": "3b62b5cebd99250c4d566430c8ed6bfd",
     "entities": [
       {
         "tableName": "actividades",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `titulo` TEXT NOT NULL, `descripcion` TEXT NOT NULL, `fecha` TEXT NOT NULL, `progreso` INTEGER NOT NULL, `prioridad` TEXT NOT NULL, `competenciaId` INTEGER, `completada` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `titulo` TEXT NOT NULL, `descripcion` TEXT NOT NULL, `fecha` INTEGER NOT NULL, `progreso` INTEGER NOT NULL, `prioridad` TEXT NOT NULL, `competenciaId` INTEGER, `completada` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -29,7 +29,7 @@
           {
             "fieldPath": "fecha",
             "columnName": "fecha",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -101,7 +101,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '56ed362f40bfb0d9909ddce172bddbb3')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3b62b5cebd99250c4d566430c8ed6bfd')"
     ]
   }
 }

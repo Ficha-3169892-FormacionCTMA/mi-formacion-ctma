@@ -2,6 +2,8 @@
 *.iml
 .gradle
 /local.properties
+/secrets.properties
+
 .idea/
 /.idea/caches
 /.idea/libraries
@@ -15,6 +17,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+secrets.properties
+
 
 # Android Studio local device state
 /.idea/deploymentTargetSelector.xml

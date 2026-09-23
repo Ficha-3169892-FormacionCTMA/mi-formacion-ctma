@@ -58,20 +58,20 @@ adaptando las pautas recomendadas de flujo unidireccional (UVI):
     - Combina flujos reactivos fríos transformándolos en un único estado inmutable expuesto mediante
       un `StateFlow`.
 3. **Capa de Datos (Data Layer - Repositorios/Fuentes de Datos):**
-    - **Room Database:** Almacena de forma persistente las entidades exponiendo flujos asíncronos
-      continuos a través de DAOs.
-    - **DataStore Preferences:** Guarda configuraciones efímeras del usuario de manera
-      transaccional (ej. criterios de ordenamiento).
-    - Mapeo completo en la capa de datos (`toDomain()` / `toEntity()`) que impide la filtración de
-      componentes de Room hacia la interfaz de usuario.
+    - **Room Database:** Fuente local canónica de verdad. Almacena de forma persistente las entidades exponiendo flujos asíncronos continuos a través de DAOs. Utiliza transacciones atómicas (`useWriterConnection`) para garantizar la integridad durante la sincronización.
+    - **Retrofit & OkHttp:** Capa de red para la sincronización remota. Configurada con *timeouts* explícitos y un sistema de autenticación basado en `Interceptor` para inyectar tokens Bearer de forma dinámica.
+    - **DataStore Preferences:** Guarda configuraciones efímeras del usuario de manera transaccional (ej. criterios de ordenamiento).
+    - **Offline-First Policy:** La UI nunca consume datos directamente de la red (DTOs). El Repositorio coordina la descarga, el mapeo y la persistencia en Room, desde donde la UI observa los cambios.
 
 ---
 
-## Concurrencia y Justificación de Dispatchers
+## Concurrencia, Red y Seguridad
 
-El proyecto sigue una estricta política de **Main-Safety** para garantizar animaciones fluidas y una
-interfaz libre de bloqueos:
+El proyecto sigue una estricta política de **Main-Safety** y seguridad de datos:
 
+- **Autenticación Segura:** Los tokens no están *hardcoded* ni se guardan en el `BuildConfig`. Se inyectan en tiempo de ejecución mediante un `TokenProvider` y se redactan automáticamente en los logs de red para evitar fugas.
+- **Gestión de Estados de Sincronización:** Se manejan dos dimensiones de estado: el contenido (datos locales siempre disponibles) y el estado de refresco (`RefreshUiState`: Idle, Running, Success, Failed).
+- **Resiliencia ante Fallos:** Si la red falla, la caché local se mantiene intacta. Se clasifican los errores (401, 404, 5xx, No conexión, Timeout) para ofrecer una respuesta visual acorde y accionable (Reintentar).
 - **Asincronía Reactiva Continuada (`Flow`):** Room y DataStore exponen streams asíncronos continuos
   que operan de forma segura nativa en hilos de background independientes. Por este motivo, se evitó
   la inyección innecesaria o redundante de `withContext(Dispatchers.IO)` en la capa del ViewModel,
@@ -96,6 +96,10 @@ Se implementaron pruebas automatizadas con **JUnit** para verificar reglas de ne
 flujos de estado y migración de datos. La suite incluye un total de **24 pruebas automatizadas** que
 finalizan correctamente en verde:
 
+* **Pruebas de Repositorio y Red (`ActividadRepositoryTest`):**
+    - Simulación de servidor real mediante **`MockWebServer`**, permitiendo pruebas deterministas sin dependencia de internet.
+    - Verificación de 8 escenarios críticos: éxito (200), lista vacía, fallos de autenticación (401), errores de servidor (500), JSON inválido, *timeouts*, concurrencia y cancelación.
+    - Uso de **`MockK`** para interceptar y validar transacciones atómicas en la base de datos.
 * **Pruebas de ViewModel y Flujos de Estado (`ActividadesViewModelTest`):**
     - Implementadas bajo entornos de tiempo virtual con **`runTest`** y `StandardTestDispatcher`
       eliminando por completo retardos físicos o bloqueos como `Thread.sleep()`.

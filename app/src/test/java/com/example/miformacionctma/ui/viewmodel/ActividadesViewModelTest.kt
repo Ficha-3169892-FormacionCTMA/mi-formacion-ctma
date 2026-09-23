@@ -2,6 +2,7 @@ package com.example.miformacionctma.ui.viewmodel
 
 import com.example.miformacionctma.data.repository.ActividadRepository
 import com.example.miformacionctma.data.repository.PreferenciasRepository
+import com.example.miformacionctma.data.repository.RepositoryResult
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Competencia
 import com.example.miformacionctma.model.Prioridad
@@ -24,6 +25,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ActividadesViewModelTest {
@@ -80,6 +82,10 @@ class ActividadesViewModelTest {
         override suspend fun inicializarDatos() {
             // No-op para pruebas controladas
         }
+
+        override suspend fun refresh(): RepositoryResult<Unit> {
+            return com.example.miformacionctma.data.util.Result.Success(Unit)
+        }
     }
 
     // 2. Fake PreferenciasRepository subclass
@@ -135,7 +141,7 @@ class ActividadesViewModelTest {
             id = 1L,
             titulo = "Aprender Corrutinas",
             descripcion = "Guía de estudio 07",
-            fecha = "2026-09-17",
+            fecha = Instant.now(),
             progreso = 50,
             prioridad = Prioridad.ALTA
         )
@@ -162,7 +168,7 @@ class ActividadesViewModelTest {
 
         assertEquals(OperacionUiState.Inactiva, viewModel.operacionUiState.value)
 
-        val actividad = ActividadFormativa(2L, "Test", "Desc", "2026-09-17", 0, Prioridad.MEDIA)
+        val actividad = ActividadFormativa(2L, "Test", "Desc", Instant.now(), 0, Prioridad.MEDIA)
         viewModel.insertar(actividad)
         
         advanceUntilIdle()

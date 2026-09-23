@@ -17,6 +17,9 @@ import androidx.compose.ui.unit.dp
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.ui.theme.MiFormacionCTMATheme
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun TarjetaActividad(
@@ -75,8 +78,11 @@ fun TarjetaActividad(
                     style = MaterialTheme.typography.bodyMedium
                 )
 
+                val fechaFormateada = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                    .withZone(ZoneId.systemDefault())
+                    .format(actividad.fecha)
                 Text(
-                    text = "Fecha límite: ${actividad.fecha}",
+                    text = "Fecha límite: $fechaFormateada",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -103,7 +109,7 @@ private fun TarjetaActividadPreviewNormal() {
                 id = 1L,
                 titulo = "Kotlin básico",
                 descripcion = "Repasar funciones y clases",
-                fecha = "2026-09-02",
+                fecha = Instant.parse("2026-09-02T10:00:00Z"),
                 progreso = 65,
                 prioridad = Prioridad.ALTA
             )
@@ -120,7 +126,7 @@ private fun TarjetaActividadPreviewTituloLargo() {
                 id = 2L,
                 titulo = "Validar títulos extremadamente largos dentro de una tarjeta reutilizable de actividades para Compose",
                 descripcion = "Comprobar que el diseño no se rompa con textos extensos",
-                fecha = "2026-09-06",
+                fecha = Instant.parse("2026-09-06T10:00:00Z"),
                 progreso = 20,
                 prioridad = Prioridad.MEDIA
             )
@@ -137,7 +143,7 @@ private fun TarjetaActividadPreviewCompletada() {
                 id = 3L,
                 titulo = "Actividad completada",
                 descripcion = "Debe mostrar el estado Completada",
-                fecha = "2026-08-29",
+                fecha = Instant.parse("2026-08-29T10:00:00Z"),
                 progreso = 100,
                 prioridad = Prioridad.MEDIA
             )
@@ -154,7 +160,7 @@ private fun TarjetaActividadPreviewSinIniciar() {
                 id = 4L,
                 titulo = "Actividad pendiente",
                 descripcion = "Debe mostrar el estado Pendiente",
-                fecha = "2026-09-09",
+                fecha = Instant.parse("2026-09-09T10:00:00Z"),
                 progreso = 0,
                 prioridad = Prioridad.BAJA
             )

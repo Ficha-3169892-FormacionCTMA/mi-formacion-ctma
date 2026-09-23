@@ -10,6 +10,8 @@ import com.example.miformacionctma.model.Competencia
 import com.example.miformacionctma.model.ReglasActividad
 import com.example.miformacionctma.ui.state.ListadoUiState
 import com.example.miformacionctma.ui.state.OperacionUiState
+import com.example.miformacionctma.ui.state.RefreshUiState
+import com.example.miformacionctma.data.util.Result
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +36,9 @@ class ActividadesViewModel(
 
     private val _operacionUiState = MutableStateFlow<OperacionUiState>(OperacionUiState.Inactiva)
     val operacionUiState: StateFlow<OperacionUiState> = _operacionUiState.asStateFlow()
+
+    private val _syncState = MutableStateFlow<RefreshUiState>(RefreshUiState.Idle)
+    val syncState: StateFlow<RefreshUiState> = _syncState.asStateFlow()
 
     fun actualizarBusqueda(texto: String) {
         _textoBusqueda.value = texto
@@ -146,6 +151,20 @@ class ActividadesViewModel(
         return repository.obtenerConCompetencia(id)
     }
 
+    /**
+     * Sincroniza las actividades desde el servidor.
+     */
+    fun refreshActividades() {
+        viewModelScope.launch {
+            _syncState.value = RefreshUiState.Running
+            val result = repository.refresh()
+            _syncState.value = when (result) {
+                is Result.Success -> RefreshUiState.Success
+                is Result.Error -> RefreshUiState.Failed(result.error)
+            }
+        }
+    }
+
     init {
         viewModelScope.launch {
             try {
@@ -154,6 +173,8 @@ class ActividadesViewModel(
                 if (e is CancellationException) throw e
             }
         }
+        // Sincronizar al iniciar si es necesario
+        refreshActividades()
     }
 }
 

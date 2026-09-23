@@ -3,6 +3,7 @@ package com.example.miformacionctma.data.local.dao
 import androidx.room3.Dao
 import androidx.room3.Delete
 import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Update
@@ -13,8 +14,11 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ActividadDao {
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertar(actividad: ActividadEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarTodas(actividades: List<ActividadEntity>)
 
     @Update
     suspend fun actualizar(actividad: ActividadEntity)
@@ -44,4 +48,7 @@ interface ActividadDao {
     @Transaction
     @Query("SELECT * FROM actividades WHERE id = :id LIMIT 1")
     suspend fun obtenerConCompetencia(id: Long): ActividadConCompetencia?
+
+    @Query("DELETE FROM actividades")
+    suspend fun eliminarTodas()
 }

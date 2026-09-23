@@ -1,19 +1,28 @@
 package com.example.miformacionctma.data.repository
 
+import androidx.room3.useWriterConnection
+import com.example.miformacionctma.data.local.FormacionDatabase
 import com.example.miformacionctma.data.local.dao.ActividadDao
 import com.example.miformacionctma.data.local.dao.CompetenciaDao
 import com.example.miformacionctma.data.local.toDomain
 import com.example.miformacionctma.data.local.toEntity
-import com.example.miformacionctma.domain.ActividadesDemo
-import com.example.miformacionctma.domain.CompetenciasDemo
+import com.example.miformacionctma.data.mapper.toEntityList
+import com.example.miformacionctma.data.remote.api.ActividadesApi
+import com.example.miformacionctma.data.util.DataError
+import com.example.miformacionctma.data.util.Result
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Competencia
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import retrofit2.HttpException
+import java.io.IOException
 
 class RoomActividadRepository(
     private val dao: ActividadDao,
-    private val competenciaDao: CompetenciaDao
+    private val competenciaDao: CompetenciaDao,
+    private val db: FormacionDatabase,
+    private val api: ActividadesApi
 ) : ActividadRepository {
 
     override fun observarActividades(): Flow<List<ActividadFormativa>> {
@@ -75,14 +84,46 @@ class RoomActividadRepository(
     }
 
     override suspend fun inicializarDatos() {
-        if (dao.contarActividades() == 0) {
-            ActividadesDemo.listaInicial.forEach { actividad ->
-                dao.insertar(actividad.toEntity())
-            }
-        }
+        // En una arquitectura Offline-First conectada a Supabase,
+        // no sembramos datos locales. La base de datos local se llenará
+        // exclusivamente mediante la función refresh() cuando haya red.
+        // Esto evita conflictos entre datos demo y datos reales del servidor.
+    }
 
-        if (competenciaDao.contar() == 0) {
-            competenciaDao.insertarTodas(CompetenciasDemo.listaInicial)
+    override suspend fun refresh(): RepositoryResult<Unit> {
+        return try {
+            val response = api.getActividades()
+
+            if (response.isSuccessful) {
+                val actividadesDto = response.body() ?: emptyList()
+                val actividadesEntity = actividadesDto.toEntityList()
+
+                // Transacción atómica en Room 3: borrar y reinsertar
+                db.useWriterConnection {
+                    dao.eliminarTodas()
+                    dao.insertarTodas(actividadesEntity)
+                }
+
+                Result.Success(Unit)
+            } else {
+                val error = when (response.code()) {
+                    401 -> DataError.Network.Unauthorized
+                    404 -> DataError.Network.NotFound
+                    in 500..599 -> DataError.Network.Server
+                    else -> DataError.Network.Unknown
+                }
+                Result.Error(error)
+            }
+        } catch (e: IOException) {
+            Result.Error(DataError.Network.NoConnection)
+        } catch (e: HttpException) {
+            Result.Error(DataError.Network.Server)
+        } catch (e: kotlinx.serialization.SerializationException) {
+            Result.Error(DataError.Network.InvalidPayload)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error(DataError.Network.Unknown)
         }
     }
 }

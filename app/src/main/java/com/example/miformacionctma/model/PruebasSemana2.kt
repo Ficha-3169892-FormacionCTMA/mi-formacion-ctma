@@ -1,5 +1,7 @@
 package com.example.miformacionctma.model
 
+import java.time.Instant
+
 object PruebasSemana2 {
     fun ejecutar() {
         // Escenario 1: título vacío (Inválido)
@@ -7,7 +9,7 @@ object PruebasSemana2 {
             id = 1L,
             titulo = "   ",
             descripcion = "Intento de registro sin título",
-            fecha = "2026-09-15",
+            fecha = Instant.parse("2026-09-15T10:00:00Z"),
             progreso = 50,
             prioridad = Prioridad.MEDIA,
             completada = false
@@ -21,7 +23,7 @@ object PruebasSemana2 {
             id = 2L,
             titulo = "Aprender Kotlin",
             descripcion = "Progreso fuera de rango",
-            fecha = "2026-09-10",
+            fecha = Instant.parse("2026-09-10T10:00:00Z"),
             progreso = 120,
             prioridad = Prioridad.MEDIA,
             completada = false
@@ -35,7 +37,7 @@ object PruebasSemana2 {
             id = 3L,
             titulo = "Entrega de Guía",
             descripcion = "Actividad con plazo expirado",
-            fecha = "2026-08-01",
+            fecha = Instant.parse("2026-08-01T10:00:00Z"),
             progreso = 80,
             prioridad = Prioridad.ALTA,
             completada = false
@@ -49,7 +51,7 @@ object PruebasSemana2 {
             id = 4L,
             titulo = "Taller Final",
             descripcion = "Actividad entregada al 100%",
-            fecha = "2026-08-20",
+            fecha = Instant.parse("2026-08-20T10:00:00Z"),
             progreso = 100,
             prioridad = Prioridad.MEDIA,
             completada = true
@@ -68,7 +70,7 @@ object PruebasSemana2 {
                 id = 5L,
                 titulo = "Kotlin básico",
                 descripcion = "Introducción al lenguaje",
-                fecha = "2026-09-05",
+                fecha = Instant.parse("2026-09-05T10:00:00Z"),
                 progreso = 10,
                 prioridad = Prioridad.BAJA,
                 completada = false
@@ -84,7 +86,7 @@ object PruebasSemana2 {
                 6L,
                 "Normal Baja",
                 "Prioridad baja",
-                "2026-09-12",
+                Instant.parse("2026-09-12T10:00:00Z"),
                 0,
                 Prioridad.BAJA,
                 completada = false
@@ -93,7 +95,7 @@ object PruebasSemana2 {
                 7L,
                 "Actividad Vencida",
                 "Vencida",
-                "2026-08-10",
+                Instant.parse("2026-08-10T10:00:00Z"),
                 20,
                 Prioridad.MEDIA,
                 completada = false
@@ -102,7 +104,7 @@ object PruebasSemana2 {
                 8L,
                 "Normal Alta",
                 "Prioridad alta",
-                "2026-09-02",
+                Instant.parse("2026-09-02T10:00:00Z"),
                 10,
                 Prioridad.ALTA,
                 completada = false

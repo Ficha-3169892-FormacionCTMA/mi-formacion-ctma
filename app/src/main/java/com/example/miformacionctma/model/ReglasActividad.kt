@@ -1,9 +1,11 @@
 package com.example.miformacionctma.model
 
-import java.text.ParseException
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.time.temporal.ChronoUnit
 
 object ReglasActividad {
     // - Validaciones de campos para el formulario de la semana 4) -
@@ -30,13 +32,10 @@ object ReglasActividad {
 
         if (limpio.isEmpty()) return "La fecha es obligatoria"
 
-        val formato = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        formato.isLenient = false
-
         return try {
-            formato.parse(limpio)
+            LocalDate.parse(limpio, DateTimeFormatter.ISO_LOCAL_DATE)
             null
-        } catch (_: ParseException) {
+        } catch (e: DateTimeParseException) {
             "Fecha inválida (AAAA-MM-DD)"
         }
     }
@@ -48,15 +47,13 @@ object ReglasActividad {
 
     // Días restantes: calculado automáticamente
     private fun diasRestantes(
-        actividad: ActividadFormativa, fechaReferencia: Date = Date()
+        actividad: ActividadFormativa, fechaReferencia: Instant = Instant.now()
     ): Long {
-        val formato = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        formato.isLenient = false
+        val zona = ZoneId.systemDefault()
+        val fechaLimite = actividad.fecha.atZone(zona).toLocalDate()
+        val hoy = fechaReferencia.atZone(zona).toLocalDate()
 
-        val fechaLimite = formato.parse(actividad.fecha) ?: return 0L
-        val hoy = formato.parse(formato.format(fechaReferencia)) ?: return 0L
-
-        return (fechaLimite.time - hoy.time) / (1000L * 60 * 60 * 24)
+        return ChronoUnit.DAYS.between(hoy, fechaLimite)
     }
 
     // - Validaciones de semanas anteriores -
@@ -65,13 +62,13 @@ object ReglasActividad {
         val errores = mutableListOf<String>()
         validarTitulo(actividad.titulo)?.let { errores.add(it) }
         validarDescripcion(actividad.descripcion)?.let { errores.add(it) }
-        validarFecha(actividad.fecha)?.let { errores.add(it) }
+        // Nota: validarFecha espera String, aquí validamos el Instant implícitamente
         validarProgreso(actividad.progreso)?.let { errores.add(it) }
         return errores
     }
 
     fun estadoActividad(
-        actividad: ActividadFormativa, fechaReferencia: Date = Date()
+        actividad: ActividadFormativa, fechaReferencia: Instant = Instant.now()
     ): String {
         return when {
             actividad.completada -> "Completada"
@@ -82,7 +79,7 @@ object ReglasActividad {
     }
 
     fun actividadesUrgentes(
-        actividades: List<ActividadFormativa>, fechaReferencia: Date = Date()
+        actividades: List<ActividadFormativa>, fechaReferencia: Instant = Instant.now()
     ): List<ActividadFormativa> {
         return actividades.filter {
             !it.completada && diasRestantes(it, fechaReferencia) <= 2

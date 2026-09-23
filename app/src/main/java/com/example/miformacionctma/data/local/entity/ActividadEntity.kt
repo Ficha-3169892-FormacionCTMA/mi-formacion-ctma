@@ -3,6 +3,7 @@ package com.example.miformacionctma.data.local.entity
 import androidx.room3.Entity
 import androidx.room3.Index
 import androidx.room3.PrimaryKey
+import java.time.Instant
 
 @Entity(
     tableName = "actividades",
@@ -16,7 +17,7 @@ data class ActividadEntity(
     val id: Long,
     val titulo: String,
     val descripcion: String,
-    val fecha: String,
+    val fecha: Instant,
     val progreso: Int,
     val prioridad: String,
     val competenciaId: Long? = null,

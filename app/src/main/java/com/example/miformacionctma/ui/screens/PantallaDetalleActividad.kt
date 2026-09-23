@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.model.ReglasActividad
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -132,8 +134,11 @@ fun PantallaDetalleActividad(
                                 text = "Fecha límite",
                                 style = MaterialTheme.typography.labelMedium
                             )
+                            val fechaFormateada = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                                .withZone(ZoneId.systemDefault())
+                                .format(actividad.fecha)
                             Text(
-                                text = actividad.fecha,
+                                text = fechaFormateada,
                                 style = MaterialTheme.typography.bodyLarge
                             )
                         }

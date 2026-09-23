@@ -15,6 +15,7 @@ import com.example.miformacionctma.data.local.entity.CompetenciaEntity
     version = 2,
     exportSchema = true
 )
+@androidx.room3.ColumnTypeConverters(Converters::class)
 abstract class FormacionDatabase : RoomDatabase() {
 
     abstract fun actividadDao(): ActividadDao

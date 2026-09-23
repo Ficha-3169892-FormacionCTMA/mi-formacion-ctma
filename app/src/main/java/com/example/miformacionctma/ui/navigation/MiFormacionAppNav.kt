@@ -25,6 +25,10 @@ import com.example.miformacionctma.ui.state.FormularioActividadUiState
 import com.example.miformacionctma.ui.state.ListadoUiState
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModelFactory
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun MiFormacionAppNav(
@@ -123,11 +127,19 @@ fun MiFormacionAppNav(
                 onProgresoChange = { formProgreso = it },
                 onGuardarClick = {
                     if (uiStateFormulario.puedeGuardar) {
+                        val fechaInstant = try {
+                            LocalDate.parse(formFecha.trim(), DateTimeFormatter.ISO_LOCAL_DATE)
+                                .atStartOfDay(ZoneId.systemDefault())
+                                .toInstant()
+                        } catch (e: Exception) {
+                            Instant.now()
+                        }
+
                         val nuevaActividad = ActividadFormativa(
                             id = (listaActividades.maxOfOrNull { it.id } ?: 0L) + 1L,
                             titulo = formTitulo.trim(),
                             descripcion = formDescripcion.trim(),
-                            fecha = formFecha.trim(),
+                            fecha = fechaInstant,
                             progreso = formProgreso,
                             competenciaId = formCompetenciaId,
                             prioridad = formPrioridad,
