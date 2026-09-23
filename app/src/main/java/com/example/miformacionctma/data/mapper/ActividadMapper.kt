@@ -1,7 +1,10 @@
 package com.example.miformacionctma.data.mapper
 
 import com.example.miformacionctma.data.local.entity.ActividadEntity
+import com.example.miformacionctma.data.local.entity.CompetenciaEntity
 import com.example.miformacionctma.data.remote.dto.ActividadDto
+import com.example.miformacionctma.data.remote.dto.CompetenciaDto
+import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import java.time.Instant
 
@@ -40,8 +43,42 @@ fun ActividadDto.toEntity(): ActividadEntity {
 }
 
 /**
+ * Mapea un modelo de Dominio a un DTO de Red.
+ */
+fun ActividadFormativa.toDto(): ActividadDto {
+    return ActividadDto(
+        id = id,
+        titulo = titulo,
+        descripcion = descripcion,
+        fecha = fecha.toString(), // ISO 8601
+        progreso = progreso,
+        prioridad = prioridad.name,
+        competenciaId = competenciaId,
+        estaCompletada = completada
+    )
+}
+
+/**
+ * Mapea un DTO de Competencia a Entidad.
+ */
+fun CompetenciaDto.toEntity(): CompetenciaEntity {
+    return CompetenciaEntity(
+        id = id,
+        nombre = nombre
+    )
+}
+
+/**
  * Mapea una lista de DTOs a una lista de Entidades.
  */
 fun List<ActividadDto>.toEntityList(): List<ActividadEntity> {
+    return map { it.toEntity() }
+}
+
+/**
+ * Mapea una lista de DTOs de competencia a lista de entidades.
+ */
+@JvmName("toCompetenciaEntityList")
+fun List<CompetenciaDto>.toEntityList(): List<CompetenciaEntity> {
     return map { it.toEntity() }
 }

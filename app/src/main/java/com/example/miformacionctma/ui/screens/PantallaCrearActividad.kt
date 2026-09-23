@@ -41,6 +41,7 @@ import com.example.miformacionctma.ui.state.FormularioActividadUiState
 fun PantallaCrearActividad(
     uiState: FormularioActividadUiState,
     competencias: List<Competencia>,
+    esEdicion: Boolean = false,
     onTituloChange: (String) -> Unit,
     onDescripcionChange: (String) -> Unit,
     onFechaChange: (String) -> Unit,
@@ -55,7 +56,7 @@ fun PantallaCrearActividad(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Detalle de Actividad") },
+                title = { Text(if (esEdicion) "Editar Actividad" else "Nueva Actividad") },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
                         Icon(
@@ -200,7 +201,6 @@ fun PantallaCrearActividad(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // BOTÓN GUARDAR
             Button(
                 onClick = {
                     if (!enProcesoGuardado && uiState.puedeGuardar) {
@@ -213,7 +213,13 @@ fun PantallaCrearActividad(
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Text(if (enProcesoGuardado) "Guardando..." else "Guardar Actividad")
+                Text(
+                    text = when {
+                        enProcesoGuardado -> "Guardando..."
+                        esEdicion -> "Guardar Cambios"
+                        else -> "Crear Actividad"
+                    }
+                )
             }
         }
     }

@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -41,6 +42,7 @@ fun PantallaDetalleActividad(
     actividades: List<ActividadFormativa>,
     competenciaNombre: String?,
     onVolver: () -> Unit,
+    onEditar: (ActividadFormativa) -> Unit,
     onEliminar: (ActividadFormativa) -> Unit
 ) {
     val actividad = actividades.find { it.id == actividadId }
@@ -177,13 +179,27 @@ fun PantallaDetalleActividad(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Button(
-                        onClick = {
-                            mostrarDialogoEliminar = true
-                        },
-                        modifier = Modifier.fillMaxWidth()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Eliminar actividad")
+                        Button(
+                            onClick = { onEditar(actividad) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Editar")
+                        }
+
+                        Button(
+                            onClick = { mostrarDialogoEliminar = true },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        ) {
+                            Text("Eliminar")
+                        }
                     }
                 }
             } else {

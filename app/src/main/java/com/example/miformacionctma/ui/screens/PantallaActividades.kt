@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +18,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -109,7 +119,9 @@ fun ContenidoAdaptable(
                             value = textoBusqueda,
                             onValueChange = onTextoBusquedaChange,
                             label = { Text("Buscar actividad...") },
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
                             singleLine = true
                         )
 
@@ -123,7 +135,11 @@ fun ContenidoAdaptable(
                         when (uiState) {
                             is ListadoUiState.Cargando -> EstadoCargando()
                             is ListadoUiState.Vacio -> EstadoVacio(onCrearClick = onCrearClick)
-                            is ListadoUiState.Error -> EstadoError(mensaje = uiState.mensaje, onReintentar = onReintentarClick)
+                            is ListadoUiState.Error -> EstadoError(
+                                mensaje = uiState.mensaje,
+                                onReintentar = onReintentarClick
+                            )
+
                             is ListadoUiState.Contenido -> {
                                 LazyVerticalGrid(
                                     columns = GridCells.Fixed(2),
@@ -167,15 +183,11 @@ fun PantallaActividadesScreen(
         Scaffold(
             floatingActionButton = {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalAlignment = Alignment.End
                 ) {
                     // Pequeño FAB para sincronizar
-                    SmallFloatingActionButton(
-                        onClick = onReintentarClick,
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    ) {
+                    SmallFloatingActionButton(onClick = onReintentarClick) {
                         Icon(Icons.Default.Refresh, contentDescription = "Sincronizar")
                     }
 
@@ -199,7 +211,8 @@ fun PantallaActividadesScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // SECCIÓN FIJA: Siempre visible (Presentación y Encabezado)
-                    val actividades = (uiState as? ListadoUiState.Contenido)?.actividades ?: emptyList()
+                    val actividades =
+                        (uiState as? ListadoUiState.Contenido)?.actividades ?: emptyList()
                     val urgentes = ReglasActividad.actividadesUrgentes(actividades).size
                     val promedio = ReglasActividad.promedioProgreso(actividades).toInt()
                     val completadas = actividades.count { it.completada }
@@ -216,14 +229,6 @@ fun PantallaActividadesScreen(
                     item { EncabezadoActividades() }
 
                     item {
-                        FilterChip(
-                            selected = ordenarPorPrioridad,
-                            onClick = { onOrdenPorPrioridadChange(!ordenarPorPrioridad) },
-                            label = { Text("Ordenar por prioridad") }
-                        )
-                    }
-
-                    item {
                         OutlinedTextField(
                             value = textoBusqueda,
                             onValueChange = onTextoBusquedaChange,
@@ -233,21 +238,33 @@ fun PantallaActividadesScreen(
                         )
                     }
 
+                    item {
+                        FilterChip(
+                            selected = ordenarPorPrioridad,
+                            onClick = { onOrdenPorPrioridadChange(!ordenarPorPrioridad) },
+                            label = { Text("Ordenar por prioridad") }
+                        )
+                    }
+
                     // CONTENIDO DINÁMICO: Según el estado
                     when (uiState) {
                         is ListadoUiState.Cargando -> {
                             item {
                                 Box(
-                                    modifier = Modifier.fillParentMaxHeight(0.6f).fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillParentMaxHeight(0.6f)
+                                        .fillMaxWidth(),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     EstadoCargando()
                                 }
                             }
                         }
+
                         is ListadoUiState.Vacio -> {
                             item { EstadoVacio(onCrearClick = onCrearClick) }
                         }
+
                         is ListadoUiState.Error -> {
                             item {
                                 EstadoError(
@@ -256,6 +273,7 @@ fun PantallaActividadesScreen(
                                 )
                             }
                         }
+
                         is ListadoUiState.Contenido -> {
                             items(uiState.actividades, key = { it.id }) { actividad ->
                                 TarjetaActividad(
@@ -286,6 +304,7 @@ private fun SyncIndicator(
                 trackColor = MaterialTheme.colorScheme.primaryContainer
             )
         }
+
         is RefreshUiState.Failed -> {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -296,7 +315,7 @@ private fun SyncIndicator(
                     DataError.Network.NoConnection -> "Sin conexión a internet."
                     else -> "Error al sincronizar datos."
                 }
-                
+
                 Text(
                     text = mensaje,
                     modifier = Modifier.padding(12.dp),
@@ -305,6 +324,7 @@ private fun SyncIndicator(
                 )
             }
         }
+
         else -> {}
     }
 }

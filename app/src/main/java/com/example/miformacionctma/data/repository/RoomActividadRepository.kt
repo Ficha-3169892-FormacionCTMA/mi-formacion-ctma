@@ -6,6 +6,7 @@ import com.example.miformacionctma.data.local.dao.ActividadDao
 import com.example.miformacionctma.data.local.dao.CompetenciaDao
 import com.example.miformacionctma.data.local.toDomain
 import com.example.miformacionctma.data.local.toEntity
+import com.example.miformacionctma.data.mapper.toDto
 import com.example.miformacionctma.data.mapper.toEntityList
 import com.example.miformacionctma.data.remote.api.ActividadesApi
 import com.example.miformacionctma.data.util.DataError
@@ -44,15 +45,36 @@ class RoomActividadRepository(
     }
 
     override suspend fun insertar(actividad: ActividadFormativa) {
-        dao.insertar(actividad.toEntity())
+        try {
+            val response = api.crearActividad(actividad.toDto())
+            if (response.isSuccessful) {
+                dao.insertar(actividad.toEntity())
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+        }
     }
 
     override suspend fun actualizar(actividad: ActividadFormativa) {
-        dao.actualizar(actividad.toEntity())
+        try {
+            val response = api.actualizarActividad("eq.${actividad.id}", actividad.toDto())
+            if (response.isSuccessful) {
+                dao.actualizar(actividad.toEntity())
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+        }
     }
 
     override suspend fun eliminar(actividad: ActividadFormativa) {
-        dao.eliminar(actividad.toEntity())
+        try {
+            val response = api.eliminarActividad("eq.${actividad.id}")
+            if (response.isSuccessful) {
+                dao.eliminar(actividad.toEntity())
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+        }
     }
 
     override suspend fun insertarConCompetencia(
@@ -92,21 +114,29 @@ class RoomActividadRepository(
 
     override suspend fun refresh(): RepositoryResult<Unit> {
         return try {
-            val response = api.getActividades()
+            val actividadesResponse = api.getActividades()
+            val competenciasResponse = api.getCompetencias()
 
-            if (response.isSuccessful) {
-                val actividadesDto = response.body() ?: emptyList()
+            if (actividadesResponse.isSuccessful && competenciasResponse.isSuccessful) {
+                val actividadesDto = actividadesResponse.body() ?: emptyList()
+                val competenciasDto = competenciasResponse.body() ?: emptyList()
+                
                 val actividadesEntity = actividadesDto.toEntityList()
+                val competenciasEntity = competenciasDto.toEntityList()
 
-                // Transacción atómica en Room 3: borrar y reinsertar
+                // Transacción atómica en Room 3: borrar y reinsertar todo
                 db.useWriterConnection {
                     dao.eliminarTodas()
                     dao.insertarTodas(actividadesEntity)
+                    
+                    competenciaDao.eliminarTodas()
+                    competenciaDao.insertarTodas(competenciasEntity)
                 }
 
                 Result.Success(Unit)
             } else {
-                val error = when (response.code()) {
+                val code = if (!actividadesResponse.isSuccessful) actividadesResponse.code() else competenciasResponse.code()
+                val error = when (code) {
                     401 -> DataError.Network.Unauthorized
                     404 -> DataError.Network.NotFound
                     in 500..599 -> DataError.Network.Server

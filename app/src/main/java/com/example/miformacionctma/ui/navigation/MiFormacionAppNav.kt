@@ -67,6 +67,8 @@ fun MiFormacionAppNav(
     var formDescripcionTocado by rememberSaveable { mutableStateOf(false) }
     var formFechaTocado by rememberSaveable { mutableStateOf(false) }
 
+    var idActividadEdicion by rememberSaveable { mutableStateOf<Long?>(null) }
+
     val uiStateFormulario = FormularioActividadUiState(
         titulo = formTitulo,
         tituloError = tituloError,
@@ -96,6 +98,19 @@ fun MiFormacionAppNav(
                     }
                 },
                 onCrearClick = {
+                    // Resetear el formulario para una nueva actividad
+                    idActividadEdicion = null
+                    formTitulo = ""
+                    formDescripcion = ""
+                    formFecha = ""
+                    formPrioridad = Prioridad.MEDIA
+                    formCompetenciaId = null
+                    formProgreso = 0
+                    
+                    formTituloTocado = false
+                    formDescripcionTocado = false
+                    formFechaTocado = false
+
                     navController.navigate(Destino.Crear.ruta) {
                         launchSingleTop = true
                     }
@@ -103,11 +118,12 @@ fun MiFormacionAppNav(
             )
         }
 
-        // Destino 2 - Formulario de creación
+        // Destino 2 - Formulario de creación/edición
         composable(Destino.Crear.ruta) {
             PantallaCrearActividad(
                 uiState = uiStateFormulario,
                 competencias = competencias,
+                esEdicion = idActividadEdicion != null,
                 onTituloChange = {
                     formTitulo = it
                     formTituloTocado = true
@@ -136,7 +152,7 @@ fun MiFormacionAppNav(
                         }
 
                         val nuevaActividad = ActividadFormativa(
-                            id = (listaActividades.maxOfOrNull { it.id } ?: 0L) + 1L,
+                            id = idActividadEdicion ?: ((listaActividades.maxOfOrNull { it.id } ?: 0L) + 1L),
                             titulo = formTitulo.trim(),
                             descripcion = formDescripcion.trim(),
                             fecha = fechaInstant,
@@ -146,7 +162,11 @@ fun MiFormacionAppNav(
                             completada = formProgreso >= 100
                         )
 
-                        viewModel.insertar(nuevaActividad)
+                        if (idActividadEdicion != null) {
+                            viewModel.actualizar(nuevaActividad)
+                        } else {
+                            viewModel.insertar(nuevaActividad)
+                        }
 
                         // Limpiar formulario y reiniciar las banderas de interacción
                         formTitulo = ""
@@ -155,6 +175,7 @@ fun MiFormacionAppNav(
                         formPrioridad = Prioridad.MEDIA
                         formCompetenciaId = null
                         formProgreso = 0
+                        idActividadEdicion = null
 
                         formTituloTocado = false
                         formDescripcionTocado = false
@@ -164,6 +185,7 @@ fun MiFormacionAppNav(
                     }
                 },
                 onVolver = {
+                    idActividadEdicion = null
                     navController.popBackStack()
                 }
             )
@@ -191,6 +213,20 @@ fun MiFormacionAppNav(
                 competenciaNombre = resultado?.second,
                 onVolver = {
                     navController.popBackStack()
+                },
+                onEditar = { actividad ->
+                    // Pre-llenar el formulario con los datos de la actividad
+                    idActividadEdicion = actividad.id
+                    formTitulo = actividad.titulo
+                    formDescripcion = actividad.descripcion
+                    formFecha = DateTimeFormatter.ISO_LOCAL_DATE
+                        .withZone(ZoneId.systemDefault())
+                        .format(actividad.fecha)
+                    formPrioridad = actividad.prioridad
+                    formCompetenciaId = actividad.competenciaId
+                    formProgreso = actividad.progreso
+                    
+                    navController.navigate(Destino.Crear.ruta)
                 },
                 onEliminar = { actividad ->
                     viewModel.eliminar(actividad)

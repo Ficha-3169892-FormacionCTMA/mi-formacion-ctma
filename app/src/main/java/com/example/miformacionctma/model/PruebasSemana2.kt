@@ -2,6 +2,9 @@ package com.example.miformacionctma.model
 
 import java.time.Instant
 
+/**
+ * Pruebas de lógica de negocio para la semana 2.
+ */
 object PruebasSemana2 {
     fun ejecutar() {
         // Escenario 1: título vacío (Inválido)

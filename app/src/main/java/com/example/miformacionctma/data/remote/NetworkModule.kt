@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 object NetworkModule {
 
     private const val BASE_URL = BuildConfig.SUPABASE_URL
-    private const val SUPABASE_ANON_KEY = BuildConfig.SUPABASE_ANON_KEY
+    private const val SUPABASE_PUBLISHABLE_KEY = BuildConfig.SUPABASE_PUBLISHABLE_KEY
     
     private val json = Json {
         ignoreUnknownKeys = true
@@ -34,9 +34,9 @@ object NetworkModule {
         return OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
-                    .header("apikey", SUPABASE_ANON_KEY)
-                    // Usamos el token dinámico si existe (para usuarios logueados) o el anon_key para lectura pública
-                    .header("Authorization", "Bearer ${tokenProvider.getToken() ?: SUPABASE_ANON_KEY}")
+                    .header("apikey", SUPABASE_PUBLISHABLE_KEY)
+                    // Usamos el token dinámico si existe o la clave pública para invitados
+                    .header("Authorization", "Bearer ${tokenProvider.getToken() ?: SUPABASE_PUBLISHABLE_KEY}")
                     .build()
                 chain.proceed(request)
             }
@@ -53,7 +53,7 @@ object NetworkModule {
         
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(okHttpClient)
+            .callFactory(okHttpClient) // En Retrofit 3 se usa callFactory para pasar el cliente
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()
             .create(ActividadesApi::class.java)
