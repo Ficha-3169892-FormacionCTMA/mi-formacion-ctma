@@ -247,7 +247,7 @@ fun MiFormacionAppNav(
                 actividadExistente?.let {
                     formTitulo = it.titulo
                     formDescripcion = it.descripcion
-                    formFecha = it.fecha
+                    formFecha = ReglasActividad.fechaParaFormulario(it.fecha)
                     formPrioridad = it.prioridad
                     formProgreso = it.progreso
                     formTituloTocado = false

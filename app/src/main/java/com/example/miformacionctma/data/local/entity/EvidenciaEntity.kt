@@ -18,8 +18,15 @@ import androidx.room.PrimaryKey
 data class EvidenciaEntity(
     @PrimaryKey
     val actividadId: Int,
-    val uri: String,
+    val uri: String, // Ruta del archivo en el almacenamiento interno de la app
     val tipo: String,
     val tamano: Long,
-    val estado: String // "LOCAL", "SUBIENDO", "SINCRONIZADA", "FALLIDA"
-)
+    val estado: String, // "PENDIENTE", "SINCRONIZADA", "FALLIDA"
+    val urlRemota: String? = null // URL pública en Supabase Storage (null si aún no se ha subido)
+) {
+    companion object {
+        const val ESTADO_PENDIENTE = "PENDIENTE"
+        const val ESTADO_SINCRONIZADA = "SINCRONIZADA"
+        const val ESTADO_FALLIDA = "FALLIDA"
+    }
+}

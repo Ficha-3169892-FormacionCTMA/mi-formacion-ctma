@@ -2,6 +2,8 @@ package com.example.miformacionctma.ui.actividades
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.miformacionctma.data.remote.DataError
+import com.example.miformacionctma.data.remote.NetworkFailure
 import com.example.miformacionctma.data.repository.ActividadRepository
 import com.example.miformacionctma.model.ActividadFormativa
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,8 +30,15 @@ class ActividadViewModel(
     private val _operacionUiState = MutableStateFlow<OperacionUiState>(OperacionUiState.Inactiva)
     val operacionUiState: StateFlow<OperacionUiState> = _operacionUiState.asStateFlow()
 
-    init {
-        sincronizarConServidor()
+    private fun mensajeDeError(error: Throwable): String {
+        val causa = (error as? NetworkFailure)?.error
+        return when (causa) {
+            DataError.NoConnection -> "sin conexión a internet. Se reintentará al volver a abrir la app."
+            DataError.Timeout -> "el servidor tardó demasiado en responder. Se reintentará al volver a abrir la app."
+            is DataError.Unknown -> causa.cause.message ?: "error desconocido"
+            null -> error.message ?: "error desconocido"
+            else -> causa.toString()
+        }
     }
 
     val listadoUiState: StateFlow<ListadoUiState> = _queryBusqueda
@@ -61,9 +70,11 @@ class ActividadViewModel(
             initialValue = ListadoUiState.Cargando
         )
 
+    // Primero las actividades (las evidencias necesitan que su actividad exista en Room) y luego las fotos
     fun sincronizarConServidor() {
         viewModelScope.launch {
             repository.refresh()
+            repository.sincronizarEvidencias()
         }
     }
 
@@ -75,23 +86,45 @@ class ActividadViewModel(
         _operacionUiState.value = OperacionUiState.Inactiva
     }
 
-    // --- Métodos CRUD utilizando ActividadFormativa ---
+    private fun normalizarFecha(fechaInput: String): String {
+        if (fechaInput.isBlank()) return fechaInput
+        return try {
+            val separador = if (fechaInput.contains("/")) "/" else if (fechaInput.contains("-")) "-" else ""
+            if (separador.isNotEmpty()) {
+                val partes = fechaInput.split(separador)
+                if (partes.size == 3) {
+                    if (partes[0].length == 4) {
+                        "${partes[0]}-${partes[1].padStart(2, '0')}-${partes[2].padStart(2, '0')}"
+                    } else {
+                        "${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}"
+                    }
+                } else fechaInput
+            } else fechaInput
+        } catch (e: Exception) {
+            fechaInput
+        }
+    }
 
     fun agregarActividad(actividad: ActividadFormativa) {
         viewModelScope.launch {
-            repository.insertActividad(actividad)
+            val actividadAjustada = actividad.copy(fecha = normalizarFecha(actividad.fecha))
+            repository.insertActividad(actividadAjustada)
+            repository.refresh()
         }
     }
 
     fun actualizarActividad(actividad: ActividadFormativa) {
         viewModelScope.launch {
-            repository.updateActividad(actividad)
+            val actividadAjustada = actividad.copy(fecha = normalizarFecha(actividad.fecha))
+            repository.updateActividad(actividadAjustada)
+            repository.refresh()
         }
     }
 
     fun eliminarActividad(actividad: ActividadFormativa) {
         viewModelScope.launch {
             repository.deleteActividad(actividad)
+            repository.refresh()
         }
     }
 
@@ -101,10 +134,28 @@ class ActividadViewModel(
         return repository.observarEvidencia(actividadId)
     }
 
-    fun guardarYSubirEvidencia(actividadId: Int, uriStr: String, tipoMime: String, tamano: Long, bytes: ByteArray, nombreArchivo: String) {
+    fun subirEvidencia(actividadId: Int, bytes: ByteArray, tipoMime: String, onResultado: (Boolean, String) -> Unit) {
         viewModelScope.launch {
-            repository.guardarEvidenciaLocal(actividadId, uriStr, tipoMime, tamano)
-            repository.subirEvidenciaAlServidor(actividadId, bytes, tipoMime, nombreArchivo)
+            _operacionUiState.value = OperacionUiState.EnCurso
+            val resultado = repository.subirEvidencia(actividadId, bytes, tipoMime)
+
+            resultado.fold(
+                onSuccess = {
+                    _operacionUiState.value = OperacionUiState.Exitosa
+                    onResultado(true, "Evidencia guardada y subida a Supabase.")
+                },
+                onFailure = { error ->
+                    val msj = "La foto quedó guardada en el teléfono, pero no se pudo subir: ${mensajeDeError(error)}"
+                    _operacionUiState.value = OperacionUiState.Fallida(msj)
+                    onResultado(false, msj)
+                }
+            )
+        }
+    }
+
+    fun sincronizarEvidencias() {
+        viewModelScope.launch {
+            repository.sincronizarEvidencias()
         }
     }
 

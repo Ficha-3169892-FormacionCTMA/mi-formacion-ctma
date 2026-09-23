@@ -181,7 +181,9 @@ fun TarjetaActividad(
 ) {
     val fechaFormateada = remember(actividad.fecha) {
         val partes = actividad.fecha.split("-", "/")
-        if (partes.size == 3) {
+        if (partes.size == 3 && partes[0].length == 4) {
+            "${partes[2]}/${partes[1]}/${partes[0]}"
+        } else if (partes.size == 3) {
             "${partes[0]}/${partes[1]}/${partes[2]}"
         } else {
             actividad.fecha

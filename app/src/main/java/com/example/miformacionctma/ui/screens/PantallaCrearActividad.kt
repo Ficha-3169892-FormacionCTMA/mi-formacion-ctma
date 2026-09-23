@@ -25,8 +25,15 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.ui.state.FormularioActividadUiState
@@ -77,7 +84,7 @@ fun PantallaCrearActividad(
                 isError = mostrarErrorTitulo,
                 supportingText = {
                     if (mostrarErrorTitulo) {
-                        Text(text = uiState.tituloError, color = MaterialTheme.colorScheme.error)
+                        Text(text = uiState.tituloError ?: "", color = MaterialTheme.colorScheme.error)
                     } else {
                         Text("${uiState.titulo.length}/80 caracteres")
                     }
@@ -96,7 +103,7 @@ fun PantallaCrearActividad(
                 isError = mostrarErrorDescripcion,
                 supportingText = {
                     if (mostrarErrorDescripcion) {
-                        Text(text = uiState.descripcionError, color = MaterialTheme.colorScheme.error)
+                        Text(text = uiState.descripcionError ?: "", color = MaterialTheme.colorScheme.error)
                     } else {
                         Text("${uiState.descripcion.length}/240 caracteres")
                     }
@@ -108,15 +115,30 @@ fun PantallaCrearActividad(
 
             // CAMPO: FECHA
             val mostrarErrorFecha = uiState.fechaTocado && uiState.fechaError != null
+            // Se usa TextFieldValue para dejar el cursor al final cuando se insertan las "/"
+            var campoFecha by remember {
+                mutableStateOf(TextFieldValue(uiState.fecha, TextRange(uiState.fecha.length)))
+            }
+            LaunchedEffect(uiState.fecha) {
+                if (uiState.fecha != campoFecha.text) {
+                    campoFecha = TextFieldValue(uiState.fecha, TextRange(uiState.fecha.length))
+                }
+            }
             OutlinedTextField(
-                value = uiState.fecha,
-                onValueChange = onFechaChange,
+                value = campoFecha,
+                onValueChange = { nuevo ->
+                    val formateada = formatearEntradaFecha(nuevo.text)
+                    campoFecha = TextFieldValue(formateada, TextRange(formateada.length))
+                    onFechaChange(formateada)
+                },
                 label = { Text("Fecha límite *") },
-                placeholder = { Text("Día/Mes/Año (Ej: 15/09/2026)") },
+                placeholder = { Text("DD/MM/AAAA") },
                 isError = mostrarErrorFecha,
                 supportingText = {
                     if (mostrarErrorFecha) {
-                        Text(text = uiState.fechaError, color = MaterialTheme.colorScheme.error)
+                        Text(text = uiState.fechaError ?: "", color = MaterialTheme.colorScheme.error)
+                    } else {
+                        Text("Formato: Día/Mes/Año (ej: 25/09/2026)")
                     }
                 },
                 singleLine = true,
@@ -175,6 +197,16 @@ fun PantallaCrearActividad(
             ) {
                 Text(if (tituloPantalla.contains("Editar", ignoreCase = true)) "Guardar Cambios" else "Guardar Actividad")
             }
+        }
+    }
+}
+// Deja solo los dígitos (máx. 8) e inserta las "/" automáticamente: 25092026 -> 25/09/2026
+private fun formatearEntradaFecha(texto: String): String {
+    val digitos = texto.filter { it.isDigit() }.take(8)
+    return buildString {
+        digitos.forEachIndexed { indice, digito ->
+            if (indice == 2 || indice == 4) append('/')
+            append(digito)
         }
     }
 }

@@ -3,9 +3,11 @@ package com.example.miformacionctma
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.model.ReglasActividad
+import com.example.miformacionctma.ui.state.FormularioActividadUiState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -29,7 +31,7 @@ class PlanesDePruebaTest {
     @Test
     fun cp03_fechaInvalida_exigeFormatoCorrecto() {
         val error = ReglasActividad.validarFecha("15-09-2026")
-        assertEquals("Formato inválido (AAAA-MM-DD)", error)
+        assertEquals("Formato inválido (DD/MM/AAAA)", error)
     }
 
     // CP-04: Conservar borrador por rotación (Simulación)
@@ -162,5 +164,29 @@ class PlanesDePruebaTest {
 
         assertEquals(1, urgentes.size)
         assertEquals("Urgente", urgentes.first().titulo)
+    }
+
+    // CP-17: La fecha se ingresa como DD/MM/AAAA
+    @Test
+    fun cp17_fechaDiaMesAnio_esValida() {
+        assertNull(ReglasActividad.validarFecha("25/09/2026"))
+        assertNotNull(ReglasActividad.validarFecha("25/13/2026"))
+    }
+
+    // CP-18: Al editar, la fecha guardada (AAAA-MM-DD) se muestra como DD/MM/AAAA
+    @Test
+    fun cp18_editarActividad_muestraFechaDiaMesAnio() {
+        assertEquals("25/09/2026", ReglasActividad.fechaParaFormulario("2026-09-25"))
+        assertEquals("25/09/2026", ReglasActividad.fechaParaFormulario("25/09/2026"))
+    }
+
+    // CP-19: El botón Guardar se habilita solo cuando el formulario es válido
+    @Test
+    fun cp19_formularioValido_habilitaGuardar() {
+        val valido = FormularioActividadUiState(titulo = "Taller Kotlin", fecha = "25/09/2026")
+        val conError = valido.copy(fechaError = "Formato inválido (DD/MM/AAAA)")
+
+        assertTrue(valido.puedeGuardar)
+        assertFalse(conError.puedeGuardar)
     }
 }

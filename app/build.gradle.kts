@@ -1,3 +1,12 @@
+import java.util.Properties
+
+// Cargar variables desde local.properties sin subirlas a Git
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -7,9 +16,7 @@ plugins {
 
 android {
     namespace = "com.example.miformacionctma"
-    compileSdk {
-        version = release(37)
-    }
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.miformacionctma"
@@ -19,13 +26,22 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Inyección de credenciales de Supabase
+        val supabaseUrl = localProperties.getProperty("SUPABASE_URL") ?: ""
+        val supabaseKey = localProperties.getProperty("SUPABASE_ANON_KEY") ?: ""
+
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseKey\"")
     }
 
     buildTypes {
         release {
-            optimization {
-                enable = false
-            }
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
@@ -33,10 +49,12 @@ android {
     productFlavors {
         create("dev") {
             dimension = "environment"
+            applicationIdSuffix = ".dev"
             buildConfigField("String", "BASE_URL", "\"https://api-dev.ejemplo.com/\"")
         }
         create("stage") {
             dimension = "environment"
+            applicationIdSuffix = ".stage"
             buildConfigField("String", "BASE_URL", "\"https://api-stage.ejemplo.com/\"")
         }
         create("prod") {
@@ -55,7 +73,6 @@ android {
     }
 }
 
-// Configuración requerida para KSP y Room con Kotlin 2.0+
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
     arg("room.generateKotlin", "true")
@@ -110,6 +127,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
-    // Pruebas de red (MockWebServer)
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 }

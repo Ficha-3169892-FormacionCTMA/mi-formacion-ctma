@@ -16,6 +16,9 @@ interface EvidenciaDao {
     @Query("SELECT * FROM evidencias WHERE actividadId = :actividadId")
     suspend fun obtenerEvidenciaPorActividad(actividadId: Int): EvidenciaEntity?
 
+    @Query("SELECT * FROM evidencias")
+    suspend fun obtenerTodas(): List<EvidenciaEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarEvidencia(evidencia: EvidenciaEntity)
 

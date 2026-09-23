@@ -19,17 +19,28 @@ object ReglasActividad {
         return if (valor.trim().length > 240) "Máximo 240 caracteres" else null
     }
 
-    // Fecha obligatoria con formato YYYY-MM-DD
+    // Fecha obligatoria: el usuario la ingresa como DD/MM/AAAA.
+    // También se acepta AAAA-MM-DD, que es el formato en que se guarda.
     fun validarFecha(fecha: String): String? {
         if (fecha.isBlank()) return "La fecha es obligatoria"
 
-        // Expresión regular para YYYY-MM-DD
-        val regexFecha = Regex("""^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$""")
+        val regexDiaMesAnio = Regex("""^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/\d{4}$""")
+        val regexAnioMesDia = Regex("""^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$""")
 
-        return if (!regexFecha.matches(fecha)) {
-            "Formato inválido (AAAA-MM-DD)"
+        return if (!regexDiaMesAnio.matches(fecha) && !regexAnioMesDia.matches(fecha)) {
+            "Formato inválido (DD/MM/AAAA)"
         } else {
             null
+        }
+    }
+
+    // Convierte AAAA-MM-DD (formato guardado) a DD/MM/AAAA para mostrar en el formulario
+    fun fechaParaFormulario(fecha: String): String {
+        val partes = fecha.split("-")
+        return if (partes.size == 3 && partes[0].length == 4) {
+            "${partes[2]}/${partes[1]}/${partes[0]}"
+        } else {
+            fecha
         }
     }
 

@@ -172,4 +172,65 @@ class ActividadDaoTest {
         val recuperada = database.evidenciaDao().obtenerEvidenciaPorActividad(999)
         assertNull(recuperada)
     }
+
+    @Test
+    fun guardarEvidenciaSincronizadaConUrlRemota() = runBlocking {
+        database.actividadDao().insertarActividad(ActividadEntity(id = 80, titulo = "Supabase", descripcion = "", fecha = ""))
+        database.evidenciaDao().insertarEvidencia(
+            EvidenciaEntity(80, "/data/evidencias/foto.jpg", "image/jpeg", 2048, EvidenciaEntity.ESTADO_PENDIENTE)
+        )
+
+        val pendiente = database.evidenciaDao().obtenerEvidenciaPorActividad(80)!!
+        database.evidenciaDao().insertarEvidencia(
+            pendiente.copy(estado = EvidenciaEntity.ESTADO_SINCRONIZADA, urlRemota = "https://ejemplo.supabase.co/foto.jpg")
+        )
+
+        val recuperada = database.evidenciaDao().obtenerEvidenciaPorActividad(80)
+        assertEquals(EvidenciaEntity.ESTADO_SINCRONIZADA, recuperada?.estado)
+        assertEquals("https://ejemplo.supabase.co/foto.jpg", recuperada?.urlRemota)
+        assertEquals(1, database.evidenciaDao().obtenerTodas().size)
+    }
+
+    @Test
+    fun existeActividadSoloParaIdsGuardados() = runBlocking {
+        database.actividadDao().insertarActividad(ActividadEntity(id = 90, titulo = "Existe", descripcion = "", fecha = ""))
+
+        assertEquals(true, database.actividadDao().existeActividad(90))
+        assertEquals(false, database.actividadDao().existeActividad(91))
+    }
+
+    @Test
+    fun upsertDesdeSupabaseNoBorraLaEvidenciaDeLaActividad() = runBlocking {
+        database.actividadDao().insertarActividad(ActividadEntity(id = 100, titulo = "Local", descripcion = "", fecha = ""))
+        database.evidenciaDao().insertarEvidencia(EvidenciaEntity(100, "foto.jpg", "image/jpeg", 1, EvidenciaEntity.ESTADO_SINCRONIZADA))
+
+        database.actividadDao().upsertActividad(
+            ActividadEntity(id = 100, titulo = "Desde Supabase", descripcion = "", fecha = "", sincronizada = true)
+        )
+
+        assertEquals("Desde Supabase", database.actividadDao().obtenerPorId(100)?.titulo)
+        assertNotNull("El upsert no debe borrar en cascada la evidencia", database.evidenciaDao().obtenerEvidenciaPorActividad(100))
+    }
+
+    @Test
+    fun actividadEliminadaSeOcultaPeroQuedaPendienteDeSincronizar() = runBlocking {
+        val actividad = ActividadEntity(id = 110, titulo = "Borrar offline", descripcion = "", fecha = "", sincronizada = true)
+        database.actividadDao().insertarActividad(actividad)
+
+        database.actividadDao().actualizarActividad(actividad.copy(eliminada = true, sincronizada = false))
+
+        assertEquals(0, database.actividadDao().obtenerTodasLasActividades().first().size)
+        assertEquals(false, database.actividadDao().existeActividad(110))
+        assertEquals(listOf(110), database.actividadDao().obtenerPendientes().map { it.id })
+    }
+
+    @Test
+    fun marcarSincronizadaQuitaLaActividadDePendientes() = runBlocking {
+        database.actividadDao().insertarActividad(ActividadEntity(id = 120, titulo = "Nueva", descripcion = "", fecha = ""))
+        assertEquals(1, database.actividadDao().obtenerPendientes().size)
+
+        database.actividadDao().marcarSincronizada(120)
+
+        assertEquals(0, database.actividadDao().obtenerPendientes().size)
+    }
 }

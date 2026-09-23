@@ -19,6 +19,8 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.example.miformacionctma", appContext.packageName)
+        // Cada sabor agrega su sufijo (.dev, .stage), por eso se compara con el applicationId generado
+        assertEquals(BuildConfig.APPLICATION_ID, appContext.packageName)
+        assertTrue(appContext.packageName.startsWith("com.example.miformacionctma"))
     }
 }

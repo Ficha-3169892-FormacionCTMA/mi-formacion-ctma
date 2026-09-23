@@ -1,5 +1,6 @@
 package com.example.miformacionctma.data.remote
 
+import com.example.miformacionctma.BuildConfig
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -19,6 +20,10 @@ object NetworkModule {
     private val okHttpClient = OkHttpClient.Builder()
         .build()
 
+    private val supabaseOkHttpClient = OkHttpClient.Builder()
+        .addInterceptor(SupabaseAuthInterceptor())
+        .build()
+
     fun createActividadesApi(baseUrl: String = "https://api.ejemplo.com/"): ActividadesApi {
         return Retrofit.Builder()
             .baseUrl(baseUrl)
@@ -27,9 +32,23 @@ object NetworkModule {
             .build()
             .create(ActividadesApi::class.java)
     }
+
+    fun createSupabaseApiService(): SupabaseApiService {
+        val baseUrl = if (BuildConfig.SUPABASE_URL.endsWith("/")) {
+            BuildConfig.SUPABASE_URL
+        } else {
+            "${BuildConfig.SUPABASE_URL}/"
+        }
+
+        return Retrofit.Builder()
+            .baseUrl(baseUrl)
+            .client(supabaseOkHttpClient)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(SupabaseApiService::class.java)
+    }
 }
 
-// Función utilitaria para clasificar errores de red sin capturar CancellationException
 suspend fun <T> classifyNetworkCall(block: suspend () -> T): Result<T> = try {
     Result.success(block())
 } catch (cancelled: CancellationException) {
