@@ -58,10 +58,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.miformacionctma.data.local.entity.EvidenciaEntity
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.ui.actividades.ActividadViewModel
+import com.example.miformacionctma.ui.actividades.EstadoEvidencia
 import com.example.miformacionctma.ui.actividades.OperacionUiState
 import com.example.miformacionctma.ui.components.cargarMiniatura
 import com.example.miformacionctma.ui.components.prepararImagenParaSubir
@@ -84,7 +84,9 @@ fun PantallaDetalleActividad(
     var recordatoriosActivados by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
-    val evidenciaState by viewModel.observarEvidencia(actividadId.toInt())
+    // remember evita crear un Flow nuevo (y reiniciar la consulta a Room) en cada recomposición
+    val evidenciaFlow = remember(actividadId) { viewModel.observarEvidencia(actividadId.toInt()) }
+    val evidenciaState by evidenciaFlow
         .collectAsStateWithLifecycle(initialValue = null)
 
     val operacionState by viewModel.operacionUiState.collectAsStateWithLifecycle()
@@ -194,8 +196,8 @@ fun PantallaDetalleActividad(
         pickMediaLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
 
-    val miniatura by produceState<ImageBitmap?>(initialValue = null, evidenciaState?.uri) {
-        value = evidenciaState?.uri?.let { cargarMiniatura(it) }
+    val miniatura by produceState<ImageBitmap?>(initialValue = null, evidenciaState?.rutaLocal) {
+        value = evidenciaState?.rutaLocal?.let { cargarMiniatura(it) }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -314,21 +316,21 @@ fun PantallaDetalleActividad(
                                     )
                                 }
                                 val textoEstado = when (ev.estado) {
-                                    EvidenciaEntity.ESTADO_SINCRONIZADA -> "Sincronizada con Supabase"
-                                    EvidenciaEntity.ESTADO_FALLIDA -> "Guardada en el teléfono, pendiente de subir"
+                                    EstadoEvidencia.SINCRONIZADA -> "Sincronizada con Supabase"
+                                    EstadoEvidencia.FALLIDA -> "Guardada en el teléfono, pendiente de subir"
                                     else -> "Subiendo..."
                                 }
                                 Text(
                                     "Estado: $textoEstado",
-                                    color = if (ev.estado == EvidenciaEntity.ESTADO_FALLIDA) {
+                                    color = if (ev.estado == EstadoEvidencia.FALLIDA) {
                                         MaterialTheme.colorScheme.error
                                     } else {
                                         MaterialTheme.colorScheme.primary
                                     }
                                 )
-                                Text("Tipo: ${ev.tipo} | Tamaño: ${(ev.tamano / 1024)} KB", style = MaterialTheme.typography.bodySmall)
+                                Text("Tipo: ${ev.tipo} | Tamaño: ${ev.tamanoKb} KB", style = MaterialTheme.typography.bodySmall)
 
-                                if (ev.estado == EvidenciaEntity.ESTADO_FALLIDA) {
+                                if (ev.estado == EstadoEvidencia.FALLIDA) {
                                     Button(
                                         onClick = {
                                             mensajeUsuario = "Reintentando subida..."

@@ -18,6 +18,21 @@ También puede ejecutarse mediante un **AVD Android** compatible.
 
 ---
 
+## Configuración de Supabase
+
+La app respalda actividades y fotos en **Supabase**. Las credenciales **no se suben al repositorio**; cada integrante debe agregarlas a su archivo `local.properties` (en la raíz del proyecto):
+
+```properties
+SUPABASE_URL=https://<id-del-proyecto>.supabase.co
+SUPABASE_ANON_KEY=<clave-publica>
+```
+
+Para un proyecto de Supabase nuevo, ejecutar en *SQL Editor* los scripts de `docs/supabase/` en este orden: `tabla_actividades.sql`, `tabla_evidencias.sql` y `politicas_storage.sql`.
+
+Sin estas credenciales la app funciona sin conexión (Room), pero no sincroniza.
+
+---
+
 ## Ejecución
 
 ### Opción recomendada: dispositivo físico (inalámbrico)
@@ -40,13 +55,12 @@ También puede ejecutarse mediante un **AVD Android** compatible.
 
 ## Pruebas realizadas
 
-Se implementaron **pruebas unitarias con JUnit** para verificar:
+| Tipo | Comando | Cobertura |
+| :--- | :--- | :--- |
+| Unitarias (43) | `./gradlew testDevDebugUnitTest` | Reglas de negocio, `ActividadViewModel` con `runTest` y repositorio falso, API de Supabase con MockWebServer |
+| Instrumentadas (28) | `./gradlew connectedDevDebugAndroidTest` | DAOs de Room, sincronización local y componentes de UI en Compose |
 
-- `promedioProgreso()`
-- `actividadesUrgentes()`
-- `estadoActividad()`
-
-Todas las pruebas finalizan correctamente.
+Las pruebas instrumentadas requieren el teléfono desbloqueado. En teléfonos Xiaomi (MIUI) hay que activar además el permiso *"Mostrar ventanas emergentes mientras se ejecuta en segundo plano"* para la app `.dev`.
 
 ---
 
@@ -72,4 +86,4 @@ El proyecto fue desarrollado utilizando un **repositorio compartido en GitHub** 
 
 ## Estado actual
 
-El proyecto cuenta con una **interfaz funcional, adaptable y accesible**, lista para continuar con futuras iteraciones relacionadas con **persistencia de datos, navegación y arquitectura avanzada en Compose**.
+Incremento de la **semana 9** completado: persistencia local con Room y DataStore, arquitectura MVVM con `StateFlow`, evidencias fotográficas con cámara y galería, y sincronización **offline-first** con Supabase, incluida la restauración de datos y fotos tras reinstalar la app. El detalle de cada semana está en `docs/semana_XX/`.

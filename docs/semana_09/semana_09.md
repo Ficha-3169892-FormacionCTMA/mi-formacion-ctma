@@ -65,7 +65,18 @@ UI (Compose) -> ViewModel (StateFlow) -> Repositorio -> Room (fuente única de v
 2. Se descargan las fotografías cuya actividad existe localmente y cuyo archivo no está en el dispositivo.
 3. Las actualizaciones desde el servidor usan `@Upsert` en lugar de `REPLACE`, para evitar que la llave foránea con `ON DELETE CASCADE` borre las evidencias asociadas.
 
-**Momento de la sincronización:** al pasar la aplicación a primer plano (`MainActivity.onStart`) y después de cada operación de creación, edición o eliminación. El orden es primero actividades y luego evidencias, porque una evidencia requiere que su actividad exista en Room.
+**Momento de la sincronización:** `MainActivity` registra un `ConnectivityManager.NetworkCallback` mientras la aplicación está visible. La sincronización se ejecuta al abrir la aplicación con conexión, cada vez que la red vuelve con la aplicación abierta y después de cada operación de creación, edición o eliminación. El orden es primero actividades y luego evidencias, porque una evidencia requiere que su actividad exista en Room.
+
+**Estados y errores:** el ViewModel expone `SincronizacionUiState` (Inactiva, EnCurso, Fallida). Los fallos se muestran en un Snackbar con la acción "Reintentar", y los errores de red se traducen a mensajes comprensibles (sin conexión, tiempo de espera agotado, datos inválidos, error del servidor). La pantalla de error del listado incluye un botón "Reintentar" que vuelve a suscribirse a Room.
+
+### 3.3. Preferencias con DataStore
+
+El filtro **"Solo completadas"** de la lista se guarda con Preferences DataStore (`PreferenciasRepository`) y se lee de forma reactiva en el ViewModel mediante `combine` junto con la búsqueda y los datos de Room. El valor se conserva al cerrar y abrir la aplicación. El ViewModel depende de la interfaz `PreferenciasUsuario`, lo que permite sustituirla por un doble en las pruebas.
+
+### 3.4. Capa de Red
+
+* Timeouts explícitos en OkHttp: conexión 10 s, lectura y escritura 20 s, llamada completa 30 s.
+* Clasificación de errores en `classifyNetworkCall`: `SocketTimeoutException` -> `Timeout`, `IOException` -> `NoConnection`, `SerializationException` -> `InvalidPayload`, cualquier otra excepción -> `Unknown`. `CancellationException` se relanza para respetar la cancelación estructurada.
 
 ---
 
@@ -83,7 +94,8 @@ Antes de subir la imagen, la aplicación la reduce a un lado máximo de 1600 px,
 ### 4.2. Medidas de Seguridad
 
 * **Credenciales fuera del repositorio:** la URL y la clave pública de Supabase se leen desde `local.properties` (excluido por `.gitignore`) y se inyectan en `BuildConfig` durante la compilación.
-* **`FileProvider` no exportado:** `android:exported="false"` y `android:grantUriPermissions="true"`, de modo que solo la aplicación de cámara recibe un permiso temporal sobre la URI del archivo.
+* **`FileProvider` no exportado y restringido:** `android:exported="false"` y `android:grantUriPermissions="true"`, de modo que solo la aplicación de cámara recibe un permiso temporal sobre la URI del archivo. `file_paths.xml` comparte únicamente la carpeta `cacheDir/images/` donde se guarda la foto temporal.
+* **Separación de capas:** la interfaz de usuario recibe `EvidenciaUi`, un modelo propio de presentación, y no la entidad de Room.
 * **Almacenamiento interno:** las evidencias se guardan en `filesDir/evidencias`, inaccesible para otras aplicaciones.
 * **Permisos en tiempo de ejecución:** `CAMERA` y `POST_NOTIFICATIONS` (Android 13 o superior) se solicitan en el momento de uso; si el usuario los niega, se muestra un mensaje en lugar de cerrar la aplicación.
 * **Borrado seguro de archivos:** la aplicación solo elimina archivos ubicados dentro de su propia carpeta de evidencias.
@@ -145,7 +157,8 @@ Los scripts de creación se encuentran en `docs/supabase/tabla_actividades.sql`,
 
 * **Fecha en formato DD/MM/AAAA:** el campo inserta las barras automáticamente mientras el usuario escribe; internamente la fecha se guarda como AAAA-MM-DD. Al editar, la fecha se muestra de nuevo en formato DD/MM/AAAA.
 * **Edición de actividades:** el botón Guardar volvía a estar siempre deshabilitado porque `puedeGuardar` había dejado de calcularse a partir de los errores de validación. Se restableció el cálculo.
-* **Días restantes:** se calculan a partir de la fecha límite (antes siempre mostraban 0).
+* **Días restantes:** se calculan a partir de la fecha límite (antes siempre mostraban 0). Se habilitó *core library desugaring* para que `java.time` funcione en Android 7 (API 24-25).
+* **Búsqueda:** el campo de búsqueda de la lista no recibía el texto ni el callback desde la navegación; se conectó al ViewModel y ahora filtra con `debounce(300)`.
 * **Tests instrumentados:** se agregó `android.injected.androidTest.leaveApksInstalledAfterRun=true` en `gradle.properties`, porque Gradle desinstalaba la aplicación del teléfono al finalizar las pruebas.
 
 ---
@@ -157,9 +170,13 @@ Los scripts de creación se encuentran en `docs/supabase/tabla_actividades.sql`,
 | Suite | Tipo | Resultado |
 | :--- | :--- | :--- |
 | `PlanesDePruebaTest` y `ReglasActividadTest` | Unitarias (JVM) | 28 / 28 aprobadas |
+| `ActividadViewModelTest` | Unitarias con `runTest`, repositorio y preferencias falsos | 10 / 10 aprobadas |
+| `SupabaseApiServiceTest` | Unitarias con MockWebServer | 5 / 5 aprobadas |
 | `ActividadDaoTest` | Instrumentadas (Room en memoria) | 17 / 17 aprobadas |
 | `ExampleInstrumentedTest` | Instrumentada | 1 / 1 aprobada |
-| `ComponentesUiTest` | Instrumentadas (Compose) | Pendiente de reejecución (ver sección 8) |
+| `ComponentesUiTest` | Instrumentadas (Compose) | 10 / 10 aprobadas |
+
+`ActividadViewModelTest` cubre: transición Cargando -> Vacio, búsqueda con debounce, filtro persistido en preferencias, filtros sin resultados, lista completa para detalle y edición aunque haya filtros activos, error de Room con reintento, error de sincronización sin internet, orden actividades -> evidencias, normalización de fecha al crear y mapeo a `EvidenciaUi`. `SupabaseApiServiceTest` cubre: encabezados de autenticación, conversión de JSON, upsert con `merge-duplicates`, `actividad_id` como texto o número, `InvalidPayload` y `NoConnection`.
 
 Pruebas agregadas en este incremento: formato de fecha DD/MM/AAAA, precarga de fecha al editar, habilitación del botón Guardar, persistencia de la URL remota, verificación de existencia de actividades, `@Upsert` sin borrado en cascada de evidencias, borrado lógico y control de pendientes de sincronización.
 
@@ -174,17 +191,17 @@ Pruebas agregadas en este incremento: formato de fecha DD/MM/AAAA, precarga de f
 | CA-05 | La actividad se respalda en la tabla `actividades` de Supabase. | Cumplido |
 | CA-06 | Tras desinstalar y reinstalar la aplicación, se restauran automáticamente la actividad y su fotografía desde Supabase. | Cumplido |
 | CA-07 | La actualización desde versiones anteriores de la base de datos conserva los registros existentes. | Cumplido |
+| CA-08 | El filtro "Solo completadas" se conserva al cerrar y abrir la aplicación (DataStore). | Cumplido |
+| CA-09 | La búsqueda filtra la lista y muestra un mensaje cuando no hay coincidencias. | Cumplido |
 
 ---
 
 ## 8. Limitaciones y Trabajo Pendiente
 
-1. **Tests de UI:** `ComponentesUiTest` no pudo completarse en esta ronda porque el dispositivo (MIUI) bloqueaba el lanzamiento de la actividad de prueba con la pantalla bloqueada. Debe ejecutarse con el teléfono desbloqueado.
-2. **Sincronización al recuperar la red:** ocurre al abrir la aplicación o tras una operación; no se dispara automáticamente si la conexión vuelve con la aplicación abierta. Se propone incorporar WorkManager.
-3. **Errores de sincronización:** se registran en el log, pero aún no se muestran al usuario en la pantalla principal.
-4. **Compatibilidad con Android 7 (API 24-25):** el cálculo de días restantes usa `java.time`; se requiere habilitar *core library desugaring* o elevar `minSdk` a 26.
-5. **Políticas de Supabase:** permiten acceso completo con la clave pública, lo cual es adecuado para el entorno formativo pero no para producción (se requeriría autenticación de usuarios).
-6. **Borrados remotos:** si una actividad se elimina directamente desde el panel de Supabase, no se elimina del dispositivo (decisión de diseño para evitar pérdidas de datos por errores de permisos).
+1. **Tests de UI en MIUI:** en teléfonos Xiaomi, `ComponentesUiTest` requiere que la aplicación `.dev` tenga activado el permiso "Mostrar ventanas emergentes mientras se ejecuta en segundo plano" (Ajustes > Aplicaciones > MiFormacionCTMA > Otros permisos). MIUI lo desactiva tras cada reinstalación y, sin él, bloquea la actividad de prueba (`Abort background activity starts`). Con el permiso activo, la suite completa (28 pruebas instrumentadas) se ejecutó con éxito.
+2. **Sincronización en segundo plano:** ocurre mientras la aplicación está visible; si la conexión vuelve con la aplicación cerrada, se sincroniza al abrirla. Una mejora futura sería WorkManager.
+3. **Políticas de Supabase:** permiten acceso completo con la clave pública, lo cual es adecuado para el entorno formativo pero no para producción (se requeriría autenticación de usuarios).
+4. **Borrados remotos:** si una actividad se elimina directamente desde el panel de Supabase, no se elimina del dispositivo (decisión de diseño para evitar pérdidas de datos por errores de permisos).
 
 ---
 
@@ -205,8 +222,8 @@ SUPABASE_ANON_KEY=<clave-publica>
 
 1. Sincronizar Gradle en Android Studio.
 2. Seleccionar la variante `devDebug`.
-3. Ejecutar en un dispositivo físico o emulador con API 26 o superior (ver limitación 4).
-4. Para las pruebas instrumentadas, mantener el dispositivo desbloqueado durante la ejecución.
+3. Ejecutar en un dispositivo físico o emulador con API 24 o superior.
+4. Para las pruebas instrumentadas, mantener el dispositivo desbloqueado durante la ejecución. En teléfonos Xiaomi (MIUI), activar además el permiso descrito en la limitación 1.
 
 ---
 

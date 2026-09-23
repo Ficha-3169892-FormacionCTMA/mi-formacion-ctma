@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -95,6 +96,8 @@ fun PantallaActividades(
     modifier: Modifier = Modifier,
     queryBusqueda: String = "",
     onQueryChange: (String) -> Unit = {},
+    soloCompletadas: Boolean = false,
+    onSoloCompletadasChange: (Boolean) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     onActividadClick: (Long) -> Unit = {},
     onCrearClick: () -> Unit = {}
@@ -125,7 +128,7 @@ fun PantallaActividades(
                 }
             }
         ) { paddingValues ->
-            if (actividades.isEmpty() && queryBusqueda.isBlank()) {
+            if (actividades.isEmpty() && queryBusqueda.isBlank() && !soloCompletadas) {
                 EstadoVacio(modifier = Modifier.padding(paddingValues))
             } else {
                 LazyColumn(
@@ -149,10 +152,23 @@ fun PantallaActividades(
                         )
                     }
 
+                    item {
+                        // Filtro guardado en DataStore: se mantiene al cerrar y abrir la app
+                        FilterChip(
+                            selected = soloCompletadas,
+                            onClick = { onSoloCompletadasChange(!soloCompletadas) },
+                            label = { Text("Solo completadas") }
+                        )
+                    }
+
                     if (actividades.isEmpty()) {
                         item {
                             Text(
-                                text = "No se encontraron coincidencias para \"$queryBusqueda\"",
+                                text = if (queryBusqueda.isNotBlank()) {
+                                    "No se encontraron coincidencias para \"$queryBusqueda\""
+                                } else {
+                                    "No hay actividades completadas todavía."
+                                },
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(vertical = 16.dp)
                             )

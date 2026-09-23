@@ -1,5 +1,15 @@
 package com.example.miformacionctma.ui.navigation
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.remember
+import androidx.compose.ui.unit.dp
+import com.example.miformacionctma.ui.actividades.SincronizacionUiState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -38,10 +48,25 @@ fun MiFormacionAppNav(
     // Estado reactivo de la base de datos (emite List<ActividadFormativa>)
     val listadoState by viewModel.listadoUiState.collectAsStateWithLifecycle()
 
-    // Lista mapeada a modelo UI para pantallas secundarias
-    val actividadesFormativas = (listadoState as? ListadoUiState.Contenido)
-        ?.actividades
-        ?: emptyList()
+    val queryBusqueda by viewModel.queryBusqueda.collectAsStateWithLifecycle()
+    val soloCompletadas by viewModel.soloCompletadas.collectAsStateWithLifecycle()
+    val sincronizacionState by viewModel.sincronizacionUiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Los errores de sincronización se muestran en un Snackbar con opción de reintentar
+    LaunchedEffect(sincronizacionState) {
+        val fallo = sincronizacionState as? SincronizacionUiState.Fallida ?: return@LaunchedEffect
+        val resultado = snackbarHostState.showSnackbar(
+            message = fallo.mensaje,
+            actionLabel = "Reintentar",
+            duration = SnackbarDuration.Long
+        )
+        viewModel.descartarErrorSincronizacion()
+        if (resultado == SnackbarResult.ActionPerformed) viewModel.sincronizarConServidor()
+    }
+
+    // Lista completa (sin búsqueda ni filtros) para el detalle y la edición
+    val actividadesFormativas by viewModel.todasLasActividades.collectAsStateWithLifecycle()
 
     // Estado del formulario preservado en rotaciones
     var formTitulo by rememberSaveable { mutableStateOf("") }
@@ -79,6 +104,22 @@ fun MiFormacionAppNav(
     ) {
         // Destino 1 - Listado Principal
         composable(Destino.Lista.ruta) {
+            val limpiarYCrear = {
+                // Limpiar formulario al crear una nueva actividad
+                formTitulo = ""
+                formDescripcion = ""
+                formFecha = ""
+                formPrioridad = Prioridad.MEDIA
+                formProgreso = 0
+                formTituloTocado = false
+                formDescripcionTocado = false
+                formFechaTocado = false
+
+                navController.navigate(Destino.Crear.ruta) {
+                    launchSingleTop = true
+                }
+            }
+
             when (val estado = listadoState) {
                 is ListadoUiState.Cargando -> {
                     Box(
@@ -88,57 +129,37 @@ fun MiFormacionAppNav(
                         CircularProgressIndicator()
                     }
                 }
-                is ListadoUiState.Contenido -> {
+                is ListadoUiState.Contenido, is ListadoUiState.Vacio -> {
                     PantallaActividades(
-                        actividades = estado.actividades,
+                        actividades = (estado as? ListadoUiState.Contenido)?.actividades ?: emptyList(),
+                        queryBusqueda = queryBusqueda,
+                        onQueryChange = viewModel::actualizarBusqueda,
+                        soloCompletadas = soloCompletadas,
+                        onSoloCompletadasChange = viewModel::cambiarFiltroCompletadas,
+                        snackbarHostState = snackbarHostState,
                         onActividadClick = { id ->
                             navController.navigate(Destino.Detalle.crearRuta(id)) {
                                 launchSingleTop = true
                             }
                         },
-                        onCrearClick = {
-                            // Limpiar formulario al crear una nueva actividad
-                            formTitulo = ""
-                            formDescripcion = ""
-                            formFecha = ""
-                            formPrioridad = Prioridad.MEDIA
-                            formProgreso = 0
-                            formTituloTocado = false
-                            formDescripcionTocado = false
-                            formFechaTocado = false
-
-                            navController.navigate(Destino.Crear.ruta) {
-                                launchSingleTop = true
-                            }
-                        }
-                    )
-                }
-                is ListadoUiState.Vacio -> {
-                    PantallaActividades(
-                        actividades = emptyList(),
-                        onActividadClick = {},
-                        onCrearClick = {
-                            formTitulo = ""
-                            formDescripcion = ""
-                            formFecha = ""
-                            formPrioridad = Prioridad.MEDIA
-                            formProgreso = 0
-                            formTituloTocado = false
-                            formDescripcionTocado = false
-                            formFechaTocado = false
-
-                            navController.navigate(Destino.Crear.ruta) {
-                                launchSingleTop = true
-                            }
-                        }
+                        onCrearClick = limpiarYCrear
                     )
                 }
                 is ListadoUiState.Error -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(text = "Error de base de datos: ${estado.mensaje}")
+                        Button(
+                            onClick = viewModel::reintentarCarga,
+                            modifier = Modifier.padding(top = 16.dp)
+                        ) {
+                            Text("Reintentar")
+                        }
                     }
                 }
             }
@@ -213,10 +234,7 @@ fun MiFormacionAppNav(
                     navController.popBackStack()
                 },
                 onEliminarClick = { idEliminar ->
-                    val estadoContenido = listadoState as? ListadoUiState.Contenido
-                    val actividadAEliminar = estadoContenido?.actividades?.find {
-                        it.id == idEliminar
-                    }
+                    val actividadAEliminar = actividadesFormativas.find { it.id == idEliminar }
 
                     if (actividadAEliminar != null) {
                         viewModel.eliminarActividad(actividadAEliminar)
@@ -239,8 +257,7 @@ fun MiFormacionAppNav(
             )
         ) { backStackEntry ->
             val idEditar = backStackEntry.arguments?.getLong("actividadId") ?: -1L
-            val estadoContenido = listadoState as? ListadoUiState.Contenido
-            val actividadExistente = estadoContenido?.actividades?.find { it.id == idEditar }
+            val actividadExistente = actividadesFormativas.find { it.id == idEditar }
 
             // Precargar los datos de la actividad en los campos del formulario
             LaunchedEffect(actividadExistente) {

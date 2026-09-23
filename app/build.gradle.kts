@@ -64,6 +64,8 @@ android {
     }
 
     compileOptions {
+        // Permite usar java.time (LocalDate) en Android 7 (API 24-25)
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -119,7 +121,10 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
 
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+
     testImplementation(libs.junit)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

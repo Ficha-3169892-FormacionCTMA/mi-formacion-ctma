@@ -1,5 +1,7 @@
 package com.example.miformacionctma
 
+import android.net.ConnectivityManager
+import android.net.Network
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,6 +11,7 @@ import com.example.miformacionctma.data.local.database.AppDatabase
 import com.example.miformacionctma.data.remote.NetworkModule
 import com.example.miformacionctma.data.repository.EvidenciaRepository
 import com.example.miformacionctma.data.repository.OfflineFirstActividadRepository
+import com.example.miformacionctma.data.repository.PreferenciasRepository
 import com.example.miformacionctma.ui.actividades.ActividadViewModel
 import com.example.miformacionctma.ui.actividades.ActividadViewModelFactory
 import com.example.miformacionctma.ui.navigation.MiFormacionAppNav
@@ -41,7 +44,16 @@ class MainActivity : ComponentActivity() {
 
     // ViewModel inyectado mediante su Factory
     private val actividadViewModel: ActividadViewModel by viewModels {
-        ActividadViewModelFactory(repository)
+        ActividadViewModelFactory(repository, PreferenciasRepository(applicationContext))
+    }
+
+    private val connectivityManager by lazy { getSystemService(ConnectivityManager::class.java) }
+
+    // Se llama al registrarse si ya hay internet, y cada vez que la conexión vuelve con la app abierta
+    private val callbackRed = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            actividadViewModel.sincronizarConServidor()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,7 +72,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        // Cada vez que la app vuelve a primer plano se sincronizan actividades y fotos con Supabase
-        actividadViewModel.sincronizarConServidor()
+        // Mientras la app está visible, sincroniza actividades y fotos con Supabase al haber conexión
+        connectivityManager.registerDefaultNetworkCallback(callbackRed)
+    }
+
+    override fun onStop() {
+        connectivityManager.unregisterNetworkCallback(callbackRed)
+        super.onStop()
     }
 }
