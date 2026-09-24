@@ -18,6 +18,7 @@ open class PreferenciasRepository(
 
     private companion object {
         val ORDEN_POR_PRIORIDAD = booleanPreferencesKey("orden_por_prioridad")
+        val RECORDATORIOS_ACTIVADOS = booleanPreferencesKey("recordatorios_activados")
     }
 
     open val ordenarPorPrioridad: Flow<Boolean> = if (context != null) {
@@ -33,5 +34,18 @@ open class PreferenciasRepository(
             preferences[ORDEN_POR_PRIORIDAD] = valor
         }
     }
-}
 
+    open val recordatoriosActivados: Flow<Boolean> = if (context != null) {
+        context.dataStore.data.map { preferences ->
+            preferences[RECORDATORIOS_ACTIVADOS] ?: false
+        }
+    } else {
+        flowOf(false)
+    }
+
+    open suspend fun guardarRecordatoriosActivados(valor: Boolean) {
+        context?.dataStore?.edit { preferences ->
+            preferences[RECORDATORIOS_ACTIVADOS] = valor
+        }
+    }
+}

@@ -1,27 +1,40 @@
 package com.example.miformacionctma.data.repository
 
+import android.content.Context
+import android.net.Uri
 import androidx.room3.useWriterConnection
+import com.example.miformacionctma.BuildConfig
 import com.example.miformacionctma.data.local.FormacionDatabase
 import com.example.miformacionctma.data.local.dao.ActividadDao
 import com.example.miformacionctma.data.local.dao.CompetenciaDao
+import com.example.miformacionctma.data.local.dao.EvidenciaDao
+import com.example.miformacionctma.data.local.entity.EstadoSincronizacion
+import com.example.miformacionctma.data.local.entity.EvidenciaEntity
 import com.example.miformacionctma.data.local.toDomain
 import com.example.miformacionctma.data.local.toEntity
 import com.example.miformacionctma.data.mapper.toDto
 import com.example.miformacionctma.data.mapper.toEntityList
 import com.example.miformacionctma.data.remote.api.ActividadesApi
 import com.example.miformacionctma.data.util.DataError
+import com.example.miformacionctma.data.util.EvidenciaStorageUtil
 import com.example.miformacionctma.data.util.Result
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Competencia
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
+import java.io.File
+import java.io.FileInputStream
 import java.io.IOException
+import java.time.Instant
 
 class RoomActividadRepository(
     private val dao: ActividadDao,
     private val competenciaDao: CompetenciaDao,
+    private val evidenciaDao: EvidenciaDao,
     private val db: FormacionDatabase,
     private val api: ActividadesApi
 ) : ActividadRepository {
@@ -109,7 +122,6 @@ class RoomActividadRepository(
         // En una arquitectura Offline-First conectada a Supabase,
         // no sembramos datos locales. La base de datos local se llenará
         // exclusivamente mediante la función refresh() cuando haya red.
-        // Esto evita conflictos entre datos demo y datos reales del servidor.
     }
 
     override suspend fun refresh(): RepositoryResult<Unit> {
@@ -124,12 +136,10 @@ class RoomActividadRepository(
                 val actividadesEntity = actividadesDto.toEntityList()
                 val competenciasEntity = competenciasDto.toEntityList()
 
-                // Transacción atómica en Room 3: borrar y reinsertar todo
+                // Transacción atómica en Room 3: usar UPSERT sin borrar actividades
+                // para evitar que SQLite ejecute CASCADE DELETE en la tabla evidencias.
                 db.useWriterConnection {
-                    dao.eliminarTodas()
                     dao.insertarTodas(actividadesEntity)
-                    
-                    competenciaDao.eliminarTodas()
                     competenciaDao.insertarTodas(competenciasEntity)
                 }
 
@@ -154,6 +164,103 @@ class RoomActividadRepository(
             throw e
         } catch (e: Exception) {
             Result.Error(DataError.Network.Unknown)
+        }
+    }
+
+    // Operaciones de Evidencia Fotográfica
+    override fun observarEvidencia(actividadId: Long): Flow<EvidenciaEntity?> {
+        return evidenciaDao.observarPorActividadId(actividadId)
+    }
+
+    override suspend fun obtenerEvidenciaPorActividadId(actividadId: Long): EvidenciaEntity? {
+        return evidenciaDao.obtenerPorActividadId(actividadId)
+    }
+
+    override suspend fun guardarEvidenciaLocal(
+        actividadId: Long,
+        localUri: String,
+        mimeType: String,
+        tamano: Long
+    ): EvidenciaEntity {
+        val existente = evidenciaDao.obtenerPorActividadId(actividadId)
+        val evidencia = EvidenciaEntity(
+            id = existente?.id ?: 0,
+            actividadId = actividadId,
+            localUri = localUri,
+            mimeType = mimeType,
+            tamano = tamano,
+            fecha = Instant.now(),
+            estado = EstadoSincronizacion.LOCAL
+        )
+        val idGenerado = evidenciaDao.insertar(evidencia)
+        return evidencia.copy(id = if (evidencia.id == 0L) idGenerado else evidencia.id)
+    }
+
+    override suspend fun subirEvidencia(
+        context: Context,
+        actividadId: Long
+    ): RepositoryResult<Unit> {
+        val evidencia = evidenciaDao.obtenerPorActividadId(actividadId)
+            ?: return Result.Error(DataError.Network.Unknown)
+
+        // 1. Cambiar estado a SUBIENDO
+        evidenciaDao.actualizarEstado(evidencia.id, EstadoSincronizacion.SUBIENDO)
+
+        return try {
+            val uri = Uri.parse(evidencia.localUri)
+            val inputStream = if (uri.scheme == "file" && uri.path != null) {
+                FileInputStream(File(uri.path!!))
+            } else {
+                context.contentResolver.openInputStream(uri)
+            } ?: throw IOException("No se pudo abrir el archivo de la evidencia")
+
+            val bytes = inputStream.use { it.readBytes() }
+            val mime = evidencia.mimeType.ifBlank { "image/jpeg" }
+            val mediaType = mime.toMediaTypeOrNull()
+            val requestBody = bytes.toRequestBody(mediaType)
+            val nombreArchivo = "evidencia_${evidencia.actividadId}.jpg"
+
+            // Construir la URL completa para Supabase Storage API
+            val baseUrl = BuildConfig.SUPABASE_URL.replace("/rest/v1/", "/").trimEnd('/')
+            val storageUrl = "$baseUrl/storage/v1/object/evidencias/$nombreArchivo"
+
+            // 2. Intentar subida enviando el payload binario directo con Content-Type y x-upsert
+            val response = api.subirEvidencia(
+                url = storageUrl,
+                idempotencyKey = evidencia.id.toString(),
+                contentType = mime,
+                body = requestBody
+            )
+
+            if (response.isSuccessful) {
+                // 3. Éxito: cambiar a SINCRONIZADA
+                evidenciaDao.actualizarEstado(evidencia.id, EstadoSincronizacion.SINCRONIZADA)
+                Result.Success(Unit)
+            } else {
+                // 4. Error del servidor: cambiar a FALLIDA (mantiene archivo local)
+                evidenciaDao.actualizarEstado(evidencia.id, EstadoSincronizacion.FALLIDA)
+                Result.Error(DataError.Network.Server)
+            }
+        } catch (e: IOException) {
+            // Error de red / timeout: cambiar a FALLIDA (mantiene archivo local)
+            evidenciaDao.actualizarEstado(evidencia.id, EstadoSincronizacion.FALLIDA)
+            Result.Error(DataError.Network.NoConnection)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            evidenciaDao.actualizarEstado(evidencia.id, EstadoSincronizacion.FALLIDA)
+            Result.Error(DataError.Network.Unknown)
+        }
+    }
+
+    override suspend fun eliminarEvidencia(
+        context: Context,
+        actividadId: Long
+    ) {
+        val evidencia = evidenciaDao.obtenerPorActividadId(actividadId)
+        if (evidencia != null) {
+            EvidenciaStorageUtil.eliminarArchivoSiExiste(context, Uri.parse(evidencia.localUri))
+            evidenciaDao.eliminar(evidencia)
         }
     }
 }

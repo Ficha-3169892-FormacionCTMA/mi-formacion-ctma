@@ -1,5 +1,7 @@
 package com.example.miformacionctma.data.repository
 
+import android.content.Context
+import com.example.miformacionctma.data.local.entity.EvidenciaEntity
 import com.example.miformacionctma.data.util.DataError
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Competencia
@@ -41,4 +43,26 @@ interface ActividadRepository {
      * Sincroniza los datos remotos con la base de datos local.
      */
     suspend fun refresh(): RepositoryResult<Unit>
+
+    // Operaciones de Evidencia Fotográfica
+    fun observarEvidencia(actividadId: Long): Flow<EvidenciaEntity?>
+
+    suspend fun obtenerEvidenciaPorActividadId(actividadId: Long): EvidenciaEntity?
+
+    suspend fun guardarEvidenciaLocal(
+        actividadId: Long,
+        localUri: String,
+        mimeType: String,
+        tamano: Long
+    ): EvidenciaEntity
+
+    suspend fun subirEvidencia(
+        context: Context,
+        actividadId: Long
+    ): RepositoryResult<Unit>
+
+    suspend fun eliminarEvidencia(
+        context: Context,
+        actividadId: Long
+    )
 }

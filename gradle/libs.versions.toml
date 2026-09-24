@@ -28,6 +28,7 @@ kotlinxSerializationJson = "1.11.0"
 desugarJdkLibs = "2.1.5"
 mockk = "1.14.11"
 secretsGradlePlugin = "2.0.1"
+coil = "2.7.0"
 
 
 
@@ -72,6 +73,7 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 
 
 

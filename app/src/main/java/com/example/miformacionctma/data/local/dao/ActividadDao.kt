@@ -2,11 +2,10 @@ package com.example.miformacionctma.data.local.dao
 
 import androidx.room3.Dao
 import androidx.room3.Delete
-import androidx.room3.Insert
-import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Update
+import androidx.room3.Upsert
 import com.example.miformacionctma.data.local.entity.ActividadConCompetencia
 import com.example.miformacionctma.data.local.entity.ActividadEntity
 import kotlinx.coroutines.flow.Flow
@@ -14,10 +13,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ActividadDao {
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertar(actividad: ActividadEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertarTodas(actividades: List<ActividadEntity>)
 
     @Update

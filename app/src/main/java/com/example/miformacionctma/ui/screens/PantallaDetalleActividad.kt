@@ -1,12 +1,17 @@
 package com.example.miformacionctma.ui.screens
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
@@ -32,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.model.ReglasActividad
+import com.example.miformacionctma.ui.components.SeccionEvidencia
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -41,6 +47,11 @@ fun PantallaDetalleActividad(
     actividadId: Long,
     actividades: List<ActividadFormativa>,
     competenciaNombre: String?,
+    evidenciaUri: Uri? = null,
+    estadoSincronizacion: String? = null,
+    onGuardarEvidencia: (Uri, String, Long) -> Unit = { _, _, _ -> },
+    onReintentarSubida: () -> Unit = {},
+    onEliminarEvidencia: () -> Unit = {},
     onVolver: () -> Unit,
     onEditar: (ActividadFormativa) -> Unit,
     onEliminar: (ActividadFormativa) -> Unit
@@ -76,7 +87,12 @@ fun PantallaDetalleActividad(
                     Prioridad.ALTA -> "Alta"
                 }
 
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     Text(
                         text = actividad.titulo,
                         style = MaterialTheme.typography.headlineSmall
@@ -166,7 +182,6 @@ fun PantallaDetalleActividad(
                                 style = MaterialTheme.typography.bodyLarge
                             )
                         }
-
                     }
 
                     Text(
@@ -178,6 +193,23 @@ fun PantallaDetalleActividad(
                         progress = { actividad.progreso / 100f },
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    HorizontalDivider(
+                        Modifier,
+                        DividerDefaults.Thickness,
+                        DividerDefaults.color
+                    )
+
+                    // SECCIÓN DE EVIDENCIA FOTOGRÁFICA
+                    SeccionEvidencia(
+                        evidenciaUri = evidenciaUri,
+                        estadoSincronizacion = estadoSincronizacion,
+                        onEvidenciaValidaSeleccionada = onGuardarEvidencia,
+                        onReintentarSubida = onReintentarSubida,
+                        onEliminarEvidencia = onEliminarEvidencia
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),

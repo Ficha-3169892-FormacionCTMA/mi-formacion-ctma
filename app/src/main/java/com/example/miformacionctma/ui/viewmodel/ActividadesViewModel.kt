@@ -1,19 +1,23 @@
 package com.example.miformacionctma.ui.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.miformacionctma.data.local.entity.EvidenciaEntity
 import com.example.miformacionctma.data.repository.ActividadRepository
 import com.example.miformacionctma.data.repository.PreferenciasRepository
+import com.example.miformacionctma.data.util.Result
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Competencia
 import com.example.miformacionctma.model.ReglasActividad
 import com.example.miformacionctma.ui.state.ListadoUiState
 import com.example.miformacionctma.ui.state.OperacionUiState
 import com.example.miformacionctma.ui.state.RefreshUiState
-import com.example.miformacionctma.data.util.Result
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -58,6 +62,14 @@ class ActividadesViewModel(
 
     val ordenarPorPrioridad: StateFlow<Boolean> =
         preferenciasRepository.ordenarPorPrioridad
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = false
+            )
+
+    val recordatoriosActivados: StateFlow<Boolean> =
+        preferenciasRepository.recordatoriosActivados
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -145,10 +157,54 @@ class ActividadesViewModel(
         }
     }
 
+    fun guardarRecordatoriosActivados(valor: Boolean) {
+        viewModelScope.launch {
+            preferenciasRepository.guardarRecordatoriosActivados(valor)
+        }
+    }
+
     suspend fun obtenerConCompetencia(
         id: Long
     ): Pair<ActividadFormativa, String?>? {
         return repository.obtenerConCompetencia(id)
+    }
+
+    fun observarEvidencia(actividadId: Long): Flow<EvidenciaEntity?> {
+        return repository.observarEvidencia(actividadId)
+    }
+
+    fun guardarEvidenciaYSubir(
+        context: Context,
+        actividadId: Long,
+        localUri: Uri,
+        mimeType: String,
+        tamanoBytes: Long
+    ) {
+        viewModelScope.launch {
+            try {
+                repository.guardarEvidenciaLocal(
+                    actividadId = actividadId,
+                    localUri = localUri.toString(),
+                    mimeType = mimeType,
+                    tamano = tamanoBytes
+                )
+                repository.subirEvidencia(context, actividadId)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+            }
+        }
+    }
+
+    fun reintentarSubirEvidencia(context: Context, actividadId: Long) {
+        viewModelScope.launch {
+            repository.subirEvidencia(context, actividadId)
+        }
+    }
+
+    fun eliminarEvidencia(context: Context, actividadId: Long) {
+        viewModelScope.launch {
+            repository.eliminarEvidencia(context, actividadId)
+        }
     }
 
     /**
@@ -173,7 +229,6 @@ class ActividadesViewModel(
                 if (e is CancellationException) throw e
             }
         }
-        // Sincronizar al iniciar si es necesario
         refreshActividades()
     }
 }
@@ -195,4 +250,3 @@ class ActividadesViewModelFactory(
         throw IllegalArgumentException("ViewModel desconocido: ${modelClass.name}")
     }
 }
-

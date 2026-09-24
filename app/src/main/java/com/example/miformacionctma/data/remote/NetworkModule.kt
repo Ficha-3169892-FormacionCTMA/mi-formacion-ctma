@@ -26,16 +26,20 @@ object NetworkModule {
 
     fun provideOkHttpClient(tokenProvider: TokenProvider): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.HEADERS 
+            level = if (BuildConfig.ENVIRONMENT == "PROD") {
+                HttpLoggingInterceptor.Level.NONE
+            } else {
+                HttpLoggingInterceptor.Level.HEADERS
+            }
             redactHeader("apikey")
-            redactHeader("Authorization") // Redactar el token en los logs para mayor seguridad
+            redactHeader("Authorization")
+            redactHeader("Idempotency-Key")
         }
 
         return OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
                     .header("apikey", SUPABASE_PUBLISHABLE_KEY)
-                    // Usamos el token dinámico si existe o la clave pública para invitados
                     .header("Authorization", "Bearer ${tokenProvider.getToken() ?: SUPABASE_PUBLISHABLE_KEY}")
                     .build()
                 chain.proceed(request)
@@ -53,7 +57,7 @@ object NetworkModule {
         
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .callFactory(okHttpClient) // En Retrofit 3 se usa callFactory para pasar el cliente
+            .callFactory(okHttpClient)
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()
             .create(ActividadesApi::class.java)

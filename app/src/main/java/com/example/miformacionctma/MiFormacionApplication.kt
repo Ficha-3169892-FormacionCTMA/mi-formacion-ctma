@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.room3.Room
 import com.example.miformacionctma.data.local.FormacionDatabase
 import com.example.miformacionctma.data.local.MIGRATION_1_2
+import com.example.miformacionctma.data.local.MIGRATION_2_3
 import com.example.miformacionctma.data.remote.NetworkModule
 import com.example.miformacionctma.data.remote.auth.SessionTokenProvider
 import com.example.miformacionctma.data.remote.auth.TokenProvider
@@ -31,7 +32,7 @@ class MiFormacionApplication : Application() {
             FormacionDatabase::class.java,
             "formacion.db"
         )
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .build()
     }
 
@@ -39,6 +40,7 @@ class MiFormacionApplication : Application() {
         RoomActividadRepository(
             dao = database.actividadDao(),
             competenciaDao = database.competenciaDao(),
+            evidenciaDao = database.evidenciaDao(),
             db = database,
             api = actividadesApi
         )

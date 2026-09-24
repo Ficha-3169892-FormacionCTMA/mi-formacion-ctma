@@ -1,12 +1,15 @@
 package com.example.miformacionctma.ui.navigation
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -14,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.miformacionctma.BuildConfig
 import com.example.miformacionctma.MiFormacionApplication
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
@@ -35,6 +39,7 @@ fun MiFormacionAppNav(
     application: MiFormacionApplication
 ) {
     val navController = rememberNavController()
+    val context = LocalContext.current
 
     val viewModel: ActividadesViewModel = viewModel(
         factory = ActividadesViewModelFactory(
@@ -98,7 +103,6 @@ fun MiFormacionAppNav(
                     }
                 },
                 onCrearClick = {
-                    // Resetear el formulario para una nueva actividad
                     idActividadEdicion = null
                     formTitulo = ""
                     formDescripcion = ""
@@ -168,7 +172,6 @@ fun MiFormacionAppNav(
                             viewModel.insertar(nuevaActividad)
                         }
 
-                        // Limpiar formulario y reiniciar las banderas de interacción
                         formTitulo = ""
                         formDescripcion = ""
                         formFecha = ""
@@ -207,15 +210,35 @@ fun MiFormacionAppNav(
                 value = viewModel.obtenerConCompetencia(id)
             }
 
+            val evidenciaEntity by remember(id) {
+                viewModel.observarEvidencia(id)
+            }.collectAsStateWithLifecycle(initialValue = null)
+
+            // URL pública remota de fallback en Supabase Storage
+            val baseUrlStorage = BuildConfig.SUPABASE_URL.replace("/rest/v1/", "/").trimEnd('/')
+            val remoteUriFallback = Uri.parse("$baseUrlStorage/storage/v1/object/public/evidencias/evidencia_$id.jpg")
+            
+            val uriFinal = evidenciaEntity?.localUri?.let { Uri.parse(it) } ?: remoteUriFallback
+
             PantallaDetalleActividad(
                 actividadId = id,
                 actividades = listaActividades,
                 competenciaNombre = resultado?.second,
+                evidenciaUri = uriFinal,
+                estadoSincronizacion = evidenciaEntity?.estado?.name ?: "SINCRONIZADA",
+                onGuardarEvidencia = { uri, mime, tamano ->
+                    viewModel.guardarEvidenciaYSubir(context, id, uri, mime, tamano)
+                },
+                onReintentarSubida = {
+                    viewModel.reintentarSubirEvidencia(context, id)
+                },
+                onEliminarEvidencia = {
+                    viewModel.eliminarEvidencia(context, id)
+                },
                 onVolver = {
                     navController.popBackStack()
                 },
                 onEditar = { actividad ->
-                    // Pre-llenar el formulario con los datos de la actividad
                     idActividadEdicion = actividad.id
                     formTitulo = actividad.titulo
                     formDescripcion = actividad.descripcion
@@ -236,4 +259,3 @@ fun MiFormacionAppNav(
         }
     }
 }
-

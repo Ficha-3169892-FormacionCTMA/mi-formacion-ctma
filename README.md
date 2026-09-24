@@ -1,73 +1,77 @@
 # MiFormacionCTMA
 
-Aplicación Android desarrollada con Kotlin y Jetpack Compose para la gestion de actividades
-formativas del proceso CTMA. El proyecto implementa conceptos de UI declarativa, Material 3,
-accesibilidad y una arquitectura robusta basada en flujos reactivos y concurrencia avanzada.
+Aplicación Android desarrollada con Kotlin y Jetpack Compose para la gestión de actividades formativas del proceso CTMA. El proyecto implementa arquitectura Clean Architecture / MVVM, persistencia local Offline-First con Room, sincronización remota con Supabase, gestión segura de evidencias fotográficas, permisos contextuales y soporte para múltiples variantes de compilación (*Build Variants*).
 
 ---
 
 ## Requisitos y Ejecución
 
-- Android Studio y SDK de Android actualizados.
-- Dispositivo físico con depuración inalámbrica o emulador compatible.
-- Archivo secrets.properties configurado en la raíz del proyecto.
+- **Android Studio** Ladybug (o superior) y Android SDK 34+.
+- Dispositivo físico o emulador con depuración activa.
+- Archivo `secrets.properties` configurado en la raíz del proyecto basándose en `secrets.properties.example`.
 
-Para ejecutar la aplicación, vincule su dispositivo desde el Device Manager y presione el botón Run.
-
----
-
-## Arquitectura del Proyecto
-
-Se utiliza una Arquitectura en Capas (Clean Architecture) con flujo unidireccional:
-
-1. Capa de Interfaz de Usuario (UI): Diseñada con el patron Route-Screen, utilizando Compose y
-   recolección de estados conscientes del ciclo de vida.
-2. Capa de Presentacion (ViewModel): Gestiona el estado reactivo mediante StateFlow y coordina la
-   lógica de negocio.
-3. Capa de Datos (Offline-First):
-    - Room Database: Fuente local canónica de verdad con transacciones atómicas.
-    - Supabase: Sincronización remota mediante Retrofit y OkHttp.
-    - DataStore: Almacenamiento de preferencias del usuario.
+Para ejecutar la aplicación, seleccione la variante deseada (`devDebug`, `stageDebug` o `prodRelease`) en el panel **Build Variants** de Android Studio y presione el botón **Run**.
 
 ---
 
-## Concurrencia y Seguridad
+## Variantes de Compilación (Build Variants)
 
-- Política Main-Safety: Operaciones pesadas en hilos de background nativos.
-- Cancelación Cooperativa: Uso de flatMapLatest para optimizar consultas de búsqueda.
-- Optimización de Recursos: Uso de WhileSubscribed(5000) en flujos compartidos.
-- Seguridad de Datos: Inyección dinámica de tokens y redacción automática de claves en logs.
+El proyecto cuenta con 3 sabores de producto (*Product Flavors*) configurados en Gradle:
+
+- **`dev`**: Entorno de desarrollo local/pruebas rápidas (`applicationIdSuffix = ".dev"`). Permite inspección de red detallada.
+- **`stage`**: Entorno de homologación y pruebas de integración (`applicationIdSuffix = ".stage"`). Tráfico HTTPS forzado.
+- **`prod`**: Entorno de producción final. Tráfico HTTPS estricto y redacción total de logs de red (`HttpLoggingInterceptor.Level.NONE`).
+
+---
+
+## Arquitectura y Módulos
+
+El proyecto sigue el patrón **Offline-First** y **Unidirectional Data Flow (UDF)**:
+
+1. **Capa de Interfaz de Usuario (UI)**: Diseñada con Jetpack Compose y Material 3.
+   - Componentes clave: `SeccionEvidencia` (gestión de cámara/galería) y `SeccionRecordatorios` (notificaciones contextuales).
+2. **Capa de Presentación (ViewModel)**: Manejo del estado reactivo mediante `StateFlow` y recolección limpia de eventos.
+3. **Capa de Datos y Persistencia (Room & Retrofit)**:
+   - **Room Database (v3)**: Almacena entidades `ActividadEntity`, `CompetenciaEntity` y `EvidenciaEntity` (solo metadatos y URIs locales, nunca Base64 ni bytes de imágenes).
+   - **Retrofit & OkHttp**: Sincronización multipart con cabeceras `Idempotency-Key` y redacción de encabezados sensibles (`Authorization`, `apikey`).
+   - **DataStore**: Almacenamiento de preferencias del usuario (orden de lista y activación de recordatorios).
+
+---
+
+## Gestión de Evidencias Fotográficas y Seguridad
+
+- **Mínimo Privilegio**: Selección de imágenes mediante **Photo Picker** (`ActivityResultContracts.PickVisualMedia()`) sin solicitar permisos ampliados a la galería.
+- **Captura Segura**: Integración con **FileProvider** restringida al subdirectorio interno `filesDir/evidencias/` entregan únicamente `content URI`.
+- **Validación Vía ContentResolver**: Filtrado estricto de tipos MIME (`image/jpeg`, `image/png`, `image/webp`), límite de tamaño (5 MB) y prueba de apertura de *stream*.
+- **Redacción de Logs**: Supresión de tokens y cabeceras sensibles en Logcat.
+- **Seguridad de Red**: Configuración `network-security-config.xml` deshabilitando tráfico en texto claro (`cleartextTrafficPermitted="false"`) para stage y prod.
+
+---
+
+## Permisos Contextuales (Notificaciones)
+
+- La solicitud del permiso `POST_NOTIFICATIONS` (Android 13+) se realiza **exclusivamente de forma contextual** cuando el usuario intenta activar voluntariamente el interruptor de recordatorios.
+- Si el usuario rechaza el permiso, la app conserva la preferencia desactivada sin repetir diálogos molestos y continúa funcionando normalmente sin bloqueos.
+- **No se solicitan permisos de ubicación**.
 
 ---
 
 ## Configuración de Supabase
 
-Para habilitar la persistencia en la nube, siga estos pasos:
-
-1. Cree las tablas actividades y competencias en Supabase con los campos correspondientes.
-2. Ejecute el siguiente script para configurar las políticas de acceso:
-   ```sql
-   create policy "Acceso total" on actividades for all using (true);
-   create policy "Acceso total" on competencias for all using (true);
-   ```
-3. Configure su archivo secrets.properties con las variables SUPABASE_URL y SUPABASE_PUBLISHABLE_KEY
-   basándose en el archivo `.example`.
-
----
-
-## Pruebas y Calidad
-
-El proyecto incluye una suite de 24 pruebas automatizadas con JUnit, MockWebServer y MockK:
-
-- Pruebas de Repositorio y Red: Verificación de escenarios exitosos, fallos de conexión, timeouts y
-  errores de servidor.
-- Pruebas de ViewModel: Validación de transiciones de estado y flujos reactivos.
-- Persistencia Local: Verificación de DAOs y migraciones de base de datos.
+1. Cree las tablas `actividades`, `competencias` y el bucket de almacenamiento `evidencias` en Supabase.
+2. Configure las políticas de acceso según su entorno:
+   - **Desarrollo / Demo**:
+     ```sql
+     create policy "Acceso total actividades" on actividades for all using (true);
+     create policy "Acceso total competencias" on competencias for all using (true);
+     ```
+   - **Producción**: Restrinja las políticas RLS mediante `auth.uid() = user_id` o permisos por rol.
+3. Configure `secrets.properties` con `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`.
 
 ---
 
-## Estado Actual
+## Calidad y Pruebas
 
-La aplicación es un sistema CRUD completo y resiliente. Permite crear, editar, eliminar y visualizar
-actividades con sincronización automática. La arquitectura garantiza el funcionamiento offline
-utilizando los últimos datos guardados localmente ante la falta de conexión.
+- Suite de pruebas unitarias sobre reglas de negocio (`ReglasActividadTest.kt`).
+- Pruebas de migración y Room DAOs (`MigrationTest.kt`).
+- Cobertura de los 9 Casos de Aceptación (CA 01 al CA 09) utilizando material de prueba sintético.

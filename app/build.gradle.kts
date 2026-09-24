@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -15,6 +17,7 @@ android {
     defaultConfig {
         applicationId = "com.example.miformacionctma"
         minSdk = 24
+        //noinspection OldTargetApi
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -32,6 +35,59 @@ android {
         release {
             optimization {
                 enable = false
+            }
+        }
+    }
+
+    flavorDimensions += "environment"
+
+    val secretsFile = rootProject.file("secrets.properties")
+    val secretsProps = Properties()
+    if (secretsFile.exists()) {
+        secretsFile.inputStream().use { stream ->
+            secretsProps.load(stream)
+        }
+    }
+
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            buildConfigField("String", "ENVIRONMENT", "\"DEV\"")
+            val url = secretsProps.getProperty("SUPABASE_URL_DEV") ?: secretsProps.getProperty("SUPABASE_URL")
+            if (url != null) {
+                buildConfigField("String", "SUPABASE_URL", "\"$url\"")
+            }
+            val key = secretsProps.getProperty("SUPABASE_KEY_DEV") ?: secretsProps.getProperty("SUPABASE_PUBLISHABLE_KEY")
+            if (key != null) {
+                buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$key\"")
+            }
+        }
+        create("stage") {
+            dimension = "environment"
+            applicationIdSuffix = ".stage"
+            versionNameSuffix = "-stage"
+            buildConfigField("String", "ENVIRONMENT", "\"STAGE\"")
+            val url = secretsProps.getProperty("SUPABASE_URL_STAGE") ?: secretsProps.getProperty("SUPABASE_URL")
+            if (url != null) {
+                buildConfigField("String", "SUPABASE_URL", "\"$url\"")
+            }
+            val key = secretsProps.getProperty("SUPABASE_KEY_STAGE") ?: secretsProps.getProperty("SUPABASE_PUBLISHABLE_KEY")
+            if (key != null) {
+                buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$key\"")
+            }
+        }
+        create("prod") {
+            dimension = "environment"
+            buildConfigField("String", "ENVIRONMENT", "\"PROD\"")
+            val url = secretsProps.getProperty("SUPABASE_URL_PROD") ?: secretsProps.getProperty("SUPABASE_URL")
+            if (url != null) {
+                buildConfigField("String", "SUPABASE_URL", "\"$url\"")
+            }
+            val key = secretsProps.getProperty("SUPABASE_KEY_PROD") ?: secretsProps.getProperty("SUPABASE_PUBLISHABLE_KEY")
+            if (key != null) {
+                buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$key\"")
             }
         }
     }
@@ -79,6 +135,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.coil.compose)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(libs.okhttp)

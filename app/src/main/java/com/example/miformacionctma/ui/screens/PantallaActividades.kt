@@ -42,6 +42,7 @@ import com.example.miformacionctma.domain.ActividadesDemo
 import com.example.miformacionctma.model.ReglasActividad
 import com.example.miformacionctma.ui.components.SeccionAgile
 import com.example.miformacionctma.ui.components.SeccionPresentacion
+import com.example.miformacionctma.ui.components.SeccionRecordatorios
 import com.example.miformacionctma.ui.components.TarjetaActividad
 import com.example.miformacionctma.ui.state.ListadoUiState
 import com.example.miformacionctma.ui.state.RefreshUiState
@@ -59,6 +60,7 @@ fun PantallaActividadesRoute(
     val syncState by viewModel.syncState.collectAsStateWithLifecycle()
     val textoBusqueda by viewModel.textoBusqueda.collectAsStateWithLifecycle()
     val ordenarPorPrioridad by viewModel.ordenarPorPrioridad.collectAsStateWithLifecycle()
+    val recordatoriosActivados by viewModel.recordatoriosActivados.collectAsStateWithLifecycle()
 
     ContenidoAdaptable(
         uiState = uiState,
@@ -67,6 +69,8 @@ fun PantallaActividadesRoute(
         onTextoBusquedaChange = viewModel::actualizarBusqueda,
         ordenarPorPrioridad = ordenarPorPrioridad,
         onOrdenPorPrioridadChange = viewModel::guardarOrdenPorPrioridad,
+        recordatoriosActivados = recordatoriosActivados,
+        onRecordatoriosActivadosChange = viewModel::guardarRecordatoriosActivados,
         onActividadClick = onActividadClick,
         onCrearClick = onCrearClick,
         onReintentarClick = { viewModel.refreshActividades() },
@@ -83,6 +87,8 @@ fun ContenidoAdaptable(
     onTextoBusquedaChange: (String) -> Unit = {},
     ordenarPorPrioridad: Boolean = false,
     onOrdenPorPrioridadChange: (Boolean) -> Unit = {},
+    recordatoriosActivados: Boolean = false,
+    onRecordatoriosActivadosChange: (Boolean) -> Unit = {},
     onActividadClick: (Long) -> Unit = {},
     onCrearClick: () -> Unit = {},
     onReintentarClick: () -> Unit = {}
@@ -100,6 +106,8 @@ fun ContenidoAdaptable(
                     onTextoBusquedaChange = onTextoBusquedaChange,
                     ordenarPorPrioridad = ordenarPorPrioridad,
                     onOrdenPorPrioridadChange = onOrdenPorPrioridadChange,
+                    recordatoriosActivados = recordatoriosActivados,
+                    onRecordatoriosActivadosChange = onRecordatoriosActivadosChange,
                     onActividadClick = onActividadClick,
                     onCrearClick = onCrearClick,
                     onReintentarClick = onReintentarClick
@@ -171,6 +179,8 @@ fun PantallaActividadesScreen(
     onTextoBusquedaChange: (String) -> Unit,
     ordenarPorPrioridad: Boolean,
     onOrdenPorPrioridadChange: (Boolean) -> Unit,
+    recordatoriosActivados: Boolean = false,
+    onRecordatoriosActivadosChange: (Boolean) -> Unit = {},
     onActividadClick: (Long) -> Unit,
     onCrearClick: () -> Unit,
     onReintentarClick: () -> Unit,
@@ -186,12 +196,10 @@ fun PantallaActividadesScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalAlignment = Alignment.End
                 ) {
-                    // Pequeño FAB para sincronizar
                     SmallFloatingActionButton(onClick = onReintentarClick) {
                         Icon(Icons.Default.Refresh, contentDescription = "Sincronizar")
                     }
 
-                    // FAB principal para añadir
                     FloatingActionButton(onClick = onCrearClick) {
                         Icon(Icons.Default.Add, contentDescription = "Añadir actividad")
                     }
@@ -210,7 +218,6 @@ fun PantallaActividadesScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // SECCIÓN FIJA: Siempre visible (Presentación y Encabezado)
                     val actividades =
                         (uiState as? ListadoUiState.Contenido)?.actividades ?: emptyList()
                     val urgentes = ReglasActividad.actividadesUrgentes(actividades).size
@@ -225,6 +232,12 @@ fun PantallaActividadesScreen(
                     }
 
                     item { SeccionPresentacion(resumen = resumen) }
+                    item {
+                        SeccionRecordatorios(
+                            recordatoriosActivados = recordatoriosActivados,
+                            onCambiarRecordatorios = onRecordatoriosActivadosChange
+                        )
+                    }
                     item { Spacer(modifier = Modifier.height(12.dp)) }
                     item { EncabezadoActividades() }
 
@@ -246,7 +259,6 @@ fun PantallaActividadesScreen(
                         )
                     }
 
-                    // CONTENIDO DINÁMICO: Según el estado
                     when (uiState) {
                         is ListadoUiState.Cargando -> {
                             item {
@@ -433,6 +445,8 @@ fun PantallaActividadesPreview() {
             onTextoBusquedaChange = {},
             ordenarPorPrioridad = false,
             onOrdenPorPrioridadChange = {},
+            recordatoriosActivados = false,
+            onRecordatoriosActivadosChange = {},
             onActividadClick = {},
             onCrearClick = {},
             onReintentarClick = {}
