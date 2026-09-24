@@ -8,8 +8,7 @@ import java.time.Instant
 
 /**
  * Entidad que almacena la referencia local y los metadatos de una evidencia fotográfica asociada
- * a una actividad formativa.
- * NO almacena imágenes ni cadenas Base64 directamente en la base de datos.
+ * a una actividad formativa y perteneciente a un usuario específico.
  */
 @Entity(
     tableName = "evidencias",
@@ -33,5 +32,6 @@ data class EvidenciaEntity(
     val mimeType: String,
     val tamano: Long,
     val fecha: Instant,
-    val estado: EstadoSincronizacion = EstadoSincronizacion.LOCAL
+    val estado: EstadoSincronizacion = EstadoSincronizacion.LOCAL,
+    val usuarioId: String = ""
 )

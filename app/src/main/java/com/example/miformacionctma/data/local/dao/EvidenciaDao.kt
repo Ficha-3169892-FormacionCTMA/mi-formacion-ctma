@@ -22,11 +22,14 @@ interface EvidenciaDao {
     @Delete
     suspend fun eliminar(evidencia: EvidenciaEntity)
 
-    @Query("SELECT * FROM evidencias WHERE actividadId = :actividadId LIMIT 1")
-    fun observarPorActividadId(actividadId: Long): Flow<EvidenciaEntity?>
+    @Query("SELECT * FROM evidencias WHERE id = :evidenciaId LIMIT 1")
+    suspend fun obtenerPorId(evidenciaId: Long): EvidenciaEntity?
 
-    @Query("SELECT * FROM evidencias WHERE actividadId = :actividadId LIMIT 1")
-    suspend fun obtenerPorActividadId(actividadId: Long): EvidenciaEntity?
+    @Query("SELECT * FROM evidencias WHERE actividadId = :actividadId AND (usuarioId = :usuarioId OR usuarioId = '') ORDER BY id DESC")
+    fun observarListaPorActividadYUsuario(actividadId: Long, usuarioId: String): Flow<List<EvidenciaEntity>>
+
+    @Query("SELECT * FROM evidencias WHERE actividadId = :actividadId ORDER BY id DESC")
+    fun observarListaPorActividad(actividadId: Long): Flow<List<EvidenciaEntity>>
 
     @Query("UPDATE evidencias SET estado = :estado WHERE id = :id")
     suspend fun actualizarEstado(id: Long, estado: EstadoSincronizacion)

@@ -5,10 +5,12 @@ import androidx.room3.Room
 import com.example.miformacionctma.data.local.FormacionDatabase
 import com.example.miformacionctma.data.local.MIGRATION_1_2
 import com.example.miformacionctma.data.local.MIGRATION_2_3
+import com.example.miformacionctma.data.local.MIGRATION_3_4
 import com.example.miformacionctma.data.remote.NetworkModule
 import com.example.miformacionctma.data.remote.auth.SessionTokenProvider
 import com.example.miformacionctma.data.remote.auth.TokenProvider
 import com.example.miformacionctma.data.repository.ActividadRepository
+import com.example.miformacionctma.data.repository.AuthRepository
 import com.example.miformacionctma.data.repository.PreferenciasRepository
 import com.example.miformacionctma.data.repository.RoomActividadRepository
 
@@ -32,7 +34,7 @@ class MiFormacionApplication : Application() {
             FormacionDatabase::class.java,
             "formacion.db"
         )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
             .build()
     }
 
@@ -48,5 +50,12 @@ class MiFormacionApplication : Application() {
 
     val preferenciasRepository: PreferenciasRepository by lazy {
         PreferenciasRepository(applicationContext)
+    }
+
+    val authRepository: AuthRepository by lazy {
+        AuthRepository(
+            api = actividadesApi,
+            preferenciasRepository = preferenciasRepository
+        )
     }
 }

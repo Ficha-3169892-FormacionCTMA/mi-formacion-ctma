@@ -7,11 +7,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.miformacionctma.data.local.entity.EvidenciaEntity
 import com.example.miformacionctma.data.repository.ActividadRepository
+import com.example.miformacionctma.data.repository.AuthRepository
 import com.example.miformacionctma.data.repository.PreferenciasRepository
 import com.example.miformacionctma.data.util.Result
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Competencia
 import com.example.miformacionctma.model.ReglasActividad
+import com.example.miformacionctma.model.RolUsuario
+import com.example.miformacionctma.model.Usuario
 import com.example.miformacionctma.ui.state.ListadoUiState
 import com.example.miformacionctma.ui.state.OperacionUiState
 import com.example.miformacionctma.ui.state.RefreshUiState
@@ -32,8 +35,40 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class)
 class ActividadesViewModel(
     private val repository: ActividadRepository,
-    private val preferenciasRepository: PreferenciasRepository
+    private val preferenciasRepository: PreferenciasRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
+
+    val usuarioSesion: StateFlow<Usuario?> = authRepository.usuarioActual
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null
+        )
+
+    private val _errorLogin = MutableStateFlow<String?>(null)
+    val errorLogin: StateFlow<String?> = _errorLogin.asStateFlow()
+
+    fun limpiarErrorLogin() {
+        _errorLogin.value = null
+    }
+
+    fun iniciarSesion(email: String, password: String, nombre: String, rol: RolUsuario) {
+        viewModelScope.launch {
+            val resultado = authRepository.iniciarSesion(email, password, nombre, rol)
+            if (resultado.isFailure) {
+                _errorLogin.value = resultado.exceptionOrNull()?.message ?: "Error al iniciar sesión. Comprueba tus datos."
+            } else {
+                _errorLogin.value = null
+            }
+        }
+    }
+
+    fun cerrarSesion() {
+        viewModelScope.launch {
+            authRepository.cerrarSesion()
+        }
+    }
 
     private val _textoBusqueda = MutableStateFlow("")
     val textoBusqueda: StateFlow<String> = _textoBusqueda.asStateFlow()
@@ -169,8 +204,20 @@ class ActividadesViewModel(
         return repository.obtenerConCompetencia(id)
     }
 
-    fun observarEvidencia(actividadId: Long): Flow<EvidenciaEntity?> {
-        return repository.observarEvidencia(actividadId)
+    fun observarEvidencias(actividadId: Long, usuarioId: String): Flow<List<EvidenciaEntity>> {
+        return repository.observarEvidencias(actividadId, usuarioId)
+    }
+
+    fun observarEvidenciasSegunRol(
+        actividadId: Long,
+        usuarioId: String,
+        esInstructor: Boolean
+    ): Flow<List<EvidenciaEntity>> {
+        return if (esInstructor) {
+            repository.observarEvidenciasInstructor(actividadId)
+        } else {
+            repository.observarEvidencias(actividadId, usuarioId)
+        }
     }
 
     fun guardarEvidenciaYSubir(
@@ -178,32 +225,34 @@ class ActividadesViewModel(
         actividadId: Long,
         localUri: Uri,
         mimeType: String,
-        tamanoBytes: Long
+        tamanoBytes: Long,
+        usuarioId: String
     ) {
         viewModelScope.launch {
             try {
-                repository.guardarEvidenciaLocal(
+                val evidencia = repository.guardarEvidenciaLocal(
                     actividadId = actividadId,
                     localUri = localUri.toString(),
                     mimeType = mimeType,
-                    tamano = tamanoBytes
+                    tamano = tamanoBytes,
+                    usuarioId = usuarioId
                 )
-                repository.subirEvidencia(context, actividadId)
+                repository.subirEvidencia(context, evidencia.id)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
             }
         }
     }
 
-    fun reintentarSubirEvidencia(context: Context, actividadId: Long) {
+    fun reintentarSubirEvidencia(context: Context, evidenciaId: Long) {
         viewModelScope.launch {
-            repository.subirEvidencia(context, actividadId)
+            repository.subirEvidencia(context, evidenciaId)
         }
     }
 
-    fun eliminarEvidencia(context: Context, actividadId: Long) {
+    fun eliminarEvidencia(context: Context, evidenciaId: Long) {
         viewModelScope.launch {
-            repository.eliminarEvidencia(context, actividadId)
+            repository.eliminarEvidencia(context, evidenciaId)
         }
     }
 
@@ -235,7 +284,8 @@ class ActividadesViewModel(
 
 class ActividadesViewModelFactory(
     private val repository: ActividadRepository,
-    private val preferenciasRepository: PreferenciasRepository
+    private val preferenciasRepository: PreferenciasRepository,
+    private val authRepository: AuthRepository
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -243,7 +293,8 @@ class ActividadesViewModelFactory(
         if (modelClass.isAssignableFrom(ActividadesViewModel::class.java)) {
             return ActividadesViewModel(
                 repository,
-                preferenciasRepository
+                preferenciasRepository,
+                authRepository
             ) as T
         }
 

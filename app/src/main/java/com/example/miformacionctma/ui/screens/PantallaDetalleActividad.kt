@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.miformacionctma.data.local.entity.EvidenciaEntity
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.model.ReglasActividad
@@ -47,11 +48,11 @@ fun PantallaDetalleActividad(
     actividadId: Long,
     actividades: List<ActividadFormativa>,
     competenciaNombre: String?,
-    evidenciaUri: Uri? = null,
-    estadoSincronizacion: String? = null,
+    evidencias: List<EvidenciaEntity> = emptyList(),
+    esInstructor: Boolean = true,
     onGuardarEvidencia: (Uri, String, Long) -> Unit = { _, _, _ -> },
-    onReintentarSubida: () -> Unit = {},
-    onEliminarEvidencia: () -> Unit = {},
+    onReintentarSubida: (Long) -> Unit = {},
+    onEliminarEvidencia: (Long) -> Unit = {},
     onVolver: () -> Unit,
     onEditar: (ActividadFormativa) -> Unit,
     onEliminar: (ActividadFormativa) -> Unit
@@ -200,10 +201,11 @@ fun PantallaDetalleActividad(
                         DividerDefaults.color
                     )
 
-                    // SECCIÓN DE EVIDENCIA FOTOGRÁFICA
+                    // SECCIÓN DE EVIDENCIAS FOTOGRÁFICAS MÚLTIPLES (1 A MUCHOS)
                     SeccionEvidencia(
-                        evidenciaUri = evidenciaUri,
-                        estadoSincronizacion = estadoSincronizacion,
+                        evidencias = evidencias,
+                        actividadId = actividadId,
+                        esInstructor = esInstructor,
                         onEvidenciaValidaSeleccionada = onGuardarEvidencia,
                         onReintentarSubida = onReintentarSubida,
                         onEliminarEvidencia = onEliminarEvidencia
@@ -211,27 +213,35 @@ fun PantallaDetalleActividad(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = { onEditar(actividad) },
-                            modifier = Modifier.weight(1f)
+                    if (esInstructor) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("Editar")
-                        }
+                            Button(
+                                onClick = { onEditar(actividad) },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Editar Actividad")
+                            }
 
-                        Button(
-                            onClick = { mostrarDialogoEliminar = true },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        ) {
-                            Text("Eliminar")
+                            Button(
+                                onClick = { mostrarDialogoEliminar = true },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            ) {
+                                Text("Eliminar Actividad")
+                            }
                         }
+                    } else {
+                        Text(
+                            text = "Modo Aprendiz: Puedes adjuntar múltiples evidencias fotográficas para esta actividad.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             } else {

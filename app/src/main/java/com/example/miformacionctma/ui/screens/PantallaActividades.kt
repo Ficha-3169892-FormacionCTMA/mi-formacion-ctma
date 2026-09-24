@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,12 +20,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
@@ -34,12 +39,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.miformacionctma.data.util.DataError
 import com.example.miformacionctma.domain.ActividadesDemo
 import com.example.miformacionctma.model.ReglasActividad
+import com.example.miformacionctma.model.RolUsuario
+import com.example.miformacionctma.model.Usuario
 import com.example.miformacionctma.ui.components.SeccionAgile
 import com.example.miformacionctma.ui.components.SeccionPresentacion
 import com.example.miformacionctma.ui.components.SeccionRecordatorios
@@ -54,6 +62,7 @@ fun PantallaActividadesRoute(
     viewModel: ActividadesViewModel,
     onActividadClick: (Long) -> Unit,
     onCrearClick: () -> Unit,
+    onCerrarSesion: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -61,6 +70,7 @@ fun PantallaActividadesRoute(
     val textoBusqueda by viewModel.textoBusqueda.collectAsStateWithLifecycle()
     val ordenarPorPrioridad by viewModel.ordenarPorPrioridad.collectAsStateWithLifecycle()
     val recordatoriosActivados by viewModel.recordatoriosActivados.collectAsStateWithLifecycle()
+    val usuarioSesion by viewModel.usuarioSesion.collectAsStateWithLifecycle()
 
     ContenidoAdaptable(
         uiState = uiState,
@@ -71,6 +81,8 @@ fun PantallaActividadesRoute(
         onOrdenPorPrioridadChange = viewModel::guardarOrdenPorPrioridad,
         recordatoriosActivados = recordatoriosActivados,
         onRecordatoriosActivadosChange = viewModel::guardarRecordatoriosActivados,
+        usuario = usuarioSesion,
+        onCerrarSesion = viewModel::cerrarSesion,
         onActividadClick = onActividadClick,
         onCrearClick = onCrearClick,
         onReintentarClick = { viewModel.refreshActividades() },
@@ -89,10 +101,14 @@ fun ContenidoAdaptable(
     onOrdenPorPrioridadChange: (Boolean) -> Unit = {},
     recordatoriosActivados: Boolean = false,
     onRecordatoriosActivadosChange: (Boolean) -> Unit = {},
+    usuario: Usuario? = null,
+    onCerrarSesion: () -> Unit = {},
     onActividadClick: (Long) -> Unit = {},
     onCrearClick: () -> Unit = {},
     onReintentarClick: () -> Unit = {}
 ) {
+    val esInstructor = usuario?.rol == RolUsuario.INSTRUCTOR
+
     Surface(
         modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -108,6 +124,8 @@ fun ContenidoAdaptable(
                     onOrdenPorPrioridadChange = onOrdenPorPrioridadChange,
                     recordatoriosActivados = recordatoriosActivados,
                     onRecordatoriosActivadosChange = onRecordatoriosActivadosChange,
+                    usuario = usuario,
+                    onCerrarSesion = onCerrarSesion,
                     onActividadClick = onActividadClick,
                     onCrearClick = onCrearClick,
                     onReintentarClick = onReintentarClick
@@ -115,13 +133,17 @@ fun ContenidoAdaptable(
             } else {
                 Scaffold(
                     floatingActionButton = {
-                        FloatingActionButton(onClick = onCrearClick) {
-                            Text("+", style = MaterialTheme.typography.headlineMedium)
+                        if (esInstructor) {
+                            FloatingActionButton(onClick = onCrearClick) {
+                                Text("+", style = MaterialTheme.typography.headlineMedium)
+                            }
                         }
                     }
                 ) { paddingValues ->
                     Column(modifier = Modifier.padding(paddingValues)) {
                         SyncIndicator(state = syncState)
+
+                        SeccionUsuarioHeader(usuario = usuario, onCerrarSesion = onCerrarSesion)
 
                         OutlinedTextField(
                             value = textoBusqueda,
@@ -142,7 +164,7 @@ fun ContenidoAdaptable(
 
                         when (uiState) {
                             is ListadoUiState.Cargando -> EstadoCargando()
-                            is ListadoUiState.Vacio -> EstadoVacio(onCrearClick = onCrearClick)
+                            is ListadoUiState.Vacio -> EstadoVacio(onCrearClick = if (esInstructor) onCrearClick else null)
                             is ListadoUiState.Error -> EstadoError(
                                 mensaje = uiState.mensaje,
                                 onReintentar = onReintentarClick
@@ -181,11 +203,15 @@ fun PantallaActividadesScreen(
     onOrdenPorPrioridadChange: (Boolean) -> Unit,
     recordatoriosActivados: Boolean = false,
     onRecordatoriosActivadosChange: (Boolean) -> Unit = {},
+    usuario: Usuario? = null,
+    onCerrarSesion: () -> Unit = {},
     onActividadClick: (Long) -> Unit,
     onCrearClick: () -> Unit,
     onReintentarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val esInstructor = usuario?.rol == RolUsuario.INSTRUCTOR
+
     Surface(
         modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -200,8 +226,11 @@ fun PantallaActividadesScreen(
                         Icon(Icons.Default.Refresh, contentDescription = "Sincronizar")
                     }
 
-                    FloatingActionButton(onClick = onCrearClick) {
-                        Icon(Icons.Default.Add, contentDescription = "Añadir actividad")
+                    // Solo el instructor puede crear actividades
+                    if (esInstructor) {
+                        FloatingActionButton(onClick = onCrearClick) {
+                            Icon(Icons.Default.Add, contentDescription = "Añadir actividad")
+                        }
                     }
                 }
             }
@@ -218,6 +247,8 @@ fun PantallaActividadesScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    item { SeccionUsuarioHeader(usuario = usuario, onCerrarSesion = onCerrarSesion) }
+
                     val actividades =
                         (uiState as? ListadoUiState.Contenido)?.actividades ?: emptyList()
                     val urgentes = ReglasActividad.actividadesUrgentes(actividades).size
@@ -274,7 +305,7 @@ fun PantallaActividadesScreen(
                         }
 
                         is ListadoUiState.Vacio -> {
-                            item { EstadoVacio(onCrearClick = onCrearClick) }
+                            item { EstadoVacio(onCrearClick = if (esInstructor) onCrearClick else null) }
                         }
 
                         is ListadoUiState.Error -> {
@@ -299,6 +330,49 @@ fun PantallaActividadesScreen(
                     item { Spacer(modifier = Modifier.height(20.dp)) }
                     item { SeccionAgile() }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun SeccionUsuarioHeader(
+    usuario: Usuario?,
+    onCerrarSesion: () -> Unit
+) {
+    if (usuario == null) return
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "${if (usuario.rol == RolUsuario.INSTRUCTOR) "Prof." else "Aprendiz"} ${usuario.nombre}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = "Rol: ${usuario.rol.name} (${usuario.email})",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
+            }
+
+            OutlinedButton(
+                onClick = onCerrarSesion,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            ) {
+                Text("Salir")
             }
         }
     }
@@ -378,7 +452,7 @@ private fun EstadoCargando() {
 
 @Composable
 private fun EstadoVacio(
-    onCrearClick: () -> Unit,
+    onCrearClick: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -399,8 +473,16 @@ private fun EstadoVacio(
                 text = "Agrega una actividad para comenzar a organizar tu formación.",
                 style = MaterialTheme.typography.bodyMedium
             )
-            Button(onClick = onCrearClick) {
-                Text("Crear Actividad")
+            if (onCrearClick != null) {
+                Button(onClick = onCrearClick) {
+                    Text("Crear Actividad")
+                }
+            } else {
+                Text(
+                    text = "(Solo los instructores pueden crear actividades)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
@@ -431,25 +513,5 @@ private fun EstadoError(
                 Text("Reintentar")
             }
         }
-    }
-}
-
-@Preview(name = "Actividades normales", showBackground = true)
-@Composable
-fun PantallaActividadesPreview() {
-    MiFormacionCTMATheme {
-        PantallaActividadesScreen(
-            uiState = ListadoUiState.Contenido(ActividadesDemo.listaInicial),
-            syncState = RefreshUiState.Idle,
-            textoBusqueda = "",
-            onTextoBusquedaChange = {},
-            ordenarPorPrioridad = false,
-            onOrdenPorPrioridadChange = {},
-            recordatoriosActivados = false,
-            onRecordatoriosActivadosChange = {},
-            onActividadClick = {},
-            onCrearClick = {},
-            onReintentarClick = {}
-        )
     }
 }

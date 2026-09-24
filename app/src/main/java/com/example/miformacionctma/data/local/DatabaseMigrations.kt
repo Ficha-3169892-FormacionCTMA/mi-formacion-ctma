@@ -38,3 +38,14 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         )
     }
 }
+
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            """
+            ALTER TABLE evidencias
+            ADD COLUMN usuarioId TEXT NOT NULL DEFAULT ''
+            """.trimIndent()
+        )
+    }
+}

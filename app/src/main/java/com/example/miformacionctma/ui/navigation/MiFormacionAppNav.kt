@@ -22,9 +22,11 @@ import com.example.miformacionctma.MiFormacionApplication
 import com.example.miformacionctma.model.ActividadFormativa
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.model.ReglasActividad
+import com.example.miformacionctma.model.RolUsuario
 import com.example.miformacionctma.ui.screens.PantallaActividadesRoute
 import com.example.miformacionctma.ui.screens.PantallaCrearActividad
 import com.example.miformacionctma.ui.screens.PantallaDetalleActividad
+import com.example.miformacionctma.ui.screens.PantallaLogin
 import com.example.miformacionctma.ui.state.FormularioActividadUiState
 import com.example.miformacionctma.ui.state.ListadoUiState
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
@@ -44,9 +46,29 @@ fun MiFormacionAppNav(
     val viewModel: ActividadesViewModel = viewModel(
         factory = ActividadesViewModelFactory(
             application.actividadRepository,
-            application.preferenciasRepository
+            application.preferenciasRepository,
+            application.authRepository
         )
     )
+
+    val usuarioSesion by viewModel.usuarioSesion.collectAsStateWithLifecycle()
+    val errorLogin by viewModel.errorLogin.collectAsStateWithLifecycle()
+
+    // Si no hay sesión iniciada, mostrar la pantalla de Login obligatoria
+    if (usuarioSesion == null) {
+        PantallaLogin(
+            errorLogin = errorLogin,
+            onLimpiarError = { viewModel.limpiarErrorLogin() },
+            onIniciarSesionClick = { email, password, nombre, rol ->
+                viewModel.iniciarSesion(email, password, nombre, rol)
+            }
+        )
+        return
+    }
+
+    val esInstructor = usuarioSesion?.rol == RolUsuario.INSTRUCTOR
+    val usuarioIdActual = usuarioSesion?.email ?: ""
+
     val ordenarPorPrioridad by viewModel.ordenarPorPrioridad.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val textoBusqueda by viewModel.textoBusqueda.collectAsStateWithLifecycle()
@@ -103,27 +125,37 @@ fun MiFormacionAppNav(
                     }
                 },
                 onCrearClick = {
-                    idActividadEdicion = null
-                    formTitulo = ""
-                    formDescripcion = ""
-                    formFecha = ""
-                    formPrioridad = Prioridad.MEDIA
-                    formCompetenciaId = null
-                    formProgreso = 0
-                    
-                    formTituloTocado = false
-                    formDescripcionTocado = false
-                    formFechaTocado = false
+                    if (esInstructor) {
+                        idActividadEdicion = null
+                        formTitulo = ""
+                        formDescripcion = ""
+                        formFecha = ""
+                        formPrioridad = Prioridad.MEDIA
+                        formCompetenciaId = null
+                        formProgreso = 0
+                        
+                        formTituloTocado = false
+                        formDescripcionTocado = false
+                        formFechaTocado = false
 
-                    navController.navigate(Destino.Crear.ruta) {
-                        launchSingleTop = true
+                        navController.navigate(Destino.Crear.ruta) {
+                            launchSingleTop = true
+                        }
                     }
+                },
+                onCerrarSesion = {
+                    viewModel.cerrarSesion()
                 }
             )
         }
 
         // Destino 2 - Formulario de creación/edición
         composable(Destino.Crear.ruta) {
+            if (!esInstructor) {
+                navController.popBackStack()
+                return@composable
+            }
+
             PantallaCrearActividad(
                 uiState = uiStateFormulario,
                 competencias = competencias,
@@ -210,50 +242,48 @@ fun MiFormacionAppNav(
                 value = viewModel.obtenerConCompetencia(id)
             }
 
-            val evidenciaEntity by remember(id) {
-                viewModel.observarEvidencia(id)
-            }.collectAsStateWithLifecycle(initialValue = null)
-
-            // URL pública remota de fallback en Supabase Storage
-            val baseUrlStorage = BuildConfig.SUPABASE_URL.replace("/rest/v1/", "/").trimEnd('/')
-            val remoteUriFallback = Uri.parse("$baseUrlStorage/storage/v1/object/public/evidencias/evidencia_$id.jpg")
-            
-            val uriFinal = evidenciaEntity?.localUri?.let { Uri.parse(it) } ?: remoteUriFallback
+            val evidenciasList by remember(id, usuarioIdActual, esInstructor) {
+                viewModel.observarEvidenciasSegunRol(id, usuarioIdActual, esInstructor)
+            }.collectAsStateWithLifecycle(initialValue = emptyList())
 
             PantallaDetalleActividad(
                 actividadId = id,
                 actividades = listaActividades,
                 competenciaNombre = resultado?.second,
-                evidenciaUri = uriFinal,
-                estadoSincronizacion = evidenciaEntity?.estado?.name ?: "SINCRONIZADA",
+                evidencias = evidenciasList,
+                esInstructor = esInstructor,
                 onGuardarEvidencia = { uri, mime, tamano ->
-                    viewModel.guardarEvidenciaYSubir(context, id, uri, mime, tamano)
+                    viewModel.guardarEvidenciaYSubir(context, id, uri, mime, tamano, usuarioIdActual)
                 },
-                onReintentarSubida = {
-                    viewModel.reintentarSubirEvidencia(context, id)
+                onReintentarSubida = { evidenciaId ->
+                    viewModel.reintentarSubirEvidencia(context, evidenciaId)
                 },
-                onEliminarEvidencia = {
-                    viewModel.eliminarEvidencia(context, id)
+                onEliminarEvidencia = { evidenciaId ->
+                    viewModel.eliminarEvidencia(context, evidenciaId)
                 },
                 onVolver = {
                     navController.popBackStack()
                 },
                 onEditar = { actividad ->
-                    idActividadEdicion = actividad.id
-                    formTitulo = actividad.titulo
-                    formDescripcion = actividad.descripcion
-                    formFecha = DateTimeFormatter.ISO_LOCAL_DATE
-                        .withZone(ZoneId.systemDefault())
-                        .format(actividad.fecha)
-                    formPrioridad = actividad.prioridad
-                    formCompetenciaId = actividad.competenciaId
-                    formProgreso = actividad.progreso
-                    
-                    navController.navigate(Destino.Crear.ruta)
+                    if (esInstructor) {
+                        idActividadEdicion = actividad.id
+                        formTitulo = actividad.titulo
+                        formDescripcion = actividad.descripcion
+                        formFecha = DateTimeFormatter.ISO_LOCAL_DATE
+                            .withZone(ZoneId.systemDefault())
+                            .format(actividad.fecha)
+                        formPrioridad = actividad.prioridad
+                        formCompetenciaId = actividad.competenciaId
+                        formProgreso = actividad.progreso
+                        
+                        navController.navigate(Destino.Crear.ruta)
+                    }
                 },
                 onEliminar = { actividad ->
-                    viewModel.eliminar(actividad)
-                    navController.popBackStack()
+                    if (esInstructor) {
+                        viewModel.eliminar(actividad)
+                        navController.popBackStack()
+                    }
                 }
             )
         }

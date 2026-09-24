@@ -24,6 +24,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.io.File
@@ -136,9 +137,14 @@ class RoomActividadRepository(
                 val actividadesEntity = actividadesDto.toEntityList()
                 val competenciasEntity = competenciasDto.toEntityList()
 
-                // Transacción atómica en Room 3: usar UPSERT sin borrar actividades
-                // para evitar que SQLite ejecute CASCADE DELETE en la tabla evidencias.
+                // Transacción atómica en Room 3:
+                // 1. Eliminar localmente aquellas actividades que ya fueron borradas en el servidor (Supabase).
+                // 2. Insertar o actualizar las actividades vigentes usando UPSERT.
                 db.useWriterConnection {
+                    val serverIds = actividadesEntity.map { it.id }
+                    if (serverIds.isNotEmpty()) {
+                        dao.eliminarActividadesNoPresentes(serverIds)
+                    }
                     dao.insertarTodas(actividadesEntity)
                     competenciaDao.insertarTodas(competenciasEntity)
                 }
@@ -167,40 +173,41 @@ class RoomActividadRepository(
         }
     }
 
-    // Operaciones de Evidencia Fotográfica
-    override fun observarEvidencia(actividadId: Long): Flow<EvidenciaEntity?> {
-        return evidenciaDao.observarPorActividadId(actividadId)
+    // Operaciones de Evidencias Fotográficas Múltiples (1 a muchos) con Aislamiento por Usuario o Vista Global de Instructor
+    override fun observarEvidencias(actividadId: Long, usuarioId: String): Flow<List<EvidenciaEntity>> {
+        return evidenciaDao.observarListaPorActividadYUsuario(actividadId, usuarioId)
     }
 
-    override suspend fun obtenerEvidenciaPorActividadId(actividadId: Long): EvidenciaEntity? {
-        return evidenciaDao.obtenerPorActividadId(actividadId)
+    override fun observarEvidenciasInstructor(actividadId: Long): Flow<List<EvidenciaEntity>> {
+        return evidenciaDao.observarListaPorActividad(actividadId)
     }
 
     override suspend fun guardarEvidenciaLocal(
         actividadId: Long,
         localUri: String,
         mimeType: String,
-        tamano: Long
+        tamano: Long,
+        usuarioId: String
     ): EvidenciaEntity {
-        val existente = evidenciaDao.obtenerPorActividadId(actividadId)
         val evidencia = EvidenciaEntity(
-            id = existente?.id ?: 0,
+            id = 0, // 0 fuerza la inserción de una nueva evidencia (relación 1 a muchos)
             actividadId = actividadId,
             localUri = localUri,
             mimeType = mimeType,
             tamano = tamano,
             fecha = Instant.now(),
-            estado = EstadoSincronizacion.LOCAL
+            estado = EstadoSincronizacion.LOCAL,
+            usuarioId = usuarioId
         )
         val idGenerado = evidenciaDao.insertar(evidencia)
-        return evidencia.copy(id = if (evidencia.id == 0L) idGenerado else evidencia.id)
+        return evidencia.copy(id = idGenerado)
     }
 
     override suspend fun subirEvidencia(
         context: Context,
-        actividadId: Long
+        evidenciaId: Long
     ): RepositoryResult<Unit> {
-        val evidencia = evidenciaDao.obtenerPorActividadId(actividadId)
+        val evidencia = evidenciaDao.obtenerPorId(evidenciaId)
             ?: return Result.Error(DataError.Network.Unknown)
 
         // 1. Cambiar estado a SUBIENDO
@@ -218,7 +225,7 @@ class RoomActividadRepository(
             val mime = evidencia.mimeType.ifBlank { "image/jpeg" }
             val mediaType = mime.toMediaTypeOrNull()
             val requestBody = bytes.toRequestBody(mediaType)
-            val nombreArchivo = "evidencia_${evidencia.actividadId}.jpg"
+            val nombreArchivo = "evidencia_${evidencia.actividadId}_${evidencia.id}_${evidencia.usuarioId.takeIf { it.isNotBlank() } ?: "general"}.jpg"
 
             // Construir la URL completa para Supabase Storage API
             val baseUrl = BuildConfig.SUPABASE_URL.replace("/rest/v1/", "/").trimEnd('/')
@@ -255,9 +262,9 @@ class RoomActividadRepository(
 
     override suspend fun eliminarEvidencia(
         context: Context,
-        actividadId: Long
+        evidenciaId: Long
     ) {
-        val evidencia = evidenciaDao.obtenerPorActividadId(actividadId)
+        val evidencia = evidenciaDao.obtenerPorId(evidenciaId)
         if (evidencia != null) {
             EvidenciaStorageUtil.eliminarArchivoSiExiste(context, Uri.parse(evidencia.localUri))
             evidenciaDao.eliminar(evidencia)

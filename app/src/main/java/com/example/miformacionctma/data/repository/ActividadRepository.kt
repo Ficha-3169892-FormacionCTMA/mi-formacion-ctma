@@ -44,25 +44,26 @@ interface ActividadRepository {
      */
     suspend fun refresh(): RepositoryResult<Unit>
 
-    // Operaciones de Evidencia Fotográfica
-    fun observarEvidencia(actividadId: Long): Flow<EvidenciaEntity?>
+    // Operaciones de Evidencias Fotográficas Múltiples con Aislamiento por Usuario o Vista Global de Instructor
+    fun observarEvidencias(actividadId: Long, usuarioId: String): Flow<List<EvidenciaEntity>>
 
-    suspend fun obtenerEvidenciaPorActividadId(actividadId: Long): EvidenciaEntity?
+    fun observarEvidenciasInstructor(actividadId: Long): Flow<List<EvidenciaEntity>>
 
     suspend fun guardarEvidenciaLocal(
         actividadId: Long,
         localUri: String,
         mimeType: String,
-        tamano: Long
+        tamano: Long,
+        usuarioId: String
     ): EvidenciaEntity
 
     suspend fun subirEvidencia(
         context: Context,
-        actividadId: Long
+        evidenciaId: Long
     ): RepositoryResult<Unit>
 
     suspend fun eliminarEvidencia(
         context: Context,
-        actividadId: Long
+        evidenciaId: Long
     )
 }

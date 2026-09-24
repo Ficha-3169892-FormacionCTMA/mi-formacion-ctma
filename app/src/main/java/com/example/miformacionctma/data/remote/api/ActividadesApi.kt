@@ -2,6 +2,7 @@ package com.example.miformacionctma.data.remote.api
 
 import com.example.miformacionctma.data.remote.dto.ActividadDto
 import com.example.miformacionctma.data.remote.dto.CompetenciaDto
+import com.example.miformacionctma.data.remote.dto.PerfilDto
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -14,7 +15,7 @@ import retrofit2.http.Query
 import retrofit2.http.Url
 
 /**
- * Definición del contrato de red para los recursos de Actividades y Evidencias.
+ * Definición del contrato de red para los recursos de Actividades, Competencias, Perfiles y Evidencias.
  */
 interface ActividadesApi {
     // Listar Actividades
@@ -47,6 +48,17 @@ interface ActividadesApi {
     suspend fun eliminarActividad(
         @Query("id") idFilter: String
     ): Response<Unit>
+
+    // Consultar Perfil de Usuario por Email
+    @GET("perfiles")
+    suspend fun getPerfilPorEmail(
+        @Query("email") emailFilter: String,
+        @Query("select") select: String = "*"
+    ): Response<List<PerfilDto>>
+
+    // Crear Perfil de Usuario
+    @POST("perfiles")
+    suspend fun crearPerfil(@Body perfil: PerfilDto): Response<Unit>
 
     // Subir Evidencia Fotográfica directamente al endpoint de Supabase Storage
     @POST

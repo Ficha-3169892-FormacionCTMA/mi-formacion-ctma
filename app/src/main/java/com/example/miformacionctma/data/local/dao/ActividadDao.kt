@@ -48,6 +48,9 @@ interface ActividadDao {
     @Query("SELECT * FROM actividades WHERE id = :id LIMIT 1")
     suspend fun obtenerConCompetencia(id: Long): ActividadConCompetencia?
 
+    @Query("DELETE FROM actividades WHERE id NOT IN (:serverIds)")
+    suspend fun eliminarActividadesNoPresentes(serverIds: List<Long>)
+
     @Query("DELETE FROM actividades")
     suspend fun eliminarTodas()
 }

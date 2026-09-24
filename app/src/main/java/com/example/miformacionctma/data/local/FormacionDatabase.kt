@@ -15,7 +15,7 @@ import com.example.miformacionctma.data.local.entity.EvidenciaEntity
         CompetenciaEntity::class,
         EvidenciaEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @androidx.room3.ColumnTypeConverters(Converters::class)
