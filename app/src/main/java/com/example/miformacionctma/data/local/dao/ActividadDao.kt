@@ -18,15 +18,19 @@ interface ActividadDao {
 
     @Query(
         "SELECT * FROM actividades " +
-        "WHERE LOWER(titulo) LIKE '%' || LOWER(:texto) || '%' " +
-        "ORDER BY fechaLimiteEpochMillis DESC"
+                "WHERE LOWER(titulo) LIKE '%' || LOWER(:texto) || '%' " +
+                "ORDER BY fechaLimiteEpochMillis DESC"
     )
     fun buscar(texto: String): Flow<List<ActividadEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertar(actividad: ActividadEntity)
 
-    @Update suspend fun actualizar(actividad: ActividadEntity)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarTodas(actividades: List<ActividadEntity>) // <-- Añadido para el refresh
+
+    @Update
+    suspend fun actualizar(actividad: ActividadEntity)
 
     @Query("DELETE FROM actividades WHERE id = :id")
     suspend fun eliminarPorId(id: String): Int

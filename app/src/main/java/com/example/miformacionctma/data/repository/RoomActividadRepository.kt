@@ -1,8 +1,8 @@
 package com.example.miformacionctma.data.repository
 
 import com.example.miformacionctma.data.local.dao.ActividadDao
-import com.example.miformacionctma.data.local.toDomain
-import com.example.miformacionctma.data.local.toEntity
+import com.example.miformacionctma.data.remote.toDomain
+import com.example.miformacionctma.data.remote.toEntity
 import com.example.miformacionctma.domain.repository.ActividadRepository
 import com.example.miformacionctma.model.ActividadFormativa
 import kotlinx.coroutines.flow.Flow

@@ -1,7 +1,7 @@
 package com.example.miformacionctma.data.repository
 
-import com.example.miformacionctma.data.local.EvidenciaDao
-import com.example.miformacionctma.data.local.EvidenciaEntity
+import com.example.miformacionctma.data.local.dao.EvidenciaDao
+import com.example.miformacionctma.data.local.entities.EvidenciaEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest

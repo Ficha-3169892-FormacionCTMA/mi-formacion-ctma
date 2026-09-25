@@ -38,6 +38,32 @@ También puede ejecutarse mediante un **AVD Android** compatible.
 
 ---
 
+## 🔑 Credenciales de Acceso para Pruebas
+
+La aplicación cuenta con usuarios preconfigurados en Supabase para validar los diferentes roles (Instructor y Aprendices):
+
+### 1. Rol Instructor
+* **Correo:** `instructor@sena.edu.co`
+* **Contraseña:** `user123`
+* **UUID:** `df3b0ab1-7129-414d-a457-1694057f88fd`
+
+*(Alternativa Instructor)*
+* **Correo:** `instructor1@sena.edu.co`
+* **Contraseña:** `instructor123`
+* **UUID:** `79d59938-c884-4c12-bec0-8c06e4b18ea1`
+
+### 2. Rol Aprendiz
+* **Correo:** `aprendiz@sena.edu.co`
+* **Contraseña:** `aprendiz123`
+* **UUID:** `9fd64873-8c88-49bc-959e-871f338d232a`
+
+*(Cuenta de Aprendiz Principal - Sebas)*
+* **Correo:** `sebas@sena.edu.co`
+* **Contraseña:** `sebas123`
+* **UUID:** `af6ef7e4-5689-45b9-8dc8-71046edbba0c`
+
+---
+
 ## Pruebas realizadas
 
 Se implementaron **pruebas unitarias con JUnit** para verificar:
@@ -70,21 +96,16 @@ El proyecto fue desarrollado utilizando un **repositorio compartido en GitHub** 
 
 ---
 
-## Persistencia Local (Semana 6)
+## Persistencia Local y Sincronización Remota
 
-Se incorporó persistencia local estructurada con **Room 3** y almacenamiento de preferencias liviano con **Preferences DataStore**, siguiendo el patrón de **Fuente Única de Verdad (Single Source of Truth - SSOT)**.
+Se incorporó persistencia local estructurada con **Room** y sincronización en la nube con **Supabase (Backend-as-a-Service)** bajo un enfoque **Offline-First**.
 
 ### Recorrido del Dato (Arquitectura)
-1. **Lectura / Observación:** `Room Database / DataStore` → `Flow<List<Entity>>` → `Repository contrato` → `ViewModel (combina flows)` → `UiState` → `Jetpack Compose UI` (recomposición automática ante cambios).
-2. **Escritura / Registro:** `Compose UI (Event)` → `ViewModel` → `Repository` → `DAO (suspend)` → `Room SQLite` → Disparo automático de nueva emisión de Flow hacia la UI.
-
-### Próximos pasos (Semana 8: Sincronización con API)
-Al incorporar una API Remota en la Semana 8:
-- La API externa actualizará la base de datos local de Room de forma asíncrona.
-- La UI continuará leyendo de Room de manera reactiva (Offline-First), manteniendo a Room como la única fuente canónica de verdad.
+1. **Lectura / Observación:** `Room Database` → `Flow<List<Entity>>` → `Repository contrato` → `ViewModel (combina flows y roles)` → `UiState` → `Jetpack Compose UI` (recomposición automática).
+2. **Escritura / Sincronización:** `Compose UI` → `ViewModel` → Guardado local en `Room` + Inserción remota en `Supabase` con su respectivo `aprendiz_id`.
 
 ---
 
 ## Estado actual
 
-El proyecto cuenta con una **interfaz funcional, adaptable y accesible**, lista para continuar con futuras iteraciones relacionadas con **persistencia de datos, navegación y arquitectura avanzada en Compose**.
+El proyecto cuenta con una **interfaz funcional, adaptable y accesible**, autenticación por roles (Instructor / Aprendiz), asignación de tareas dirigidas y sincronización en tiempo real con Supabase.

@@ -16,5 +16,6 @@ data class ActividadDto(
     @SerialName("competencia_id") val competenciaId: String,
     @SerialName("fecha_limite") val fechaLimite: String,
     val completada: Boolean,
-    @SerialName("actualizado_en") val actualizadoEn: String
+    @SerialName("actualizado_en") val actualizadoEn: String,
+    @SerialName("aprendiz_id") val aprendizId: String? = null
 )

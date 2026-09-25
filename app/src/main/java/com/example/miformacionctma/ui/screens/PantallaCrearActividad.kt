@@ -1,37 +1,18 @@
 package com.example.miformacionctma.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.miformacionctma.data.local.entities.CompetenciaEntity
+import com.example.miformacionctma.ui.viewmodel.ProfileDto
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.ui.state.FormularioActividadUiState
 
@@ -39,20 +20,27 @@ import com.example.miformacionctma.ui.state.FormularioActividadUiState
 @Composable
 fun PantallaCrearActividad(
     uiState: FormularioActividadUiState,
+    listaCompetencias: List<CompetenciaEntity>,
+    listaAprendices: List<ProfileDto>,
     onTituloChange: (String) -> Unit,
     onDescripcionChange: (String) -> Unit,
     onFechaChange: (String) -> Unit,
     onPrioridadChange: (Prioridad) -> Unit,
     onProgresoChange: (Int) -> Unit,
+    onCompetenciaChange: (Long) -> Unit,
+    onAprendizChange: (String?) -> Unit,
     onGuardarClick: () -> Unit,
     onVolver: () -> Unit
 ) {
     var enProcesoGuardado by remember { mutableStateOf(false) }
+    var expandedMenu by remember { mutableStateOf(false) }
+
+    val nombreAprendizSeleccionado = listaAprendices.find { it.id == uiState.aprendizId }?.nombre ?: "Seleccionar aprendiz (Opcional)"
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Detalle de Actividad") },
+                title = { Text("Crear Actividad") },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
                         Icon(
@@ -82,7 +70,7 @@ fun PantallaCrearActividad(
                 isError = mostrarErrorTitulo,
                 supportingText = {
                     if (mostrarErrorTitulo) {
-                        Text(text = uiState.tituloError, color = MaterialTheme.colorScheme.error)
+                        Text(text = uiState.tituloError ?: "", color = MaterialTheme.colorScheme.error)
                     } else {
                         Text("${uiState.titulo.length}/80 caracteres")
                     }
@@ -92,38 +80,86 @@ fun PantallaCrearActividad(
             )
 
             // CAMPO: DESCRIPCIÓN
-            val mostrarErrorDescripcion = uiState.descripcionTocado && uiState.descripcionError != null
             OutlinedTextField(
                 value = uiState.descripcion,
                 onValueChange = onDescripcionChange,
                 label = { Text("Descripción (opcional)") },
                 placeholder = { Text("Agrega detalles sobre la actividad") },
-                isError = mostrarErrorDescripcion,
-                supportingText = {
-                    if (mostrarErrorDescripcion) {
-                        Text(text = uiState.descripcionError, color = MaterialTheme.colorScheme.error)
-                    } else {
-                        Text("${uiState.descripcion.length}/240 caracteres")
-                    }
-                },
                 minLines = 3,
                 maxLines = 5,
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // 🧑‍🎓 CAMPO: ASIGNAR APRENDIZ ESPECÍFICO POR NOMBRE
+            Text(
+                text = "Asignar a Aprendiz",
+                style = MaterialTheme.typography.titleMedium
+            )
+            ExposedDropdownMenuBox(
+                expanded = expandedMenu,
+                onExpandedChange = { expandedMenu = !expandedMenu }
+            ) {
+                OutlinedTextField(
+                    value = nombreAprendizSeleccionado,
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMenu) },
+                    modifier = Modifier
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true) // 👈 Corregido el warning de deprecación
+                        .fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expandedMenu,
+                    onDismissRequest = { expandedMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("-- Ninguno (General para todos) --") },
+                        onClick = {
+                            onAprendizChange(null)
+                            expandedMenu = false
+                        }
+                    )
+                    listaAprendices.forEach { aprendiz ->
+                        DropdownMenuItem(
+                            text = { Text(aprendiz.nombre) },
+                            onClick = {
+                                onAprendizChange(aprendiz.id)
+                                expandedMenu = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            // CAMPO: SELECCIÓN DE COMPETENCIA
+            Text(
+                text = "Competencia *",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (listaCompetencias.isEmpty()) {
+                    Text("Cargando competencias...", style = MaterialTheme.typography.bodySmall)
+                } else {
+                    listaCompetencias.forEach { competencia ->
+                        FilterChip(
+                            selected = (uiState.competenciaId == competencia.id),
+                            onClick = { onCompetenciaChange(competencia.id) },
+                            label = { Text(competencia.nombre) }
+                        )
+                    }
+                }
+            }
+
             // CAMPO: FECHA
-            val mostrarErrorFecha = uiState.fechaTocado && uiState.fechaError != null
             OutlinedTextField(
                 value = uiState.fecha,
                 onValueChange = onFechaChange,
                 label = { Text("Fecha límite *") },
                 placeholder = { Text("Año-Mes-Día (Ej: 2026-09-15)") },
-                isError = mostrarErrorFecha,
-                supportingText = {
-                    if (mostrarErrorFecha) {
-                        Text(text = uiState.fechaError, color = MaterialTheme.colorScheme.error)
-                    }
-                },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()

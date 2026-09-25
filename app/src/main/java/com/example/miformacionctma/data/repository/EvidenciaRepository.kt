@@ -2,8 +2,8 @@ package com.example.miformacionctma.data.repository
 
 import android.content.ContentResolver
 import android.net.Uri
-import com.example.miformacionctma.data.local.EvidenciaDao
-import com.example.miformacionctma.data.local.EvidenciaEntity
+import com.example.miformacionctma.data.local.dao.EvidenciaDao
+import com.example.miformacionctma.data.local.entities.EvidenciaEntity
 import com.example.miformacionctma.data.remote.EvidencePolicy
 import com.example.miformacionctma.data.remote.EvidenciasApi
 import com.example.miformacionctma.data.remote.classifyNetworkCall

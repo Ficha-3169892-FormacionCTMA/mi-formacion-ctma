@@ -3,10 +3,8 @@ package com.example.miformacionctma
 import android.content.Context
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
-import androidx.sqlite.execSQL
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.example.miformacionctma.data.local.FormacionDatabase
 import com.example.miformacionctma.data.local.entities.ActividadEntity
 import com.example.miformacionctma.data.local.entities.CompetenciaEntity

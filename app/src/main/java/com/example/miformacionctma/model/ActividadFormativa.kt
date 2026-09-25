@@ -12,5 +12,6 @@ data class ActividadFormativa(
     val prioridad: Prioridad,
     val competenciaId: Long = 0L,
     val fechaLimiteEpochMillis: Long = 0L,
-    val completada: Boolean = false
+    val completada: Boolean = false,
+    val aprendizId: String? = null
 )

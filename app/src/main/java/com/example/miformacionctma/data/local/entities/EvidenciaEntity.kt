@@ -1,9 +1,9 @@
-package com.example.miformacionctma.data.local
+package com.example.miformacionctma.data.local.entities
 
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
-import androidx.room.PrimaryKey
+import androidx.room3.Entity
+import androidx.room3.ForeignKey
+import androidx.room3.Index
+import androidx.room3.PrimaryKey
 
 /**
  * Entidad que representa una evidencia fotográfica asociada a una actividad.

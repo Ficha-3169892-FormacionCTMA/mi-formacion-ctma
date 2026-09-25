@@ -1,7 +1,7 @@
 package com.example.miformacionctma.data.repository
 
-import com.example.miformacionctma.data.local.ActividadDao
-import com.example.miformacionctma.data.local.ActividadEntity
+import com.example.miformacionctma.data.local.dao.ActividadDao
+import com.example.miformacionctma.data.local.entities.ActividadEntity
 import com.example.miformacionctma.data.remote.ActividadesApi
 import com.example.miformacionctma.data.remote.DataError
 import com.example.miformacionctma.data.remote.NetworkFailure
@@ -20,7 +20,7 @@ class OfflineFirstActividadRepository(
 ) : ActividadRepository {
 
     override fun observeActividades(): Flow<List<ActividadEntity>> {
-        return dao.observeAll()
+        return dao.observarTodos() // Actualizado al nombre correcto del DAO
     }
 
     override suspend fun refresh(): Result<Unit> = classifyNetworkCall {
@@ -36,7 +36,7 @@ class OfflineFirstActividadRepository(
         val dtoList = response.body().orEmpty()
         val entities = dtoList.map { it.toEntity() }
 
-        // Sincronización en Room: se insertan/actualizan los datos descargados
-        dao.insertAll(entities)
+        // Sincronización en Room usando la inserción masiva
+        dao.insertarTodas(entities)
     }
 }

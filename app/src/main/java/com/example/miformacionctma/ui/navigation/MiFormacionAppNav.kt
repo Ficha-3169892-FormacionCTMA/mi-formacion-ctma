@@ -1,11 +1,11 @@
 package com.example.miformacionctma.ui.navigation
 
+import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -20,13 +20,12 @@ import com.example.miformacionctma.data.repository.PreferenciasRepository
 import com.example.miformacionctma.data.repository.RoomActividadRepository
 import com.example.miformacionctma.data.repository.dataStore
 import com.example.miformacionctma.model.ActividadFormativa
-import com.example.miformacionctma.model.Prioridad
-import com.example.miformacionctma.model.ReglasActividad
 import com.example.miformacionctma.ui.screens.ContenidoAdaptable
 import com.example.miformacionctma.ui.screens.PantallaCrearActividad
 import com.example.miformacionctma.ui.screens.PantallaDetalleActividad
-import com.example.miformacionctma.ui.state.FormularioActividadUiState
+import com.example.miformacionctma.ui.screens.PantallaLogin
 import com.example.miformacionctma.ui.state.ListadoUiState
+import com.example.miformacionctma.ui.state.OperacionUiState
 import com.example.miformacionctma.ui.viewmodel.ActividadesViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -34,18 +33,22 @@ import androidx.lifecycle.ViewModelProvider
 @Composable
 fun MiFormacionAppNav() {
     val navController = rememberNavController()
-    val context = LocalContext.current.applicationContext
+    val context = LocalContext.current
+    val appContext = context.applicationContext
 
-    // Manual injection of database & repository as per guideline single instance scope
-    val database = remember { crearDatabase(context) }
+    val database = remember { crearDatabase(appContext) }
     val repoActividades = remember { RoomActividadRepository(database.actividadDao()) }
-    val repoPreferencias = remember { PreferenciasRepository(context.dataStore) }
+    val repoPreferencias = remember { PreferenciasRepository(appContext.dataStore) }
 
     val factory = remember {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return ActividadesViewModel(repoActividades, repoPreferencias) as T
+                return ActividadesViewModel(
+                    repository = repoActividades,
+                    preferenciasRepository = repoPreferencias,
+                    competenciaDao = database.competenciaDao()
+                ) as T
             }
         }
     }
@@ -53,42 +56,50 @@ fun MiFormacionAppNav() {
     val viewModel: ActividadesViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val textoBusqueda by viewModel.textoBusqueda.collectAsStateWithLifecycle()
+    val operacionState by viewModel.operacion.collectAsStateWithLifecycle()
+    val esInstructor by viewModel.esInstructor.collectAsStateWithLifecycle()
 
-    // Estado del formulario de creación preservado en rotaciones
-    var formTitulo by rememberSaveable { mutableStateOf("") }
-    var formDescripcion by rememberSaveable { mutableStateOf("") }
-    var formFecha by rememberSaveable { mutableStateOf("") }
-    var formPrioridad by rememberSaveable { mutableStateOf(Prioridad.MEDIA) }
-    var formProgreso by rememberSaveable { mutableIntStateOf(0) }
+    val formularioState by viewModel.formularioState.collectAsStateWithLifecycle()
+    val competencias by viewModel.competencias.collectAsStateWithLifecycle()
+    val listaAprendices by viewModel.aprendices.collectAsStateWithLifecycle() // 👈 Recolectado correctamente
 
-    // Computación de errores usando ReglasActividad
-    val tituloError = ReglasActividad.validarTitulo(formTitulo)
-    val descripcionError = ReglasActividad.validarDescripcion(formDescripcion)
-    val fechaError = ReglasActividad.validarFecha(formFecha)
-
-    // Banderas de estado para interacción
-    var formTituloTocado by rememberSaveable { mutableStateOf(false) }
-    var formDescripcionTocado by rememberSaveable { mutableStateOf(false) }
-    var formFechaTocado by rememberSaveable { mutableStateOf(false) }
-
-    val uiStateFormulario = FormularioActividadUiState(
-        titulo = formTitulo,
-        tituloError = tituloError,
-        tituloTocado = formTituloTocado,
-        descripcion = formDescripcion,
-        descripcionError = descripcionError,
-        descripcionTocado = formDescripcionTocado,
-        fecha = formFecha,
-        fechaError = fechaError,
-        fechaTocado = formFechaTocado,
-        prioridad = formPrioridad,
-        progreso = formProgreso
-    )
+    LaunchedEffect(operacionState) {
+        when (val op = operacionState) {
+            is OperacionUiState.Fallida -> {
+                Toast.makeText(context, "Error: ${op.mensaje}", Toast.LENGTH_LONG).show()
+                viewModel.reiniciarOperacion()
+            }
+            is OperacionUiState.Exitosa -> {
+                viewModel.reiniciarOperacion()
+            }
+            else -> {}
+        }
+    }
 
     NavHost(
         navController = navController,
-        startDestination = Destino.Lista.ruta
+        startDestination = "login"
     ) {
+        // Destino 0 - Pantalla de Login
+        composable("login") {
+            var errorLogin by remember { mutableStateOf<String?>(null) }
+
+            PantallaLogin(
+                onLoginClick = { email, password ->
+                    viewModel.iniciarSesion(email, password) { exito, mensaje ->
+                        if (exito) {
+                            navController.navigate(Destino.Lista.ruta) {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        } else {
+                            errorLogin = mensaje ?: "Credenciales incorrectas"
+                        }
+                    }
+                },
+                errorMessage = errorLogin
+            )
+        }
+
         // Destino 1 - Listado de actividades
         composable(Destino.Lista.ruta) {
             ContenidoAdaptable(
@@ -105,53 +116,45 @@ fun MiFormacionAppNav() {
                         launchSingleTop = true
                     }
                 },
-                onReintentar = { viewModel.cambiarBusqueda(textoBusqueda) }
+                onReintentar = { viewModel.cambiarBusqueda(textoBusqueda) },
+                esInstructor = esInstructor,
+                onCerrarSesion = {
+                    viewModel.cerrarSesion {
+                        navController.navigate("login") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                }
             )
         }
 
         // Destino 2 - Formulario de creación
         composable(Destino.Crear.ruta) {
             PantallaCrearActividad(
-                uiState = uiStateFormulario,
-                onTituloChange = {
-                    formTitulo = it
-                    formTituloTocado = true
-                },
-                onDescripcionChange = {
-                    formDescripcion = it
-                    formDescripcionTocado = true
-                },
-                onFechaChange = {
-                    formFecha = it
-                    formFechaTocado = true
-                },
-                onPrioridadChange = { formPrioridad = it },
-                onProgresoChange = { formProgreso = it },
+                uiState = formularioState,
+                listaCompetencias = competencias,
+                listaAprendices = listaAprendices, // 👈 Pasado
+                onTituloChange = { viewModel.actualizarTitulo(it) },
+                onDescripcionChange = { viewModel.actualizarDescripcion(it) },
+                onFechaChange = { viewModel.actualizarFecha(it) },
+                onPrioridadChange = { viewModel.actualizarPrioridad(it) },
+                onProgresoChange = { viewModel.actualizarProgreso(it) },
+                onCompetenciaChange = { viewModel.actualizarCompetenciaSeleccionada(it) },
+                onAprendizChange = { viewModel.actualizarAprendizSeleccionado(it) }, // 👈 Pasado
                 onGuardarClick = {
-                    if (uiStateFormulario.puedeGuardar) {
+                    if (formularioState.puedeGuardar) {
                         val maxId = System.currentTimeMillis().toString()
                         val nuevaActividad = ActividadFormativa(
                             id = maxId,
-                            titulo = formTitulo.trim(),
-                            descripcion = formDescripcion.trim(),
-                            fecha = formFecha.trim(),
-                            progreso = formProgreso,
+                            titulo = formularioState.titulo.trim(),
+                            descripcion = formularioState.descripcion.trim(),
+                            fecha = formularioState.fecha.trim(),
+                            progreso = formularioState.progreso,
                             diasRestantes = 7,
-                            prioridad = formPrioridad
+                            prioridad = formularioState.prioridad,
+                            competenciaId = formularioState.competenciaId
                         )
                         viewModel.guardar(nuevaActividad)
-
-                        // Limpiar formulario y reiniciar las banderas de interacción
-                        formTitulo = ""
-                        formDescripcion = ""
-                        formFecha = ""
-                        formPrioridad = Prioridad.MEDIA
-                        formProgreso = 0
-
-                        formTituloTocado = false
-                        formDescripcionTocado = false
-                        formFechaTocado = false
-
                         navController.popBackStack()
                     }
                 },
@@ -176,6 +179,7 @@ fun MiFormacionAppNav() {
             PantallaDetalleActividad(
                 actividadId = id,
                 actividades = listaActividades,
+                viewModel = viewModel,
                 onVolver = {
                     navController.popBackStack()
                 }

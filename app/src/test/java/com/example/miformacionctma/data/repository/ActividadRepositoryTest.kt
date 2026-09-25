@@ -1,7 +1,6 @@
 package com.example.miformacionctma.data.repository
 
-import com.example.miformacionctma.data.local.ActividadDao
-import com.example.miformacionctma.data.local.ActividadEntity
+import com.example.miformacionctma.data.local.entities.ActividadEntity
 import com.example.miformacionctma.data.remote.ActividadesApi
 import com.example.miformacionctma.data.remote.DataError
 import com.example.miformacionctma.data.remote.NetworkFailure

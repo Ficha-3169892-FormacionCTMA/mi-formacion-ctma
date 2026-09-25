@@ -14,7 +14,9 @@ data class FormularioActividadUiState(
     val fechaTocado: Boolean = false,
     val prioridad: Prioridad = Prioridad.MEDIA,
     val progreso: Int = 0,
-    val progresoError: String? = null
+    val progresoError: String? = null,
+    val competenciaId: Long = 1L,
+    val aprendizId: String? = null // 👈 ID del aprendiz seleccionado para la tarea
 ) {
     val puedeGuardar: Boolean
         get() = tituloError == null &&

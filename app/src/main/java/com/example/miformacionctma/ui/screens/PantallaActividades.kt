@@ -15,14 +15,20 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,7 +53,9 @@ fun ContenidoAdaptable(
     onBusquedaChange: (String) -> Unit = {},
     onActividadClick: (String) -> Unit = {},
     onCrearClick: () -> Unit = {},
-    onReintentar: () -> Unit = {}
+    onReintentar: () -> Unit = {},
+    esInstructor: Boolean = true,
+    onCerrarSesion: () -> Unit = {}
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -61,7 +69,9 @@ fun ContenidoAdaptable(
                     onBusquedaChange = onBusquedaChange,
                     onActividadClick = onActividadClick,
                     onCrearClick = onCrearClick,
-                    onReintentar = onReintentar
+                    onReintentar = onReintentar,
+                    esInstructor = esInstructor,
+                    onCerrarSesion = onCerrarSesion
                 )
             } else {
                 when (uiState) {
@@ -70,7 +80,13 @@ fun ContenidoAdaptable(
                             CircularProgressIndicator(Modifier.semantics { contentDescription = "Consultando actividades" })
                         }
                     }
-                    ListadoUiState.Vacio -> EstadoVacio(onCrearClick = onCrearClick)
+                    ListadoUiState.Vacio -> {
+                        if (esInstructor) {
+                            EstadoVacio(onCrearClick = onCrearClick)
+                        } else {
+                            EstadoVacioAprendiz()
+                        }
+                    }
                     is ListadoUiState.Error -> {
                         Column(
                             Modifier.fillMaxSize().padding(16.dp),
@@ -103,6 +119,7 @@ fun ContenidoAdaptable(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaActividades(
     uiState: ListadoUiState,
@@ -110,19 +127,36 @@ fun PantallaActividades(
     onBusquedaChange: (String) -> Unit = {},
     onActividadClick: (String) -> Unit = {},
     onCrearClick: () -> Unit = {},
-    onReintentar: () -> Unit = {}
+    onReintentar: () -> Unit = {},
+    esInstructor: Boolean = true,
+    onCerrarSesion: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
         Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(if (esInstructor) "Panel Instructor" else "Panel Aprendiz") },
+                    actions = {
+                        IconButton(onClick = onCerrarSesion) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Logout,
+                                contentDescription = "Cerrar Sesión"
+                            )
+                        }
+                    }
+                )
+            },
             floatingActionButton = {
-                FloatingActionButton(onClick = onCrearClick) {
-                    Text(
-                        text = "+",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
+                if (esInstructor) {
+                    FloatingActionButton(onClick = onCrearClick) {
+                        Text(
+                            text = "+",
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+                    }
                 }
             }
         ) { paddingValues ->
@@ -140,7 +174,11 @@ fun PantallaActividades(
                     }
                 }
                 ListadoUiState.Vacio -> {
-                    EstadoVacio(modifier = Modifier.padding(paddingValues), onCrearClick = onCrearClick)
+                    if (esInstructor) {
+                        EstadoVacio(modifier = Modifier.padding(paddingValues), onCrearClick = onCrearClick)
+                    } else {
+                        EstadoVacioAprendiz(modifier = Modifier.padding(paddingValues))
+                    }
                 }
                 is ListadoUiState.Error -> {
                     Box(
@@ -180,7 +218,6 @@ fun PantallaActividades(
                         item { Spacer(modifier = Modifier.height(12.dp)) }
                         item { EncabezadoActividades() }
 
-                        // Componente de la Barra de Búsqueda
                         item {
                             OutlinedTextField(
                                 value = textoBusqueda,
@@ -246,6 +283,30 @@ private fun EstadoVacio(modifier: Modifier = Modifier, onCrearClick: () -> Unit 
     }
 }
 
+@Composable
+private fun EstadoVacioAprendiz(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "No hay actividades disponibles",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = "Espera a que tu instructor asigne nuevas actividades.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
 @Preview(name = "Actividades normales", showBackground = true)
 @Composable
 private fun PantallaActividadesPreview() {
@@ -253,7 +314,6 @@ private fun PantallaActividadesPreview() {
         PantallaActividades(uiState = ListadoUiState.Contenido(ActividadesDemo.listaInicial))
     }
 }
-
 
 @Preview(name = "Actividades anchas", showBackground = true, widthDp = 700)
 @Composable
