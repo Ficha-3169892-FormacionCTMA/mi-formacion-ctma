@@ -15,6 +15,7 @@ import com.example.miformacionctma.data.local.toEntity
 import com.example.miformacionctma.data.mapper.toDto
 import com.example.miformacionctma.data.mapper.toEntityList
 import com.example.miformacionctma.data.remote.api.ActividadesApi
+import com.example.miformacionctma.data.remote.dto.EvidenciaDto
 import com.example.miformacionctma.data.util.DataError
 import com.example.miformacionctma.data.util.EvidenciaStorageUtil
 import com.example.miformacionctma.data.util.Result
@@ -129,17 +130,38 @@ class RoomActividadRepository(
         return try {
             val actividadesResponse = api.getActividades()
             val competenciasResponse = api.getCompetencias()
+            
+            // Intento seguro de obtener evidencias remotas (si la tabla ya existe)
+            val evidenciasResponse = try {
+                api.getEvidencias()
+            } catch (e: Exception) {
+                null
+            }
 
             if (actividadesResponse.isSuccessful && competenciasResponse.isSuccessful) {
                 val actividadesDto = actividadesResponse.body() ?: emptyList()
                 val competenciasDto = competenciasResponse.body() ?: emptyList()
+                val evidenciasDto = if (evidenciasResponse?.isSuccessful == true) evidenciasResponse.body() ?: emptyList() else emptyList()
                 
                 val actividadesEntity = actividadesDto.toEntityList()
                 val competenciasEntity = competenciasDto.toEntityList()
 
-                // Transacción atómica en Room 3:
-                // 1. Eliminar localmente aquellas actividades que ya fueron borradas en el servidor (Supabase).
-                // 2. Insertar o actualizar las actividades vigentes usando UPSERT.
+                val baseUrlStorage = BuildConfig.SUPABASE_URL.replace("/rest/v1/", "/").trimEnd('/')
+                val evidenciasRemotas = evidenciasDto.map { dto ->
+                    val remoteUrl = "$baseUrlStorage/storage/v1/object/public/evidencias/evidencia_${dto.actividadId}_${dto.id}_${dto.usuarioId}.jpg"
+                    EvidenciaEntity(
+                        id = dto.id ?: 0L,
+                        actividadId = dto.actividadId,
+                        localUri = remoteUrl,
+                        mimeType = dto.mimeType,
+                        tamano = dto.tamano,
+                        fecha = Instant.now(),
+                        estado = EstadoSincronizacion.SINCRONIZADA,
+                        usuarioId = dto.usuarioId
+                    )
+                }
+
+                // Transacción atómica en Room 3: sincronizar actividades, competencias y evidencias
                 db.useWriterConnection {
                     val serverIds = actividadesEntity.map { it.id }
                     if (serverIds.isNotEmpty()) {
@@ -147,6 +169,12 @@ class RoomActividadRepository(
                     }
                     dao.insertarTodas(actividadesEntity)
                     competenciaDao.insertarTodas(competenciasEntity)
+
+                    for (ev in evidenciasRemotas) {
+                        if (evidenciaDao.obtenerPorId(ev.id) == null) {
+                            evidenciaDao.insertar(ev)
+                        }
+                    }
                 }
 
                 Result.Success(Unit)
@@ -173,7 +201,7 @@ class RoomActividadRepository(
         }
     }
 
-    // Operaciones de Evidencias Fotográficas Múltiples (1 a muchos) con Aislamiento por Usuario o Vista Global de Instructor
+    // Operaciones de Evidencias Fotográficas Múltiples con Aislamiento por Usuario o Vista Global de Instructor
     override fun observarEvidencias(actividadId: Long, usuarioId: String): Flow<List<EvidenciaEntity>> {
         return evidenciaDao.observarListaPorActividadYUsuario(actividadId, usuarioId)
     }
@@ -240,11 +268,25 @@ class RoomActividadRepository(
             )
 
             if (response.isSuccessful) {
-                // 3. Éxito: cambiar a SINCRONIZADA
+                // 3. Sincronizar metadatos en tabla SQL `evidencias` de Supabase de forma segura (id = null para autoincremento en servidor)
+                try {
+                    val evidenciaDto = EvidenciaDto(
+                        id = null,
+                        actividadId = evidencia.actividadId,
+                        usuarioId = evidencia.usuarioId,
+                        mimeType = evidencia.mimeType,
+                        tamano = evidencia.tamano,
+                        estado = "SINCRONIZADA"
+                    )
+                    api.crearEvidenciaDto(evidenciaDto)
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                }
+
+                // 4. Éxito: cambiar a SINCRONIZADA localmente
                 evidenciaDao.actualizarEstado(evidencia.id, EstadoSincronizacion.SINCRONIZADA)
                 Result.Success(Unit)
             } else {
-                // 4. Error del servidor: cambiar a FALLIDA (mantiene archivo local)
                 evidenciaDao.actualizarEstado(evidencia.id, EstadoSincronizacion.FALLIDA)
                 Result.Error(DataError.Network.Server)
             }
@@ -266,8 +308,22 @@ class RoomActividadRepository(
     ) {
         val evidencia = evidenciaDao.obtenerPorId(evidenciaId)
         if (evidencia != null) {
+            // 1. Eliminar archivo físico local
             EvidenciaStorageUtil.eliminarArchivoSiExiste(context, Uri.parse(evidencia.localUri))
+
+            // 2. Eliminar registro en base de datos local Room
             evidenciaDao.eliminar(evidencia)
+
+            // 3. Eliminar archivo en Supabase Storage y metadatos SQL de forma resiliente
+            try {
+                val nombreArchivo = "evidencia_${evidencia.actividadId}_${evidencia.id}_${evidencia.usuarioId.takeIf { it.isNotBlank() } ?: "general"}.jpg"
+                val baseUrl = BuildConfig.SUPABASE_URL.replace("/rest/v1/", "/").trimEnd('/')
+                val storageUrl = "$baseUrl/storage/v1/object/evidencias/$nombreArchivo"
+                api.eliminarEvidenciaRemota(storageUrl)
+                api.eliminarEvidenciaDto("eq.${evidencia.id}")
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+            }
         }
     }
 }

@@ -51,7 +51,7 @@ fun PantallaLogin(
     onIniciarSesionClick: (email: String, password: String, nombre: String, rol: RolUsuario) -> Unit
 ) {
     var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("123456") }
+    var password by remember { mutableStateOf("") }
     var nombre by remember { mutableStateOf("") }
     var rolSeleccionado by remember { mutableStateOf(RolUsuario.APRENDIZ) }
     var errorValidacionLocal by remember { mutableStateOf<String?>(null) }
@@ -178,7 +178,7 @@ fun PantallaLogin(
                             onLimpiarError()
                         },
                         label = { Text("Contraseña *") },
-                        placeholder = { Text("••••••") },
+                        placeholder = { Text("********") },
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
@@ -227,7 +227,7 @@ fun PantallaLogin(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Accesos Rápidos de Prueba (Contraseña: 123456):",
+                        text = "Accesos Rápidos de Prueba (Contraseña predefinida: 123456):",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold
                     )

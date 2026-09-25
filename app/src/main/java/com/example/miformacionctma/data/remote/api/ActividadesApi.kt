@@ -2,6 +2,7 @@ package com.example.miformacionctma.data.remote.api
 
 import com.example.miformacionctma.data.remote.dto.ActividadDto
 import com.example.miformacionctma.data.remote.dto.CompetenciaDto
+import com.example.miformacionctma.data.remote.dto.EvidenciaDto
 import com.example.miformacionctma.data.remote.dto.PerfilDto
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -60,6 +61,23 @@ interface ActividadesApi {
     @POST("perfiles")
     suspend fun crearPerfil(@Body perfil: PerfilDto): Response<Unit>
 
+    // Listar Evidencias Metadata
+    @GET("evidencias")
+    suspend fun getEvidencias(
+        @Query("select") select: String = "*",
+        @Query("order") order: String = "id.asc"
+    ): Response<List<EvidenciaDto>>
+
+    // Crear Metadatos de Evidencia
+    @POST("evidencias")
+    suspend fun crearEvidenciaDto(@Body evidencia: EvidenciaDto): Response<Unit>
+
+    // Eliminar Metadatos de Evidencia
+    @DELETE("evidencias")
+    suspend fun eliminarEvidenciaDto(
+        @Query("id") idFilter: String
+    ): Response<Unit>
+
     // Subir Evidencia Fotográfica directamente al endpoint de Supabase Storage
     @POST
     suspend fun subirEvidencia(
@@ -68,5 +86,11 @@ interface ActividadesApi {
         @Header("x-upsert") xUpsert: String = "true",
         @Header("Content-Type") contentType: String,
         @Body body: RequestBody
+    ): Response<Unit>
+
+    // Eliminar Evidencia en Supabase Storage
+    @DELETE
+    suspend fun eliminarEvidenciaRemota(
+        @Url url: String
     ): Response<Unit>
 }
