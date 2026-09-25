@@ -2,7 +2,6 @@
 *.iml
 .gradle
 /local.properties
-/secrets.properties
 
 .idea/
 /.idea/caches
@@ -17,7 +16,6 @@
 .externalNativeBuild
 .cxx
 local.properties
-secrets.properties
 
 
 # Android Studio local device state
