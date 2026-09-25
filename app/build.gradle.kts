@@ -55,11 +55,11 @@ android {
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
             buildConfigField("String", "ENVIRONMENT", "\"DEV\"")
-            val url = secretsProps.getProperty("SUPABASE_URL_DEV") ?: secretsProps.getProperty("SUPABASE_URL")
+            val url = (secretsProps.getProperty("SUPABASE_URL_DEV") ?: secretsProps.getProperty("SUPABASE_URL"))?.trim('"', '\'')
             if (url != null) {
                 buildConfigField("String", "SUPABASE_URL", "\"$url\"")
             }
-            val key = secretsProps.getProperty("SUPABASE_KEY_DEV") ?: secretsProps.getProperty("SUPABASE_PUBLISHABLE_KEY")
+            val key = (secretsProps.getProperty("SUPABASE_KEY_DEV") ?: secretsProps.getProperty("SUPABASE_PUBLISHABLE_KEY"))?.trim('"', '\'')
             if (key != null) {
                 buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$key\"")
             }
@@ -69,11 +69,11 @@ android {
             applicationIdSuffix = ".stage"
             versionNameSuffix = "-stage"
             buildConfigField("String", "ENVIRONMENT", "\"STAGE\"")
-            val url = secretsProps.getProperty("SUPABASE_URL_STAGE") ?: secretsProps.getProperty("SUPABASE_URL")
+            val url = (secretsProps.getProperty("SUPABASE_URL_STAGE") ?: secretsProps.getProperty("SUPABASE_URL"))?.trim('"', '\'')
             if (url != null) {
                 buildConfigField("String", "SUPABASE_URL", "\"$url\"")
             }
-            val key = secretsProps.getProperty("SUPABASE_KEY_STAGE") ?: secretsProps.getProperty("SUPABASE_PUBLISHABLE_KEY")
+            val key = (secretsProps.getProperty("SUPABASE_KEY_STAGE") ?: secretsProps.getProperty("SUPABASE_PUBLISHABLE_KEY"))?.trim('"', '\'')
             if (key != null) {
                 buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$key\"")
             }
@@ -81,11 +81,11 @@ android {
         create("prod") {
             dimension = "environment"
             buildConfigField("String", "ENVIRONMENT", "\"PROD\"")
-            val url = secretsProps.getProperty("SUPABASE_URL_PROD") ?: secretsProps.getProperty("SUPABASE_URL")
+            val url = (secretsProps.getProperty("SUPABASE_URL_PROD") ?: secretsProps.getProperty("SUPABASE_URL"))?.trim('"', '\'')
             if (url != null) {
                 buildConfigField("String", "SUPABASE_URL", "\"$url\"")
             }
-            val key = secretsProps.getProperty("SUPABASE_KEY_PROD") ?: secretsProps.getProperty("SUPABASE_PUBLISHABLE_KEY")
+            val key = (secretsProps.getProperty("SUPABASE_KEY_PROD") ?: secretsProps.getProperty("SUPABASE_PUBLISHABLE_KEY"))?.trim('"', '\'')
             if (key != null) {
                 buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$key\"")
             }

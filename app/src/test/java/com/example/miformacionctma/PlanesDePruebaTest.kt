@@ -8,10 +8,18 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.text.SimpleDateFormat
-import java.util.Locale
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 class PlanesDePruebaTest {
+
+    private fun parseInstant(fechaStr: String): Instant {
+        return LocalDate.parse(fechaStr, DateTimeFormatter.ISO_LOCAL_DATE)
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+    }
 
     // CP-01: Estado inicial sin errores de validación
     @Test
@@ -68,7 +76,7 @@ class PlanesDePruebaTest {
     @Test
     fun cp06_seleccionarTarjeta_transfiereIdCorrectamente() {
         val actividad =
-            ActividadFormativa(101L, "Taller Kotlin", "Desc", "2026-09-10", 0, Prioridad.MEDIA)
+            ActividadFormativa(101L, "Taller Kotlin", "Desc", parseInstant("2026-09-10"), 0, Prioridad.MEDIA)
         val rutaDestino = "detalle/${actividad.id}"
         assertTrue("La ruta debe incluir el ID", rutaDestino.contains("101"))
     }
@@ -77,7 +85,7 @@ class PlanesDePruebaTest {
     @Test
     fun cp07_idInexistente_manejaErrorSinCrash() {
         val lista = listOf(
-            ActividadFormativa(1L, "Java", "Desc", "2026-09-10", 0, Prioridad.BAJA)
+            ActividadFormativa(1L, "Java", "Desc", parseInstant("2026-09-10"), 0, Prioridad.BAJA)
         )
         val idBuscado = -1L
         val encontrada = lista.find { it.id == idBuscado }
@@ -98,8 +106,8 @@ class PlanesDePruebaTest {
     @Test
     fun cp09_busquedaKotlin_filtraCoincidencias() {
         val lista = listOf(
-            ActividadFormativa(1L, "Taller Kotlin", "Desc", "2026-09-10", 10, Prioridad.ALTA),
-            ActividadFormativa(2L, "Guía Java", "Desc", "2026-09-12", 20, Prioridad.BAJA)
+            ActividadFormativa(1L, "Taller Kotlin", "Desc", parseInstant("2026-09-10"), 10, Prioridad.ALTA),
+            ActividadFormativa(2L, "Guía Java", "Desc", parseInstant("2026-09-12"), 20, Prioridad.BAJA)
         )
         val resultado = ReglasActividad.buscarPorTitulo(lista, "Kotlin")
 
@@ -118,7 +126,7 @@ class PlanesDePruebaTest {
     @Test
     fun cp11_busquedaSinCoincidencias_despliegaEstadoVacio() {
         val lista = listOf(
-            ActividadFormativa(1L, "Kotlin", "Desc", "2026-09-10", 0, Prioridad.MEDIA)
+            ActividadFormativa(1L, "Kotlin", "Desc", parseInstant("2026-09-10"), 0, Prioridad.MEDIA)
         )
         val resultado = ReglasActividad.buscarPorTitulo(lista, "XYZ999")
 
@@ -154,18 +162,18 @@ class PlanesDePruebaTest {
     // CP-15: Visualización de progreso en detalle
     @Test
     fun cp15_detalleActividad_muestraPorcentajeCorrecto() {
-        val actividad = ActividadFormativa(1L, "Móviles", "Desc", "2026-09-10", 75, Prioridad.ALTA)
+        val actividad = ActividadFormativa(1L, "Móviles", "Desc", parseInstant("2026-09-10"), 75, Prioridad.ALTA)
         assertEquals(75, actividad.progreso)
     }
 
     // CP-16: Marcado de urgencia con <= 2 días restantes
     @Test
     fun cp16_actividadDosDiasRestantes_marcaUrgente() {
-        val fechaPrueba = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse("2026-09-01")!!
+        val fechaPrueba = parseInstant("2026-09-01")
 
         val actividades = listOf(
             ActividadFormativa(
-                1L, "Urgente", "Desc", "2026-09-02", 20, Prioridad.ALTA, completada = false
+                1L, "Urgente", "Desc", parseInstant("2026-09-02"), 20, Prioridad.ALTA, completada = false
             )
         )
 

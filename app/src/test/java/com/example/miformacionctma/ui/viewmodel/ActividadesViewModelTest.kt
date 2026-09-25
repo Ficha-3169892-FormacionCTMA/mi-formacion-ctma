@@ -1,6 +1,10 @@
 package com.example.miformacionctma.ui.viewmodel
 
+import android.content.Context
+import android.net.Uri
+import com.example.miformacionctma.data.local.entity.EvidenciaEntity
 import com.example.miformacionctma.data.repository.ActividadRepository
+import com.example.miformacionctma.data.repository.AuthRepository
 import com.example.miformacionctma.data.repository.PreferenciasRepository
 import com.example.miformacionctma.data.repository.RepositoryResult
 import com.example.miformacionctma.model.ActividadFormativa
@@ -8,6 +12,7 @@ import com.example.miformacionctma.model.Competencia
 import com.example.miformacionctma.model.Prioridad
 import com.example.miformacionctma.ui.state.ListadoUiState
 import com.example.miformacionctma.ui.state.OperacionUiState
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -79,13 +84,35 @@ class ActividadesViewModelTest {
             return act to "Competencia Fake"
         }
 
-        override suspend fun inicializarDatos() {
-            // No-op para pruebas controladas
-        }
+        override suspend fun inicializarDatos() {}
 
         override suspend fun refresh(): RepositoryResult<Unit> {
             return com.example.miformacionctma.data.util.Result.Success(Unit)
         }
+
+        override fun observarEvidencias(actividadId: Long, usuarioId: String): Flow<List<EvidenciaEntity>> {
+            return flowOf(emptyList())
+        }
+
+        override fun observarEvidenciasInstructor(actividadId: Long): Flow<List<EvidenciaEntity>> {
+            return flowOf(emptyList())
+        }
+
+        override suspend fun guardarEvidenciaLocal(
+            actividadId: Long,
+            localUri: String,
+            mimeType: String,
+            tamano: Long,
+            usuarioId: String
+        ): EvidenciaEntity {
+            return EvidenciaEntity(1L, actividadId, localUri, mimeType, tamano, Instant.now())
+        }
+
+        override suspend fun subirEvidencia(context: Context, evidenciaId: Long): RepositoryResult<Unit> {
+            return com.example.miformacionctma.data.util.Result.Success(Unit)
+        }
+
+        override suspend fun eliminarEvidencia(context: Context, evidenciaId: Long) {}
     }
 
     // 2. Fake PreferenciasRepository subclass
@@ -98,13 +125,14 @@ class ActividadesViewModelTest {
         }
     }
 
+    private val authRepository = mockk<AuthRepository>(relaxed = true)
+
     @Test
     fun uiState_inicial_esCargando() = runTest(testDispatcher) {
         val repo = FakeActividadRepository()
         val prefs = FakePreferenciasRepository()
-        val viewModel = ActividadesViewModel(repo, prefs)
+        val viewModel = ActividadesViewModel(repo, prefs, authRepository)
 
-        // El valor inicial de stateIn debe ser Cargando antes de la recolección
         assertEquals(ListadoUiState.Cargando, viewModel.uiState.value)
     }
 
@@ -112,15 +140,11 @@ class ActividadesViewModelTest {
     fun uiState_transicionaAVacio_cuandoNoHayDatos() = runTest(testDispatcher) {
         val repo = FakeActividadRepository()
         val prefs = FakePreferenciasRepository()
-        val viewModel = ActividadesViewModel(repo, prefs)
+        val viewModel = ActividadesViewModel(repo, prefs, authRepository)
 
-        // Iniciamos la recolección activa en backgroundScope para arrancar WhileSubscribed
         backgroundScope.launch { viewModel.uiState.collect() }
-        
-        // Dejamos que corra el scheduler virtual
         advanceUntilIdle()
 
-        // Comprobamos el estado después de recolectar la lista vacía
         assertEquals(ListadoUiState.Vacio, viewModel.uiState.value)
     }
 
@@ -128,15 +152,13 @@ class ActividadesViewModelTest {
     fun uiState_transicionaAContenido_cuandoSeInsertanDatos() = runTest(testDispatcher) {
         val repo = FakeActividadRepository()
         val prefs = FakePreferenciasRepository()
-        val viewModel = ActividadesViewModel(repo, prefs)
+        val viewModel = ActividadesViewModel(repo, prefs, authRepository)
 
         backgroundScope.launch { viewModel.uiState.collect() }
         advanceUntilIdle()
 
-        // Al inicio está vacío
         assertEquals(ListadoUiState.Vacio, viewModel.uiState.value)
 
-        // Insertamos una actividad formativa
         val nuevaActividad = ActividadFormativa(
             id = 1L,
             titulo = "Aprender Corrutinas",
@@ -147,10 +169,8 @@ class ActividadesViewModelTest {
         )
         viewModel.insertar(nuevaActividad)
         
-        // Corremos las tareas pendientes en el scheduler virtual
         advanceUntilIdle()
 
-        // Verificamos que transicionó a Contenido con la lista correcta
         val currentState = viewModel.uiState.value
         assertTrue(currentState is ListadoUiState.Contenido)
         assertEquals(1, (currentState as ListadoUiState.Contenido).actividades.size)
@@ -161,7 +181,7 @@ class ActividadesViewModelTest {
     fun operacionUiState_cambiaAExitosa_cuandoInsercionEsCorrecta() = runTest(testDispatcher) {
         val repo = FakeActividadRepository()
         val prefs = FakePreferenciasRepository()
-        val viewModel = ActividadesViewModel(repo, prefs)
+        val viewModel = ActividadesViewModel(repo, prefs, authRepository)
 
         backgroundScope.launch { viewModel.operacionUiState.collect() }
         advanceUntilIdle()

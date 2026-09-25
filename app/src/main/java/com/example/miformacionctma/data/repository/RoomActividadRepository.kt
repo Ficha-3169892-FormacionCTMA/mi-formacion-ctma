@@ -129,65 +129,59 @@ class RoomActividadRepository(
     override suspend fun refresh(): RepositoryResult<Unit> {
         return try {
             val actividadesResponse = api.getActividades()
-            val competenciasResponse = api.getCompetencias()
-            
-            // Intento seguro de obtener evidencias remotas (si la tabla ya existe)
-            val evidenciasResponse = try {
-                api.getEvidencias()
-            } catch (e: Exception) {
-                null
-            }
-
-            if (actividadesResponse.isSuccessful && competenciasResponse.isSuccessful) {
-                val actividadesDto = actividadesResponse.body() ?: emptyList()
-                val competenciasDto = competenciasResponse.body() ?: emptyList()
-                val evidenciasDto = if (evidenciasResponse?.isSuccessful == true) evidenciasResponse.body() ?: emptyList() else emptyList()
-                
-                val actividadesEntity = actividadesDto.toEntityList()
-                val competenciasEntity = competenciasDto.toEntityList()
-
-                val baseUrlStorage = BuildConfig.SUPABASE_URL.replace("/rest/v1/", "/").trimEnd('/')
-                val evidenciasRemotas = evidenciasDto.map { dto ->
-                    val remoteUrl = "$baseUrlStorage/storage/v1/object/public/evidencias/evidencia_${dto.actividadId}_${dto.id}_${dto.usuarioId}.jpg"
-                    EvidenciaEntity(
-                        id = dto.id ?: 0L,
-                        actividadId = dto.actividadId,
-                        localUri = remoteUrl,
-                        mimeType = dto.mimeType,
-                        tamano = dto.tamano,
-                        fecha = Instant.now(),
-                        estado = EstadoSincronizacion.SINCRONIZADA,
-                        usuarioId = dto.usuarioId
-                    )
-                }
-
-                // Transacción atómica en Room 3: sincronizar actividades, competencias y evidencias
-                db.useWriterConnection {
-                    val serverIds = actividadesEntity.map { it.id }
-                    if (serverIds.isNotEmpty()) {
-                        dao.eliminarActividadesNoPresentes(serverIds)
-                    }
-                    dao.insertarTodas(actividadesEntity)
-                    competenciaDao.insertarTodas(competenciasEntity)
-
-                    for (ev in evidenciasRemotas) {
-                        if (evidenciaDao.obtenerPorId(ev.id) == null) {
-                            evidenciaDao.insertar(ev)
-                        }
-                    }
-                }
-
-                Result.Success(Unit)
-            } else {
-                val code = if (!actividadesResponse.isSuccessful) actividadesResponse.code() else competenciasResponse.code()
+            if (!actividadesResponse.isSuccessful) {
+                val code = actividadesResponse.code()
                 val error = when (code) {
                     401 -> DataError.Network.Unauthorized
                     404 -> DataError.Network.NotFound
                     in 500..599 -> DataError.Network.Server
                     else -> DataError.Network.Unknown
                 }
-                Result.Error(error)
+                return Result.Error(error)
             }
+
+            val competenciasResponse = try { api.getCompetencias() } catch (e: Exception) { null }
+            val evidenciasResponse = try { api.getEvidencias() } catch (e: Exception) { null }
+
+            val actividadesDto = actividadesResponse.body() ?: emptyList()
+            val competenciasDto = if (competenciasResponse?.isSuccessful == true) competenciasResponse.body() ?: emptyList() else emptyList()
+            val evidenciasDto = if (evidenciasResponse?.isSuccessful == true) evidenciasResponse.body() ?: emptyList() else emptyList()
+
+            val actividadesEntity = actividadesDto.toEntityList()
+            val competenciasEntity = competenciasDto.toEntityList()
+
+            val baseUrlStorage = BuildConfig.SUPABASE_URL.replace("/rest/v1/", "/").trimEnd('/')
+            val evidenciasRemotas = evidenciasDto.map { dto ->
+                val remoteUrl = "$baseUrlStorage/storage/v1/object/public/evidencias/evidencia_${dto.actividadId}_${dto.id}_${dto.usuarioId}.jpg"
+                EvidenciaEntity(
+                    id = dto.id ?: 0L,
+                    actividadId = dto.actividadId,
+                    localUri = remoteUrl,
+                    mimeType = dto.mimeType,
+                    tamano = dto.tamano,
+                    fecha = Instant.now(),
+                    estado = EstadoSincronizacion.SINCRONIZADA,
+                    usuarioId = dto.usuarioId
+                )
+            }
+
+            // Transacción atómica en Room 3: sincronizar actividades, competencias y evidencias
+            db.useWriterConnection {
+                val serverIds = actividadesEntity.map { it.id }
+                if (serverIds.isNotEmpty()) {
+                    dao.eliminarActividadesNoPresentes(serverIds)
+                }
+                dao.insertarTodas(actividadesEntity)
+                competenciaDao.insertarTodas(competenciasEntity)
+
+                for (ev in evidenciasRemotas) {
+                    if (evidenciaDao.obtenerPorId(ev.id) == null) {
+                        evidenciaDao.insertar(ev)
+                    }
+                }
+            }
+
+            Result.Success(Unit)
         } catch (e: IOException) {
             Result.Error(DataError.Network.NoConnection)
         } catch (e: HttpException) {
@@ -197,6 +191,7 @@ class RoomActividadRepository(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            e.printStackTrace()
             Result.Error(DataError.Network.Unknown)
         }
     }

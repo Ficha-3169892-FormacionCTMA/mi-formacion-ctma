@@ -17,6 +17,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.Instant
 
 @RunWith(AndroidJUnit4::class)
 class ActividadDaoTest {
@@ -51,7 +52,7 @@ class ActividadDaoTest {
             id = 1L,
             titulo = "Actividad de prueba",
             descripcion = "Prueba DAO",
-            fecha = "2026-09-20",
+            fecha = Instant.parse("2026-09-20T00:00:00Z"),
             progreso = 50,
             prioridad = "MEDIA",
             competenciaId = null
@@ -72,7 +73,7 @@ class ActividadDaoTest {
             id = 1L,
             titulo = "Original",
             descripcion = "Descripción",
-            fecha = "2026-09-20",
+            fecha = Instant.parse("2026-09-20T00:00:00Z"),
             progreso = 0,
             prioridad = "BAJA"
         )
@@ -100,7 +101,7 @@ class ActividadDaoTest {
             id = 1L,
             titulo = "Eliminar",
             descripcion = "",
-            fecha = "2026-09-20",
+            fecha = Instant.parse("2026-09-20T00:00:00Z"),
             progreso = 0,
             prioridad = "BAJA"
         )
@@ -118,7 +119,7 @@ class ActividadDaoTest {
                 id = 1L,
                 titulo = "Aprender Kotlin",
                 descripcion = "",
-                fecha = "2026-09-20",
+                fecha = Instant.parse("2026-09-20T00:00:00Z"),
                 progreso = 0,
                 prioridad = "MEDIA"
             )
@@ -129,7 +130,7 @@ class ActividadDaoTest {
                 id = 2L,
                 titulo = "Diseño Compose",
                 descripcion = "",
-                fecha = "2026-09-20",
+                fecha = Instant.parse("2026-09-20T00:00:00Z"),
                 progreso = 0,
                 prioridad = "BAJA"
             )
@@ -155,7 +156,7 @@ class ActividadDaoTest {
                 id = 1L,
                 titulo = "Actividad relacionada",
                 descripcion = "",
-                fecha = "2026-09-20",
+                fecha = Instant.parse("2026-09-20T00:00:00Z"),
                 progreso = 0,
                 prioridad = "MEDIA",
                 competenciaId = 1L
